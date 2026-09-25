@@ -7,8 +7,11 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.webkit.JavascriptInterface;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -18,11 +21,17 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Tela única: um WebView com a interface (assets/index.html).
+ * Tela única: um WebView que carrega a interface publicada no GitHub Pages,
+ * assim qualquer mudança no index.html chega ao app sem reinstalar o APK.
+ * Sem internet, usa o cache do WebView/service worker e, por último, a cópia
+ * embutida em assets/index.html.
  * As requisições HTTP são feitas aqui no Java (sem restrição de CORS) e
  * devolvidas ao JavaScript via callback.
  */
 public class MainActivity extends Activity {
+
+    private static final String SITE = "https://davidcaliman-maker.github.io/painel-cafe/";
+    private static final String OFFLINE = "file:///android_asset/index.html";
 
     private WebView web;
     private SharedPreferences prefs;
@@ -38,9 +47,40 @@ public class MainActivity extends Activity {
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
+        s.setCacheMode(WebSettings.LOAD_DEFAULT);
         web.addJavascriptInterface(new Bridge(), "Native");
+        web.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest req) {
+                String url = req.getUrl().toString();
+                if (url.startsWith(SITE) || url.startsWith("file:///android_asset/")) return false;
+                openExternal(url);  // links de fora (ex.: WhatsApp) abrem no app correspondente
+                return true;
+            }
+
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest req, WebResourceError err) {
+                // Sem internet e sem cache: cai para a cópia embutida no APK.
+                if (req.isForMainFrame() && req.getUrl().toString().startsWith(SITE)) {
+                    view.loadUrl(OFFLINE);
+                }
+            }
+        });
         setContentView(web);
-        web.loadUrl("file:///android_asset/index.html");
+        web.loadUrl(SITE);
+    }
+
+    private void openExternal(String url) {
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+        } catch (Exception ignored) {
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (web != null && web.canGoBack()) web.goBack();
+        else super.onBackPressed();
     }
 
     @Override
@@ -82,12 +122,7 @@ public class MainActivity extends Activity {
         /** Abre um link externo (ex.: WhatsApp) no app correspondente. */
         @JavascriptInterface
         public void openUrl(final String url) {
-            runOnUiThread(() -> {
-                try {
-                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
-                } catch (Exception ignored) {
-                }
-            });
+            runOnUiThread(() -> openExternal(url));
         }
 
         @JavascriptInterface

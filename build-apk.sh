@@ -19,7 +19,7 @@ sed 's|<manifest |<manifest package="br.painelcafe" |' "$SRC/AndroidManifest.xml
 "$BT/aapt2" link -o "$OUT/unsigned.apk" -I "$JAR" \
   --manifest "$OUT/AndroidManifest.xml" -A "$SRC/assets" \
   --java "$OUT/gen" --min-sdk-version 24 --target-sdk-version 30 \
-  --version-code 5 --version-name 1.4 "$OUT/res/res.zip"
+  --version-code 6 --version-name 2.0 "$OUT/res/res.zip"
 
 javac -encoding UTF-8 --release 8 -classpath "$JAR" -d "$OUT/classes" \
   $(find "$SRC/java" "$OUT/gen" -name '*.java')
