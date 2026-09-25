@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ícone "P" + barras douradas, no estilo do logo do painel -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#000000" android:pathData="M0,0h108v108h-108z" />
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M22,26h22a16,16 0 0 1 0,32h-10v24h-12zM34,37v10h9a5,5 0 0 0 0,-10z" />
+    <path android:fillColor="#F5A623" android:pathData="M62,70h8v12h-8z" />
+    <path android:fillColor="#F5A623" android:pathData="M73,62h8v20h-8z" />
+    <path android:fillColor="#F5A623" android:pathData="M84,52h8v30h-8z" />
+</vector>

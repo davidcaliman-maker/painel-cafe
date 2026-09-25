@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Painel Café">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<title>Painel do Café</title>
+<style>
+  :root {
+    --bg: #000;
+    --card: #1c1c1e;
+    --card-2: #2a2a2d;
+    --text: #fff;
+    --muted: #b8b8bd;
+    --orange: #f5a623;
+    --red: #c4161c;
+    --green: #1f8f3a;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--text);
+    font-family: "Roboto", -apple-system, "Helvetica Neue", Arial, sans-serif; -webkit-text-size-adjust: 100%; }
+  body { padding: calc(14px + env(safe-area-inset-top)) calc(6px + env(safe-area-inset-right))
+    calc(28px + env(safe-area-inset-bottom)) calc(6px + env(safe-area-inset-left)); }
+
+  /* Cabeçalho */
+  .brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px 6px; }
+  .logo { display: flex; align-items: flex-end; gap: 2px; }
+  .logo b { font-size: min(40px, 9vw); font-weight: 900; line-height: 1; }
+  .logo i { display: inline-block; width: 6px; background: var(--orange); border-radius: 1px; }
+  .brand h1 { margin: 0; white-space: nowrap; line-height: 1.05; font-size: min(28px, 6vw); font-weight: 800; letter-spacing: .5px; }
+  .sub { display: flex; justify-content: space-between; align-items: center;
+    color: var(--orange); font-weight: 700; font-size: 17px; padding: 0 8px 6px; }
+  .sub button { background: none; border: 0; color: var(--orange); font-size: 22px; font-weight: 700; padding: 0 4px; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+
+  .card { background: var(--card); border-radius: 8px; text-align: center; padding: 12px 6px 14px; }
+  .card .t { font-size: 20px; font-weight: 600; }
+  .card .v { font-size: 34px; font-weight: 700; margin-top: 8px; font-variant-numeric: tabular-nums; }
+  .card.edit { position: relative; }
+  .card.edit::after { content: "✎"; position: absolute; top: 6px; right: 8px; color: var(--muted); font-size: 13px; }
+
+  .mkt { overflow: hidden; border-radius: 6px; padding: 6px 6px 8px; text-align: center; background: #444; }
+  .mkt.down { background: var(--red); }
+  .mkt.up { background: var(--green); }
+  .mkt .h { display: flex; justify-content: space-between; font-size: min(14px, 3.4vw); font-weight: 600; }
+  .mkt .v { font-size: min(26px, 6.6vw); font-weight: 700; margin: 4px 0 2px; font-variant-numeric: tabular-nums; }
+  .mkt .d { font-size: 13px; font-weight: 500; }
+
+  .bar { border: 3px solid var(--orange); border-radius: 3px; display: flex; align-items: center;
+    justify-content: space-between; padding: 8px 12px; margin-bottom: 14px; }
+  .bar span { font-weight: 800; letter-spacing: 3px; font-size: 18px; }
+  .bar small { color: var(--muted); font-size: 12px; letter-spacing: 0; font-weight: 500; }
+  .bar button { background: var(--orange); color: #000; border: 0; border-radius: 4px;
+    font-weight: 800; font-size: 13px; padding: 7px 10px; letter-spacing: 1px; }
+
+  h2 { font-size: 36px; font-weight: 800; margin: 4px 2px 0; }
+  .sec-sub { color: var(--orange); font-weight: 700; font-size: 17px; margin: 2px 2px 8px; }
+
+  .rain-total { background: var(--card); border: 3px solid var(--orange); border-radius: 6px;
+    display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; margin-bottom: 8px; }
+  .rain-total span { font-weight: 800; letter-spacing: 2px; font-size: 16px; }
+  .rain-total b { font-size: 30px; font-weight: 800; color: #5ac8fa; font-variant-numeric: tabular-nums; }
+  .rain-list { background: var(--card-2); border-radius: 6px; padding: 4px 10px; }
+  .day { display: grid; grid-template-columns: 74px 28px 1fr 64px; align-items: center; gap: 6px;
+    padding: 9px 0; border-bottom: 1px solid #3a3a3d; font-size: 15px; }
+  .day:last-child { border-bottom: 0; }
+  .day .dt b { display: block; font-size: 15px; }
+  .day .dt small { color: var(--muted); font-size: 12px; }
+  .day .ic { font-size: 20px; text-align: center; }
+  .day .mid { display: flex; flex-direction: column; gap: 4px; }
+  .day .info { color: var(--muted); font-size: 12px; }
+  .day .track { height: 6px; background: #3a3a3d; border-radius: 3px; overflow: hidden; }
+  .day .fill { height: 100%; background: #5ac8fa; border-radius: 3px; }
+  .day .mm { text-align: right; font-weight: 700; font-size: 17px; font-variant-numeric: tabular-nums; }
+  .day .mm.zero { color: var(--muted); font-weight: 500; }
+  .sec-sub small { color: var(--muted); font-weight: 500; font-size: 12px; }
+  .ad { margin-left: auto; flex-shrink: 0; align-self: flex-start; height: min(50px, 11.5vw); border-radius: 6px; }
+
+  .foot { color: var(--muted); font-size: 12px; text-align: center; margin-top: 12px; line-height: 1.5; }
+  .err { background: var(--red); border-radius: 6px; padding: 8px 10px; font-size: 14px; margin-bottom: 8px; display: none; }
+
+  /* Modal */
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.75); display: none; align-items: flex-end; z-index: 10; }
+  .modal.open { display: flex; }
+  .sheet { background: #161618; width: 100%; border-radius: 14px 14px 0 0; padding: 16px 16px 22px;
+    max-height: 92vh; overflow-y: auto; border-top: 3px solid var(--orange); }
+  .sheet h3 { margin: 0 0 4px; font-size: 20px; }
+  .sheet p { color: var(--muted); font-size: 13px; margin: 0 0 12px; line-height: 1.45; }
+  .sheet label { display: block; font-size: 13px; color: var(--orange); font-weight: 700; margin: 10px 0 4px; }
+  .sheet input { width: 100%; background: #000; color: #fff; border: 1px solid #444; border-radius: 6px;
+    padding: 10px; font-size: 18px; }
+  .sheet .hint { color: var(--muted); font-size: 12px; margin-top: 3px; }
+  .sheet .actions { display: flex; gap: 8px; margin-top: 16px; }
+  .sheet .actions button { flex: 1; padding: 12px; border-radius: 6px; border: 0; font-size: 16px; font-weight: 800; }
+  .btn-ok { background: var(--orange); color: #000; }
+  .btn-cancel { background: #333; color: #fff; }
+</style>
+</head>
+<body>
+
+<div class="brand">
+  <div class="logo"><b>P</b><i style="height:10px"></i><i style="height:16px"></i><i style="height:22px"></i></div>
+  <h1>PAINEL DO<br>CAFÉ</h1>
+  <img class="ad" id="ad" src="anuncio.jpg" alt="Edson Vander - Corretor de Café - WhatsApp 73 99969-4897">
+</div>
+<div class="sub">Indicadores Técnicos do Mercado Físico <button id="help">?</button></div>
+
+<div class="err" id="err"></div>
+
+<div class="grid2">
+  <div class="card edit" data-edit="conilon"><div class="t">CONILON 7/8</div><div class="v" id="fisConilon">—</div></div>
+  <div class="card edit" data-edit="arabica"><div class="t">ARÁBICA RIO</div><div class="v" id="fisArabica">—</div></div>
+</div>
+
+<div class="grid3">
+  <div class="mkt" id="mUsd"><div class="h"><span>DÓLAR</span><span class="p">(–)</span></div><div class="v">—</div><div class="d">—</div></div>
+  <div class="mkt" id="mLdn"><div class="h"><span>LONDRES</span><span class="p">(–)</span></div><div class="v">—</div><div class="d">—</div></div>
+  <div class="mkt" id="mNy"><div class="h"><span>N.YORK</span><span class="p">(–)</span></div><div class="v">—</div><div class="d">—</div></div>
+</div>
+
+<div class="bar">
+  <span>COTAÇÕES <small id="upd">carregando…</small></span>
+  <button id="refresh">ATUALIZAR</button>
+</div>
+
+<h2>CHUVA</h2>
+<div class="sec-sub">Itamaraju-BA · próximos 10 dias <small id="wUpd"></small></div>
+
+<div class="rain-total">
+  <span>TOTAL 10 DIAS</span>
+  <b id="rainTotal">— mm</b>
+</div>
+
+<div class="rain-list" id="rainList"></div>
+
+<div class="foot">
+  Cotações: ICE Futures (Londres / Nova York) e câmbio USD/BRL, com atraso de ~10 min.<br>
+  Previsão: Open-Meteo. Toque num preço físico para ajustar o diferencial.
+</div>
+
+<!-- Modal de ajuste -->
+<div class="modal" id="modal">
+  <div class="sheet">
+    <h3 id="mTitle">Ajustar</h3>
+    <p id="mDesc"></p>
+    <label id="lDiff">Diferencial</label>
+    <input id="iDiff" inputmode="decimal">
+    <div class="hint" id="hDiff"></div>
+    <label>Ou informe o preço físico de hoje (R$/saca)</label>
+    <input id="iFis" inputmode="decimal" placeholder="ex.: 893,22">
+    <div class="hint">O diferencial é recalculado a partir desse preço e da bolsa atual.</div>
+    <label id="lCtr">Contrato</label>
+    <input id="iCtr" autocapitalize="characters">
+    <div class="hint">Código TradingView, ex.: RCF2027 (Londres Jan/27) ou KCZ2026 (NY Dez/26).</div>
+    <div class="actions">
+      <button class="btn-cancel" id="mCancel">Cancelar</button>
+      <button class="btn-ok" id="mSave">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Ajuda -->
+<div class="modal" id="helpModal">
+  <div class="sheet">
+    <h3>Como o painel calcula</h3>
+    <p>
+      <b>Conilon (Londres):</b> a bolsa cota em US$ por tonelada. Uma saca tem 60 kg = 0,06 t.<br>
+      Bolsa em R$/saca = Londres × 0,06 × Dólar.<br><br>
+      <b>Arábica (Nova York):</b> a bolsa cota em centavos de dólar por libra-peso.
+      Uma saca tem 60 kg = 132,277 lb.<br>
+      Bolsa em R$/saca = NY ÷ 100 × 132,277 × Dólar.<br><br>
+      <b>Deságio:</b> diferença entre o preço físico e a bolsa convertida. É negativo quando o físico
+      paga menos que a bolsa (qualidade inferior, frete, custo de exportação, oferta local).
+      Em pontos: Conilon em US$/t e Arábica em ¢/lb.
+    </p>
+    <div class="actions"><button class="btn-ok" id="helpClose">Fechar</button></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var LB_PER_SACA = 60 / 0.45359237;      // 132,277 lb
+  var T_PER_SACA = 0.06;                   // 60 kg
+  var MONTHS = { F: "Jan", G: "Fev", H: "Mar", J: "Abr", K: "Mai", M: "Jun",
+                 N: "Jul", Q: "Ago", U: "Set", V: "Out", X: "Nov", Z: "Dez" };
+
+  // Padrões calibrados em 25/09/2026 (dólar 5,19 · Londres Jan27 3.304 · NY Dez26 280,35)
+  // para bater com Conilon 7/8 = R$ 942,00 e Arábica Rio = R$ 1.148,00.
+  var DEFAULTS = { diffConilon: -278.95, diffArabica: -113.13, ctrLdn: "RCF2027", ctrNy: "KCZ2026" };
+  // Ao mudar os padrões, incremente para substituir os valores já salvos no celular.
+  var CFG_VERSION = "2";
+
+  // ---------- armazenamento ----------
+  function load(k) {
+    try { var v = window.Native ? Native.load(k) : localStorage.getItem(k); return v == null ? null : v; }
+    catch (e) { return null; }
+  }
+  function save(k, v) {
+    try { if (window.Native) Native.save(k, String(v)); else localStorage.setItem(k, String(v)); } catch (e) {}
+  }
+  if (load("cfgVersion") !== CFG_VERSION) {
+    Object.keys(DEFAULTS).forEach(function (k) { save(k, DEFAULTS[k]); });
+    save("cfgVersion", CFG_VERSION);
+  }
+  var cfg = {};
+  Object.keys(DEFAULTS).forEach(function (k) {
+    var v = load(k);
+    cfg[k] = v == null ? DEFAULTS[k] : (typeof DEFAULTS[k] === "number" ? parseFloat(v) : v);
+  });
+
+  // ---------- HTTP (via Java para evitar CORS; fetch no navegador para testes) ----------
+  var cbs = {}, seq = 0;
+  window.__nativeCb = function (id, ok, text) {
+    var cb = cbs[id]; delete cbs[id];
+    if (cb) cb(ok, text);
+  };
+  function postJson(url, body) {
+    return new Promise(function (resolve, reject) {
+      var payload = JSON.stringify(body);
+      if (window.Native) {
+        var id = "c" + (++seq);
+        cbs[id] = function (ok, text) {
+          if (!ok) return reject(new Error(text));
+          try { resolve(JSON.parse(text)); } catch (e) { reject(e); }
+        };
+        Native.post(url, payload, id);
+      } else {
+        fetch(url, { method: "POST", body: payload }).then(function (r) { return r.json(); }).then(resolve, reject);
+      }
+    });
+  }
+
+  function getJson(url) {
+    return new Promise(function (resolve, reject) {
+      if (window.Native) {
+        var id = "c" + (++seq);
+        cbs[id] = function (ok, text) {
+          if (!ok) return reject(new Error(text));
+          try { resolve(JSON.parse(text)); } catch (e) { reject(e); }
+        };
+        Native.get(url, id);
+      } else {
+        fetch(url).then(function (r) { return r.json(); }).then(resolve, reject);
+      }
+    });
+  }
+
+  function scan(market, tickers) {
+    return postJson("https://scanner.tradingview.com/" + market + "/scan", {
+      symbols: { tickers: tickers },
+      columns: ["close", "change", "time"]
+    }).then(function (res) {
+      var out = {};
+      (res.data || []).forEach(function (r) { out[r.s] = { close: r.d[0], change: r.d[1], time: r.d[2] }; });
+      return out;
+    });
+  }
+
+  // ---------- formatação ----------
+  function fmt(n, dec) {
+    if (n == null || isNaN(n)) return "—";
+    return n.toLocaleString("pt-BR", { minimumFractionDigits: dec, maximumFractionDigits: dec });
+  }
+  function signed(n, dec, suffix) {
+    if (n == null || isNaN(n)) return "—";
+    return (n > 0 ? "+" : n < 0 ? "−" : "") + fmt(Math.abs(n), dec) + (suffix || "");
+  }
+  function pct(n) { return n == null || isNaN(n) ? "(–)" : "(" + (n > 0 ? "+" : "") + n.toFixed(2) + "%)"; }
+  function ddmm(ts) {
+    if (!ts) return "";
+    var d = new Date(ts * 1000);
+    return String(d.getUTCDate()).padStart(2, "0") + "/" + String(d.getUTCMonth() + 1).padStart(2, "0");
+  }
+  function ctrLabel(code) {
+    var m = /([FGHJKMNQUVXZ])(\d{4})$/.exec(code || "");
+    return m ? MONTHS[m[1]] + m[2].slice(2) : code;
+  }
+  function $(id) { return document.getElementById(id); }
+
+  function paintMkt(el, q, value, bottom) {
+    el.classList.remove("up", "down");
+    if (q && q.change != null) el.classList.add(q.change < 0 ? "down" : "up");
+    el.querySelector(".p").textContent = pct(q && q.change);
+    el.querySelector(".v").textContent = value;
+    el.querySelector(".d").textContent = bottom;
+  }
+
+  // ---------- estado ----------
+  var last = null;  // { usd, ldn, ny, qUsd, qLdn, qNy }
+
+  function render() {
+    if (!last) return;
+    // Dólar arredondado a 2 casas, tanto na tela quanto no cálculo da saca.
+    var usd = Math.round(last.usd * 100) / 100, ldn = last.ldn, ny = last.ny;
+    var fisCon = (ldn + cfg.diffConilon) * T_PER_SACA * usd;
+    var fisAra = (ny + cfg.diffArabica) / 100 * LB_PER_SACA * usd;
+
+    $("fisConilon").textContent = fmt(fisCon, 2);
+    $("fisArabica").textContent = fmt(fisAra, 2);
+
+    paintMkt($("mUsd"), last.qUsd, fmt(usd, 2), ddmm(last.qUsd.time) + "/" + new Date().getFullYear());
+    paintMkt($("mLdn"), last.qLdn, fmt(ldn, 0), ctrLabel(cfg.ctrLdn) + " - " + ddmm(last.qLdn.time));
+    paintMkt($("mNy"), last.qNy, fmt(ny, 2), ctrLabel(cfg.ctrNy) + " - " + ddmm(last.qNy.time));
+
+  }
+
+  var loading = false;
+  function refresh() {
+    if (loading) return;
+    loading = true;
+    $("upd").textContent = "atualizando…";
+    var tLdn = "ICEEUR:" + cfg.ctrLdn, tNy = "ICEUS:" + cfg.ctrNy, tUsd = "FX_IDC:USDBRL";
+    Promise.all([scan("futures", [tLdn, tNy]), scan("forex", [tUsd])]).then(function (r) {
+      var f = r[0], fx = r[1];
+      if (!f[tLdn]) throw new Error("Contrato de Londres não encontrado: " + cfg.ctrLdn);
+      if (!f[tNy]) throw new Error("Contrato de NY não encontrado: " + cfg.ctrNy);
+      if (!fx[tUsd]) throw new Error("Cotação do dólar indisponível");
+      last = { usd: fx[tUsd].close, ldn: f[tLdn].close, ny: f[tNy].close,
+               qUsd: fx[tUsd], qLdn: f[tLdn], qNy: f[tNy] };
+      save("last", JSON.stringify(last));
+      $("err").style.display = "none";
+      var now = new Date();
+      $("upd").textContent = String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
+      render();
+    }).catch(function (e) {
+      $("err").textContent = "Falha ao atualizar: " + e.message + (last ? " (mostrando últimos valores)" : "");
+      $("err").style.display = "block";
+      $("upd").textContent = "offline";
+    }).then(function () { loading = false; });
+  }
+
+  // ---------- modal de ajuste ----------
+  var editing = null;
+  function parseBR(s) { return parseFloat(String(s).trim().replace(/\./g, "").replace(",", ".")); }
+
+  document.querySelectorAll("[data-edit]").forEach(function (el) {
+    el.addEventListener("click", function () {
+      editing = el.getAttribute("data-edit");
+      var isCon = editing === "conilon";
+      $("mTitle").textContent = isCon ? "Conilon 7/8" : "Arábica Rio";
+      $("mDesc").textContent = isCon
+        ? "Preço físico = (Londres + diferencial) × 0,06 × Dólar."
+        : "Preço físico = (NY + diferencial) ÷ 100 × 132,277 × Dólar.";
+      $("lDiff").textContent = isCon ? "Diferencial (US$/t)" : "Diferencial (¢/lb)";
+      $("hDiff").textContent = "Negativo = deságio. Padrão: " + (isCon ? "−278,95" : "−113,13") + ".";
+      $("iDiff").value = String(isCon ? cfg.diffConilon : cfg.diffArabica).replace(".", ",");
+      $("iFis").value = "";
+      $("lCtr").textContent = isCon ? "Contrato de Londres" : "Contrato de Nova York";
+      $("iCtr").value = isCon ? cfg.ctrLdn : cfg.ctrNy;
+      $("modal").classList.add("open");
+    });
+  });
+
+  $("mCancel").onclick = function () { $("modal").classList.remove("open"); };
+  $("mSave").onclick = function () {
+    var isCon = editing === "conilon";
+    var diff = parseFloat(String($("iDiff").value).replace(",", "."));
+    var fis = parseBR($("iFis").value);
+    if (!isNaN(fis) && fis > 0 && last) {
+      diff = isCon ? fis / (T_PER_SACA * last.usd) - last.ldn
+                   : fis / (LB_PER_SACA * last.usd) * 100 - last.ny;
+    }
+    var ctr = $("iCtr").value.trim().toUpperCase();
+    if (!isNaN(diff)) {
+      diff = Math.round(diff * 100) / 100;
+      if (isCon) { cfg.diffConilon = diff; save("diffConilon", diff); }
+      else { cfg.diffArabica = diff; save("diffArabica", diff); }
+    }
+    var ctrChanged = false;
+    if (ctr) {
+      var key = isCon ? "ctrLdn" : "ctrNy";
+      ctrChanged = cfg[key] !== ctr;
+      cfg[key] = ctr; save(key, ctr);
+    }
+    $("modal").classList.remove("open");
+    render();
+    if (ctrChanged) refresh();
+  };
+
+  $("ad").onclick = function () {
+    var url = "https://wa.me/5573999694897";
+    if (window.Native) Native.openUrl(url); else window.location.href = url;
+  };
+  $("help").onclick = function () { $("helpModal").classList.add("open"); };
+  $("helpClose").onclick = function () { $("helpModal").classList.remove("open"); };
+  $("refresh").onclick = function () { refresh(); refreshWeather(true); };
+
+  // ---------- previsão de chuva (Itamaraju-BA) ----------
+  var WEATHER_URL = "https://api.open-meteo.com/v1/forecast?latitude=-17.0392&longitude=-39.5311" +
+    "&daily=precipitation_sum,precipitation_probability_max,temperature_2m_max,temperature_2m_min,weather_code" +
+    "&timezone=America%2FBahia&forecast_days=10";
+  var WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+  var lastWeatherFetch = 0;
+
+  function weatherIcon(code) {
+    if (code >= 95) return "⛈️";
+    if (code >= 80) return "🌧️";
+    if (code >= 71) return "❄️";
+    if (code >= 61) return "🌧️";
+    if (code >= 51) return "🌦️";
+    if (code >= 45) return "🌫️";
+    if (code >= 3) return "☁️";
+    if (code >= 1) return "⛅";
+    return "☀️";
+  }
+
+  function renderWeather(w) {
+    var d = w.daily, max = 0, total = 0, html = "";
+    d.precipitation_sum.forEach(function (mm) { mm = mm || 0; total += mm; if (mm > max) max = mm; });
+    d.time.forEach(function (iso, i) {
+      var p = iso.split("-"), dt = new Date(+p[0], +p[1] - 1, +p[2]);
+      var mm = d.precipitation_sum[i] || 0;
+      var width = max > 0 ? Math.max(mm > 0 ? 4 : 0, mm / max * 100) : 0;
+      html += '<div class="day">' +
+        '<div class="dt"><b>' + (i === 0 ? "Hoje" : WEEKDAYS[dt.getDay()]) + '</b><small>' + p[2] + "/" + p[1] + '</small></div>' +
+        '<div class="ic">' + weatherIcon(d.weather_code[i]) + '</div>' +
+        '<div class="mid"><div class="info">' + Math.round(d.temperature_2m_min[i]) + "° / " +
+          Math.round(d.temperature_2m_max[i]) + "° · chance " + (d.precipitation_probability_max[i] || 0) + '%</div>' +
+          '<div class="track"><div class="fill" style="width:' + width + '%"></div></div></div>' +
+        '<div class="mm' + (mm === 0 ? " zero" : "") + '">' + fmt(mm, 1) + ' mm</div>' +
+        '</div>';
+    });
+    $("rainList").innerHTML = html;
+    $("rainTotal").textContent = fmt(total, 1) + " mm";
+  }
+
+  function refreshWeather(force) {
+    // A previsão muda pouco: busca no máximo a cada 30 min, salvo no botão ATUALIZAR.
+    if (!force && Date.now() - lastWeatherFetch < 30 * 60000) return;
+    lastWeatherFetch = Date.now();
+    $("wUpd").textContent = "· atualizando…";
+    getJson(WEATHER_URL).then(function (w) {
+      if (!w.daily) throw new Error(w.reason || "resposta inválida");
+      save("weather", JSON.stringify(w));
+      renderWeather(w);
+      var now = new Date();
+      $("wUpd").textContent = "· " + String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
+    }).catch(function () {
+      lastWeatherFetch = 0;
+      $("wUpd").textContent = "· offline";
+    });
+  }
+
+  // ---------- inicialização ----------
+  try { var cached = load("last"); if (cached) { last = JSON.parse(cached); render(); } } catch (e) {}
+  try { var cw = load("weather"); if (cw) renderWeather(JSON.parse(cw)); } catch (e) {}
+  window.onAppResume = function () { refresh(); refreshWeather(false); };
+  // No navegador/iPhone: atualiza ao voltar para o app.
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) window.onAppResume(); });
+  if ("serviceWorker" in navigator && /^https?:/.test(location.protocol)) {
+    navigator.serviceWorker.register("sw.js").catch(function () {});
+  }
+  refresh();
+  refreshWeather(true);
+  setInterval(function () { if (!document.hidden) { refresh(); refreshWeather(false); } }, 60000);
+})();
+</script>
+</body>
+</html>
