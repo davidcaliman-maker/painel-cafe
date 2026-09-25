@@ -7,11 +7,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Painel Café">
+<meta name="apple-mobile-web-app-title" content="Painel Agro">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
-<title>Painel do Café</title>
+<title>Painel do Agro</title>
 <style>
   :root {
     --bg: #000;
@@ -31,10 +31,10 @@
 
   /* Cabeçalho */
   .brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px 6px; }
-  .logo { display: flex; align-items: flex-end; gap: 2px; }
+  .logo { display: flex; align-items: flex-end; gap: 1px; }
   .logo b { font-size: min(40px, 9vw); font-weight: 900; line-height: 1; }
-  .logo i { display: inline-block; width: 6px; background: var(--orange); border-radius: 1px; }
-  .brand h1 { margin: 0; white-space: nowrap; line-height: 1.05; font-size: min(28px, 6vw); font-weight: 800; letter-spacing: .5px; }
+  .logo .bean { width: min(32px, 7vw); height: min(32px, 7vw); margin-bottom: -2px; }
+  .brand h1 { margin: 0; white-space: nowrap; line-height: 1.05; font-size: min(34px, 7.2vw); font-weight: 800; letter-spacing: .5px; }
   .sub { display: flex; justify-content: space-between; align-items: center;
     color: var(--orange); font-weight: 700; font-size: 17px; padding: 0 8px 6px; }
   .sub button { background: none; border: 0; color: var(--orange); font-size: 22px; font-weight: 700; padding: 0 4px; }
@@ -83,7 +83,6 @@
   .day .mm { text-align: right; font-weight: 700; font-size: 17px; font-variant-numeric: tabular-nums; }
   .day .mm.zero { color: var(--muted); font-weight: 500; }
   .sec-sub small { color: var(--muted); font-weight: 500; font-size: 12px; }
-  .ad { margin-left: auto; flex-shrink: 0; align-self: flex-start; height: min(50px, 11.5vw); border-radius: 6px; }
 
   .foot { color: var(--muted); font-size: 12px; text-align: center; margin-top: 12px; line-height: 1.5; }
   .err { background: var(--red); border-radius: 6px; padding: 8px 10px; font-size: 14px; margin-bottom: 8px; display: none; }
@@ -108,9 +107,8 @@
 <body>
 
 <div class="brand">
-  <div class="logo"><b>P</b><i style="height:10px"></i><i style="height:16px"></i><i style="height:22px"></i></div>
-  <h1>PAINEL DO<br>CAFÉ</h1>
-  <img class="ad" id="ad" src="anuncio.jpg" alt="Edson Vander - Corretor de Café - WhatsApp 73 99969-4897">
+  <div class="logo"><b>A</b><svg class="bean" viewBox="0 0 24 24" aria-hidden="true"><g transform="rotate(35 12 12)"><ellipse cx="12" cy="12" rx="7.2" ry="10.5" fill="#F5A623"/><path d="M12 1.8c-3.2 3.4-3.2 6.6 0 10.2s3.2 6.8 0 10.2" stroke="#000" stroke-width="1.7" fill="none" stroke-linecap="round"/></g></svg></div>
+  <h1>PAINEL DO AGRO</h1>
 </div>
 <div class="sub">Indicadores Técnicos do Mercado Físico <button id="help">?</button></div>
 
@@ -388,10 +386,6 @@
     if (ctrChanged) refresh();
   };
 
-  $("ad").onclick = function () {
-    var url = "https://wa.me/5573999694897";
-    if (window.Native) Native.openUrl(url); else window.location.href = url;
-  };
   $("help").onclick = function () { $("helpModal").classList.add("open"); };
   $("helpClose").onclick = function () { $("helpModal").classList.remove("open"); };
   $("refresh").onclick = function () { refresh(); refreshWeather(true); };

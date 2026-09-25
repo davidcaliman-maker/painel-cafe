@@ -1,7 +1,7 @@
 // Service worker: guarda a "casca" do app para abrir mesmo sem internet.
 // As cotações e a previsão sempre vêm da rede (ficam salvas pelo próprio app).
-const CACHE = "painel-cafe-v2";
-const SHELL = ["./", "index.html", "anuncio.jpg", "manifest.webmanifest",
+const CACHE = "painel-agro-v3";
+const SHELL = ["./", "index.html", "manifest.webmanifest",
   "apple-touch-icon.png", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", (e) => {

@@ -1,6 +1,6 @@
 {
-  "name": "Painel do Café",
-  "short_name": "Painel Café",
+  "name": "Painel do Agro",
+  "short_name": "Painel Agro",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
