@@ -649,7 +649,24 @@
   try { var ch = load("hist"); if (ch) hist = JSON.parse(ch); } catch (e) {}
   try { var cached = load("last"); if (cached) { last = JSON.parse(cached); render(); } } catch (e) {}
   try { var cw = load("weather"); if (cw) renderWeather(JSON.parse(cw)); } catch (e) {}
-  window.onAppResume = function () { refresh(); refreshWeather(false); };
+  // ---------- atualização automática da tela ----------
+  // O GitHub troca __VERSAO__ pelo código da publicação e grava o mesmo código em versao.json.
+  // Se o app estiver com uma tela antiga (ex.: Android que só voltou do segundo plano),
+  // recarrega a página para pegar a versão nova.
+  var VERSAO = "__VERSAO__";
+  function checarVersao() {
+    if (VERSAO.indexOf("__") === 0) return;  // cópia local/offline: não verifica
+    siteJson("versao.json").then(function (v) {
+      if (!v.versao || v.versao === VERSAO) return;
+      // Evita recarregar em sequência caso o celular ainda entregue a página antiga.
+      var chave = "recarregou-" + v.versao, agora = Date.now();
+      try { if (agora - Number(sessionStorage.getItem(chave) || 0) < 5 * 60000) return; sessionStorage.setItem(chave, agora); }
+      catch (e) {}
+      location.reload();
+    }).catch(function () {});
+  }
+
+  window.onAppResume = function () { checarVersao(); refresh(); refreshWeather(false); };
   // No navegador/iPhone: atualiza ao voltar para o app.
   document.addEventListener("visibilitychange", function () { if (!document.hidden) window.onAppResume(); });
   if ("serviceWorker" in navigator && /^https?:/.test(location.protocol)) {
@@ -657,7 +674,8 @@
   }
   refresh(true);
   refreshWeather(true);
-  setInterval(function () { if (!document.hidden) { refresh(); refreshWeather(false); } }, 60000);
+  checarVersao();
+  setInterval(function () { if (!document.hidden) { checarVersao(); refresh(); refreshWeather(false); } }, 60000);
 })();
 </script>
 </body>

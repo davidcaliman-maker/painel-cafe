@@ -49,6 +49,15 @@ jobs:
         if: steps.historico.outcome == 'failure' && hashFiles('app/src/main/assets/historico.json') == ''
         run: curl -sf https://davidcaliman-maker.github.io/painel-cafe/historico.json -o app/src/main/assets/historico.json || true
 
+      # Marca a publicação com o código do commit: o app compara com versao.json e se
+      # recarrega sozinho quando há tela nova.
+      - name: Carimbar versão
+        run: |
+          V="${GITHUB_SHA::7}"
+          sed -i "s/__VERSAO__/$V/" app/src/main/assets/index.html
+          echo "{\"versao\": \"$V\"}" > app/src/main/assets/versao.json
+          cat app/src/main/assets/versao.json
+
       # Push ou execução manual: publica sempre. Agendada: só se o histórico mudou.
       - uses: actions/configure-pages@v5
         if: github.event_name != 'schedule' || steps.historico.outputs.mudou != 'false'
