@@ -116,7 +116,7 @@
   .rain-total span { font-weight: 800; letter-spacing: 2px; font-size: 16px; }
   .rain-total b { font-size: 30px; font-weight: 800; color: #5ac8fa; font-variant-numeric: tabular-nums; }
   .rain-list { background: var(--card-2); border-radius: 6px; padding: 4px 10px; }
-  .day { display: grid; grid-template-columns: 74px 28px 1fr 64px; align-items: center; gap: 6px;
+  .day { display: grid; grid-template-columns: 70px 28px 1fr 76px; align-items: center; gap: 6px;
     padding: 9px 0; border-bottom: 1px solid var(--line-2); font-size: 15px; }
   .day:last-child { border-bottom: 0; }
   .day .dt b { display: block; font-size: 15px; }
@@ -126,7 +126,7 @@
   .day .info { color: var(--muted); font-size: 12px; }
   .day .track { height: 6px; background: var(--line-2); border-radius: 3px; overflow: hidden; }
   .day .fill { height: 100%; background: #5ac8fa; border-radius: 3px; }
-  .day .mm { text-align: right; font-weight: 700; font-size: 17px; font-variant-numeric: tabular-nums; }
+  .day .mm { white-space: nowrap; text-align: right; font-weight: 700; font-size: 17px; font-variant-numeric: tabular-nums; }
   .day .mm.zero { color: var(--muted); font-weight: 500; }
   .sec-sub small { color: var(--muted); font-weight: 500; font-size: 12px; }
 
@@ -277,24 +277,27 @@
   <div id="chBody"><div class="empty">carregando histórico…</div></div>
 </div>
 
-<h2>CHUVA</h2>
-<div class="sec-sub">Itamaraju-BA · próximos 10 dias <small id="wUpd"></small></div>
-
-<div class="rain-total">
-  <span>TOTAL 10 DIAS</span>
-  <b id="rainTotal">— mm</b>
-</div>
-
-<div class="rain-list" id="rainList"></div>
-
 <div class="foot">
   Cotações: ICE Futures (Londres / Nova York) e câmbio USD/BRL, com atraso de ~10 min.<br>
   Conilon 7/8: calibrado todo dia pelo Indicador do Café Robusta Cepea/Esalq e atualizado
-  durante o dia pela bolsa de Londres. Fonte: Cepea/Esalq.<br>
-  Previsão: Open-Meteo.
+  durante o dia pela bolsa de Londres. Fonte: Cepea/Esalq.
 </div>
 
 </div><!-- /vPainel -->
+
+<div id="vChuva" hidden>
+  <h2>CHUVA</h2>
+  <div class="sec-sub">Itamaraju-BA · próximos 10 dias <small id="wUpd"></small></div>
+
+  <div class="rain-total">
+    <span>TOTAL 10 DIAS</span>
+    <b id="rainTotal">— mm</b>
+  </div>
+
+  <div class="rain-list" id="rainList"></div>
+
+  <div class="foot">Previsão: Open-Meteo.</div>
+</div>
 
 <div id="vNoticias" hidden>
   <h2>NOTÍCIAS</h2>
@@ -324,6 +327,10 @@
   <button data-v="painel" class="on" aria-label="Painel">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 20V11M10 20V5M16 20v-7M22 20H2"/></svg>
     <span>PAINEL</span>
+  </button>
+  <button data-v="chuva" aria-label="Chuva">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 15a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 17.7 7.5 3.8 3.8 0 0 1 17.5 15z"/><path d="M8 18.5 7 21M12.5 18.5l-1 2.5M17 18.5l-1 2.5"/></svg>
+    <span>CHUVA</span>
   </button>
   <button data-v="noticias" aria-label="Notícias">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 5h13v14a1 1 0 0 0 1 1H6a2 2 0 0 1-2-2z"/><path d="M17 9h3v9a2 2 0 0 1-2 2"/><path d="M7 9h7M7 13h7M7 16h4" stroke-linecap="round"/></svg>
@@ -848,29 +855,33 @@
   });
 
   // ---------- abas (rodapé) ----------
-  // Usa o endereço (#noticias) para o botão "voltar" do Android retornar ao painel.
+  // Usa o endereço (#chuva, #noticias) para o botão "voltar" do Android retornar ao painel.
+  var ABAS = { painel: "vPainel", chuva: "vChuva", noticias: "vNoticias" };
+  function abaAtual() { var h = location.hash.slice(1); return ABAS[h] ? h : "painel"; }
   function mostrarAba() {
-    var noticiasAberta = location.hash === "#noticias";
-    $("vPainel").hidden = noticiasAberta;
-    $("vNoticias").hidden = !noticiasAberta;
+    var atual = abaAtual();
+    Object.keys(ABAS).forEach(function (k) { $(ABAS[k]).hidden = k !== atual; });
     document.querySelectorAll("#tabbar button").forEach(function (b) {
-      b.classList.toggle("on", (b.getAttribute("data-v") === "noticias") === noticiasAberta);
+      b.classList.toggle("on", b.getAttribute("data-v") === atual);
     });
-    if (noticiasAberta) refreshNoticias(false);
+    if (atual === "noticias") refreshNoticias(false);
+    if (atual === "chuva") refreshWeather(false);
     window.scrollTo(0, 0);
   }
   document.querySelectorAll("#tabbar button").forEach(function (b) {
     b.addEventListener("click", function () {
-      var alvo = b.getAttribute("data-v") === "noticias" ? "#noticias" : "";
-      if (location.hash === alvo || (!alvo && !location.hash)) { window.scrollTo(0, 0); return; }
-      if (alvo) location.hash = alvo; else history.back();
+      var alvo = b.getAttribute("data-v"), atual = abaAtual();
+      if (alvo === atual) { window.scrollTo(0, 0); return; }
+      if (alvo === "painel") history.back();            // volta ao painel
+      else if (atual === "painel") location.hash = alvo; // painel → aba
+      else location.replace("#" + alvo);                // aba → aba (voltar continua indo ao painel)
     });
   });
   window.addEventListener("hashchange", mostrarAba);
 
   // ---------- inicialização ----------
   try { var cn = load("noticias"); if (cn) { noticias = JSON.parse(cn); renderNoticias(); } } catch (e) {}
-  if (location.hash === "#noticias") history.replaceState(null, "", location.pathname + location.search);
+  if (location.hash) history.replaceState(null, "", location.pathname + location.search);
   try { var ch = load("hist"); if (ch) hist = JSON.parse(ch); } catch (e) {}
   try { var cached = load("last"); if (cached) { last = JSON.parse(cached); render(); } } catch (e) {}
   try { var cw = load("weather"); if (cw) renderWeather(JSON.parse(cw)); } catch (e) {}
