@@ -16,7 +16,10 @@ Todo dia o GitHub lê o **Indicador do Café Robusta Cepea/Esalq** e calibra o C
 
 Durante o dia o app aplica esse diferencial a Londres e ao dólar ao vivo. O gráfico da semana
 mostra, nos dias fechados, o próprio Cepea + ajuste. Na troca de vencimento o preço não salta.
-Tudo é gerado por `scripts/historico.py` (GitHub Actions, de hora em hora nos dias úteis).
+No card, **AO VIVO · ESTIMATIVA PELA BOLSA** aparece durante o pregão; quando o Cepea do dia sai,
+o preço vira **FECHAMENTO CEPEA** (Cepea + ajuste), que é também a abertura do dia seguinte.
+Tudo é gerado por `scripts/historico.py` (GitHub Actions nos dias úteis: de hora em hora das 6h
+às 15h e a cada 15 min das 16h às 22h, horário de Brasília).
 Se o Cepea ficar fora do ar, o app mantém a última calibração e o GitHub avisa por e-mail.
 
 O Arábica aparece só como cotação de Nova York (sem preço físico).

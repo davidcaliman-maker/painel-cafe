@@ -45,6 +45,13 @@
   .card .v { font-size: 34px; font-weight: 700; margin-top: 8px; font-variant-numeric: tabular-nums; }
   .card.solo { margin-bottom: 8px; }
   .card .ref { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 3px 10px;
+    border-radius: 12px; font-size: 11px; font-weight: 800; letter-spacing: 1px; }
+  .badge.live { background: var(--orange); color: #000; }
+  .badge.live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #000;
+    animation: pisca 1.4s ease-in-out infinite; }
+  .badge.close { background: #3a3a3d; color: #fff; }
+  @keyframes pisca { 50% { opacity: .25; } }
 
   .mkt { overflow: hidden; border-radius: 6px; padding: 6px 6px 8px; text-align: center; background: #444; }
   .mkt.down { background: var(--red); }
@@ -124,6 +131,7 @@
 
 <div class="card solo">
   <div class="t">CONILON 7/8</div><div class="v" id="fisConilon">—</div>
+  <div class="badge" id="conEstado"></div>
   <div class="ref" id="conRef"></div>
 </div>
 
@@ -180,6 +188,9 @@
       Uma saca tem 60 kg = 0,06 t.<br>
       Conilon = (Londres + diferencial) × 0,06 × Dólar, onde o diferencial é recalculado todo dia
       a partir do Cepea.<br><br>
+      <b>AO VIVO · ESTIMATIVA:</b> durante o pregão o preço é estimado pela bolsa.<br>
+      <b>FECHAMENTO CEPEA:</b> quando o Cepea do dia é publicado (fim da tarde), o preço passa a ser
+      o do Cepea + ajuste. É também o preço da abertura do dia seguinte.<br><br>
       <b>Nova York:</b> cotação do café arábica em centavos de dólar por libra-peso.<br><br>
       <b>Contratos:</b> o app troca sozinho para o próximo vencimento a partir do dia 15 do mês
       anterior, sem salto no preço do Conilon.
@@ -332,6 +343,18 @@
   function difConilon() { return Number(calib().diferencialConilon) + (last && last.ajLdn || 0); }
   function fisicoConilon(ldn, usd) { return (ldn + difConilon()) * T_PER_SACA * usd; }
 
+  function isoUTC(ts) { return ts ? new Date(ts * 1000).toISOString().slice(0, 10) : ""; }
+
+  // "fechamento": o preço é o próprio Cepea + ajuste (Londres ainda não negociou depois da
+  // calibração). "estimativa": Londres já negociou em um pregão posterior ao Cepea, então o preço
+  // é estimado pela bolsa até o Cepea do dia sair e o GitHub recalibrar.
+  function estadoConilon() {
+    var c = calib();
+    if (!last || !last.qLdn) return "fechamento";
+    if (last.ajLdn) return "estimativa";
+    return isoUTC(last.qLdn.time) > c.data ? "estimativa" : "fechamento";
+  }
+
   // Troca de vencimento: a calibração foi feita sobre um contrato. Se o app já usa outro, soma
   // (contrato da calibração − atual) pelo fechamento anterior dos dois, para o preço não saltar.
   // Na calibração seguinte o GitHub já usa o contrato novo.
@@ -349,11 +372,14 @@
     if (!last) return;
     // Dólar arredondado a 2 casas, tanto na tela quanto no cálculo da saca.
     var usd = Math.round(last.usd * 100) / 100, ldn = last.ldn, ny = last.ny;
-    var fisCon = fisicoConilon(ldn, usd);
-    var c = calib();
+    var c = calib(), estado = estadoConilon(), diaCepea = c.data.slice(8, 10) + "/" + c.data.slice(5, 7);
+    var fisCon = estado === "fechamento" && c.precoConilon != null ? c.precoConilon : fisicoConilon(ldn, usd);
 
     $("fisConilon").textContent = fmt(fisCon, 2);
-    $("conRef").textContent = "Cepea " + c.data.slice(8, 10) + "/" + c.data.slice(5, 7) + ": R$ " +
+    var badge = $("conEstado");
+    badge.className = "badge " + (estado === "fechamento" ? "close" : "live");
+    badge.textContent = estado === "fechamento" ? "FECHAMENTO CEPEA " + diaCepea : "AO VIVO · ESTIMATIVA PELA BOLSA";
+    $("conRef").textContent = (estado === "fechamento" ? "Cepea " : "Base: Cepea ") + diaCepea + " R$ " +
       fmt(c.cepeaConilon, 2) + " · ajuste " + signed(Number(c.ajusteConilonCepea), 2);
 
     paintMkt($("mUsd"), last.qUsd, fmt(usd, 2), ddmm(last.qUsd.time) + "/" + new Date().getFullYear());
@@ -490,11 +516,16 @@
   // Últimos 7 pregões: histórico publicado + cotação ao vivo de hoje (dias úteis).
   function pontos() {
     var dias = hist && hist.dias ? hist.dias.slice() : [];
-    if (last && last.ctrLdn) {
+    // Só entra ponto de hoje se Londres já negociou hoje.
+    if (last && last.ctrLdn && isoUTC(last.qLdn.time) === hojeISO()) {
       var hoje = hojeISO(), vivo = { data: hoje, usd: last.usd, londres: last.ldn, novaYork: last.ny };
-      var dow = new Date().getDay();
-      if (dias.length && dias[dias.length - 1].data === hoje) dias[dias.length - 1] = vivo;
-      else if (dow !== 0 && dow !== 6) dias.push(vivo);
+      var ultimo = dias[dias.length - 1];
+      if (ultimo && ultimo.data === hoje) {
+        if (ultimo.cepeaConilon != null) vivo.cepeaConilon = ultimo.cepeaConilon;  // Cepea do dia já saiu
+        dias[dias.length - 1] = vivo;
+      } else {
+        dias.push(vivo);
+      }
     }
     return dias.slice(-7).map(function (d) { return { data: d.data, v: valor(serie, d) }; });
   }

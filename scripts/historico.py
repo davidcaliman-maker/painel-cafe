@@ -15,6 +15,7 @@ Uso: python scripts/historico.py <config.json> <saida.json>
 import asyncio
 import datetime as dt
 import json
+import os
 import random
 import re
 import string
@@ -181,6 +182,15 @@ async def main(caminho_config, caminho_saida):
     with open(caminho_saida, "w", encoding="utf-8") as f:
         json.dump(saida, f, ensure_ascii=False, indent=1)
     print(f'{len(saida["dias"])} dias, contratos {contratos}, calibração {calibracao}')
+
+    # Informa ao GitHub Actions se algo mudou em relação ao que está no ar (sem contar a hora
+    # de geração): as execuções agendadas só republicam o site quando há dado novo.
+    sem_hora = lambda h: {k: v for k, v in h.items() if k != "geradoEm"}
+    mudou = sem_hora(saida) != sem_hora(anterior)
+    print("mudou" if mudou else "sem mudança em relação ao publicado")
+    if os.environ.get("GITHUB_OUTPUT"):
+        with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+            f.write("mudou=" + ("true" if mudou else "false") + "\n")
     if cepea_falhou:
         sys.exit(2)  # arquivo gravado, mas a execução fica marcada como falha (aviso por e-mail)
 
