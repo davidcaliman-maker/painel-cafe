@@ -1,6 +1,7 @@
 # Publica a versão web (iPhone / navegador / Android) no GitHub Pages.
-# Roda a cada push na main e de hora em hora nos dias úteis, para atualizar
-# o histórico de preços usado no gráfico da semana (historico.json).
+# Roda a cada push na main e de hora em hora nos dias úteis para:
+#  - ajustar os diferenciais quando o contrato troca de vencimento (config.json);
+#  - atualizar o histórico de preços do gráfico da semana (historico.json).
 name: Publicar no GitHub Pages
 
 on:
@@ -11,13 +12,14 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write   # regravar o config.json na troca de contrato
   pages: write
   id-token: write
+  actions: write    # manter o agendamento ativo (keepalive)
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -30,15 +32,39 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Gerar histórico de preços
-        # Se falhar, publica o site mesmo assim (o app mostra o último histórico salvo).
-        continue-on-error: true
+      - run: pip install --quiet websockets
+
+      - name: Ajustar diferenciais na troca de contrato
         run: |
-          pip install --quiet websockets
-          python scripts/historico.py app/src/main/assets/config.json app/src/main/assets/historico.json
+          cd scripts
+          python rolagem.py ../app/src/main/assets/config.json > /tmp/rolagem.txt
+          cat /tmp/rolagem.txt
+          if grep -q "^alterado$" /tmp/rolagem.txt; then
+            cd ..
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add app/src/main/assets/config.json
+            git commit -m "Troca de contrato: diferenciais ajustados automaticamente" -m "$(cat /tmp/rolagem.txt)"
+            git push
+          fi
+
+      # Os passos abaixo rodam mesmo se o ajuste falhar: o site continua publicado e a
+      # execução fica marcada como falha (o GitHub avisa por e-mail).
+      - name: Gerar histórico de preços
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: python scripts/historico.py app/src/main/assets/config.json app/src/main/assets/historico.json
+
       - uses: actions/configure-pages@v5
+        if: ${{ !cancelled() }}
       - uses: actions/upload-pages-artifact@v3
+        if: ${{ !cancelled() }}
         with:
           path: app/src/main/assets
       - id: deployment
+        if: ${{ !cancelled() }}
         uses: actions/deploy-pages@v4
+
+      # O GitHub desliga agendamentos após 60 dias sem atividade no repositório; isto evita.
+      - uses: liskin/gh-workflow-keepalive@v1
+        if: ${{ !cancelled() }}

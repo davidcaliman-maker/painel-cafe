@@ -15,9 +15,14 @@ Em 1–2 minutos todos os celulares passam a usar os novos valores.
 | Campo | O que é | Exemplo |
 |---|---|---|
 | `diferencialConilon` | Deságio do Conilon 7/8 sobre Londres, em US$/t | `-278.95` |
+| `referenciaLondres` | Contrato a que o diferencial do Conilon se refere | `"RCF2027"` |
 | `diferencialArabica` | Deságio do Arábica Rio sobre Nova York, em ¢/lb | `-113.13` |
+| `referenciaNovaYork` | Contrato a que o diferencial do Arábica se refere | `"KCZ2026"` |
 | `contratoLondres` / `contratoNovaYork` | `"auto"` troca sozinho; ou fixe um código, ex. `"RCF2027"` | `"auto"` |
 | `posicaoLondres` / `posicaoNovaYork` | Qual vencimento usar no modo auto (1 = o mais próximo) | `2` / `1` |
 
 Use ponto como separador decimal (`-278.95`, não `-278,95`).
-Troca automática: cada vencimento é usado até o dia 15 do mês anterior.
+Troca automática: cada vencimento é usado até o dia 15 do mês anterior. Na troca, o
+diferencial é ajustado sozinho pela diferença entre os dois contratos (fechamento anterior),
+sem mudar o preço físico: o app aplica na hora e o GitHub regrava o `config.json`
+(`scripts/rolagem.py`). Não é preciso mexer em nada.

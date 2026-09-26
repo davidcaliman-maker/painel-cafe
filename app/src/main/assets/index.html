@@ -197,7 +197,10 @@
 
   // Configuração central: config.json publicado no GitHub (o app não permite alterar).
   // Estes valores só são usados se o config.json ainda não pôde ser lido.
-  var cfg = { diferencialConilon: -278.95, diferencialArabica: -113.13,
+  // Cada diferencial vale para o contrato de referência; na troca de vencimento o app
+  // soma a diferença entre os dois contratos (ver ajusteTroca) e o GitHub regrava o config.
+  var cfg = { diferencialConilon: -278.95, referenciaLondres: "RCF2027",
+              diferencialArabica: -113.13, referenciaNovaYork: "KCZ2026",
               contratoLondres: "auto", contratoNovaYork: "auto", posicaoLondres: 2, posicaoNovaYork: 1 };
 
   // ---------- armazenamento local (cache para abrir sem internet) ----------
@@ -286,10 +289,10 @@
   function scan(market, tickers) {
     return postJson("https://scanner.tradingview.com/" + market + "/scan", {
       symbols: { tickers: tickers },
-      columns: ["close", "change", "time"]
+      columns: ["close", "change", "time", "close[1]"]
     }).then(function (res) {
       var out = {};
-      (res.data || []).forEach(function (r) { out[r.s] = { close: r.d[0], change: r.d[1], time: r.d[2] }; });
+      (res.data || []).forEach(function (r) { out[r.s] = { close: r.d[0], change: r.d[1], time: r.d[2], prev: r.d[3] }; });
       return out;
     });
   }
@@ -323,8 +326,20 @@
     el.querySelector(".d").textContent = bottom;
   }
 
-  function fisicoConilon(ldn, usd) { return (ldn + Number(cfg.diferencialConilon)) * T_PER_SACA * usd; }
-  function fisicoArabica(ny, usd) { return (ny + Number(cfg.diferencialArabica)) / 100 * LB_PER_SACA * usd; }
+  function difConilon() { return Number(cfg.diferencialConilon) + (last && last.ajLdn || 0); }
+  function difArabica() { return Number(cfg.diferencialArabica) + (last && last.ajNy || 0); }
+  function fisicoConilon(ldn, usd) { return (ldn + difConilon()) * T_PER_SACA * usd; }
+  function fisicoArabica(ny, usd) { return (ny + difArabica()) / 100 * LB_PER_SACA * usd; }
+
+  // Troca de vencimento: o diferencial foi definido sobre o contrato de referência. Se o app já
+  // usa outro contrato, soma (referência − atual) pelo fechamento anterior dos dois, para o preço
+  // físico não saltar. Mesma conta do scripts/rolagem.py, que depois regrava o config.json.
+  function ajusteTroca(qRef, qAtual) {
+    if (!qRef || !qAtual) return 0;
+    var pRef = qRef.prev != null ? qRef.prev : qRef.close;
+    var pAtual = qAtual.prev != null ? qAtual.prev : qAtual.close;
+    return pRef - pAtual;
+  }
 
   // ---------- estado ----------
   var last = null;  // { usd, ldn, ny, qUsd, qLdn, qNy }
@@ -356,7 +371,10 @@
       save("config", JSON.stringify(c));
     }).catch(function () { /* sem config nova: usa a última salva */ }).then(function () {
       cLdn = candidatos("londres"); cNy = candidatos("novaYork");
-      var tickers = cLdn.map(function (c) { return "ICEEUR:" + c; }).concat(cNy.map(function (c) { return "ICEUS:" + c; }));
+      var tickers = cLdn.concat([String(cfg.referenciaLondres || "").toUpperCase()]).filter(Boolean)
+        .map(function (c) { return "ICEEUR:" + c; })
+        .concat(cNy.concat([String(cfg.referenciaNovaYork || "").toUpperCase()]).filter(Boolean)
+        .map(function (c) { return "ICEUS:" + c; }));
       return Promise.all([scan("futures", tickers), scan("forex", [tUsd])]);
     }).then(function (r) {
       var f = r[0], fx = r[1];
@@ -366,8 +384,12 @@
       if (!ctrNy) throw new Error("Contrato de NY sem cotação: " + cNy.join(", "));
       if (!fx[tUsd]) throw new Error("Cotação do dólar indisponível");
       var qLdn = f["ICEEUR:" + ctrLdn], qNy = f["ICEUS:" + ctrNy];
+      var refLdn = String(cfg.referenciaLondres || ctrLdn).toUpperCase();
+      var refNy = String(cfg.referenciaNovaYork || ctrNy).toUpperCase();
       last = { usd: fx[tUsd].close, ldn: qLdn.close, ny: qNy.close,
-               qUsd: fx[tUsd], qLdn: qLdn, qNy: qNy, ctrLdn: ctrLdn, ctrNy: ctrNy };
+               qUsd: fx[tUsd], qLdn: qLdn, qNy: qNy, ctrLdn: ctrLdn, ctrNy: ctrNy,
+               ajLdn: refLdn === ctrLdn ? 0 : ajusteTroca(f["ICEEUR:" + refLdn], qLdn),
+               ajNy: refNy === ctrNy ? 0 : ajusteTroca(f["ICEUS:" + refNy], qNy) };
       save("last", JSON.stringify(last));
       $("err").style.display = "none";
       var now = new Date();
