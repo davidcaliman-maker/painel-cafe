@@ -1,7 +1,6 @@
 # Publica a versão web (iPhone / navegador / Android) no GitHub Pages.
-# Roda a cada push na main e de hora em hora nos dias úteis para:
-#  - ajustar os diferenciais quando o contrato troca de vencimento (config.json);
-#  - atualizar o histórico de preços do gráfico da semana (historico.json).
+# Roda a cada push na main e de hora em hora nos dias úteis para atualizar o
+# historico.json: fechamentos das bolsas, indicador Cepea e calibração do Conilon.
 name: Publicar no GitHub Pages
 
 on:
@@ -12,7 +11,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write   # regravar o config.json na troca de contrato
+  contents: read
   pages: write
   id-token: write
   actions: write    # manter o agendamento ativo (keepalive)
@@ -34,37 +33,27 @@ jobs:
           python-version: "3.12"
       - run: pip install --quiet websockets
 
-      - name: Ajustar diferenciais na troca de contrato
-        run: |
-          cd scripts
-          python rolagem.py ../app/src/main/assets/config.json > /tmp/rolagem.txt
-          cat /tmp/rolagem.txt
-          if grep -q "^alterado$" /tmp/rolagem.txt; then
-            cd ..
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add app/src/main/assets/config.json
-            git commit -m "Troca de contrato: diferenciais ajustados automaticamente" -m "$(cat /tmp/rolagem.txt)"
-            git push
-          fi
-
-      # Os passos abaixo rodam mesmo se o ajuste falhar: o site continua publicado e a
-      # execução fica marcada como falha (o GitHub avisa por e-mail).
-      - name: Gerar histórico de preços
-        if: ${{ !cancelled() }}
+      # Se falhar, o site é publicado mesmo assim e a execução fica marcada como falha
+      # (o GitHub avisa por e-mail). O app continua com a última calibração publicada.
+      - name: Gerar histórico, Cepea e calibração do Conilon
+        id: historico
         continue-on-error: true
         run: python scripts/historico.py app/src/main/assets/config.json app/src/main/assets/historico.json
 
+      - name: Manter o histórico publicado se não foi possível gerar um novo
+        if: steps.historico.outcome == 'failure' && hashFiles('app/src/main/assets/historico.json') == ''
+        run: curl -sf https://davidcaliman-maker.github.io/painel-cafe/historico.json -o app/src/main/assets/historico.json || true
+
       - uses: actions/configure-pages@v5
-        if: ${{ !cancelled() }}
       - uses: actions/upload-pages-artifact@v3
-        if: ${{ !cancelled() }}
         with:
           path: app/src/main/assets
       - id: deployment
-        if: ${{ !cancelled() }}
         uses: actions/deploy-pages@v4
 
       # O GitHub desliga agendamentos após 60 dias sem atividade no repositório; isto evita.
       - uses: liskin/gh-workflow-keepalive@v1
-        if: ${{ !cancelled() }}
+
+      - name: Marcar falha se o histórico não foi gerado
+        if: steps.historico.outcome == 'failure'
+        run: exit 1

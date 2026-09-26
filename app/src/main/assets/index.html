@@ -38,12 +38,13 @@
     color: var(--orange); font-weight: 700; font-size: 17px; padding: 0 8px 6px; }
   .sub button { background: none; border: 0; color: var(--orange); font-size: 22px; font-weight: 700; padding: 0 4px; }
 
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
   .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 8px; }
 
   .card { background: var(--card); border-radius: 8px; text-align: center; padding: 12px 6px 14px; }
   .card .t { font-size: 20px; font-weight: 600; }
   .card .v { font-size: 34px; font-weight: 700; margin-top: 8px; font-variant-numeric: tabular-nums; }
+  .card.solo { margin-bottom: 8px; }
+  .card .ref { color: var(--muted); font-size: 12px; margin-top: 4px; }
 
   .mkt { overflow: hidden; border-radius: 6px; padding: 6px 6px 8px; text-align: center; background: #444; }
   .mkt.down { background: var(--red); }
@@ -121,9 +122,9 @@
 
 <div class="err" id="err"></div>
 
-<div class="grid2">
-  <div class="card"><div class="t">CONILON 7/8</div><div class="v" id="fisConilon">—</div></div>
-  <div class="card"><div class="t">ARÁBICA RIO</div><div class="v" id="fisArabica">—</div></div>
+<div class="card solo">
+  <div class="t">CONILON 7/8</div><div class="v" id="fisConilon">—</div>
+  <div class="ref" id="conRef"></div>
 </div>
 
 <div class="grid3">
@@ -142,7 +143,6 @@
 
 <div class="tabs" id="tabs">
   <button data-s="conilon" class="on">CONILON</button>
-  <button data-s="arabica">ARÁBICA</button>
   <button data-s="londres">LONDRES</button>
   <button data-s="novaYork">N.YORK</button>
   <button data-s="usd">DÓLAR</button>
@@ -164,7 +164,9 @@
 
 <div class="foot">
   Cotações: ICE Futures (Londres / Nova York) e câmbio USD/BRL, com atraso de ~10 min.<br>
-  Previsão: Open-Meteo. Preço físico = bolsa + diferencial definido pelo corretor.
+  Conilon 7/8: calibrado todo dia pelo Indicador do Café Robusta Cepea/Esalq e atualizado
+  durante o dia pela bolsa de Londres. Fonte: Cepea/Esalq.<br>
+  Previsão: Open-Meteo.
 </div>
 
 <!-- Ajuda -->
@@ -172,15 +174,15 @@
   <div class="sheet">
     <h3>Como o painel calcula</h3>
     <p>
-      <b>Conilon (Londres):</b> a bolsa cota em US$ por tonelada. Uma saca tem 60 kg = 0,06 t.<br>
-      Bolsa em R$/saca = Londres × 0,06 × Dólar.<br><br>
-      <b>Arábica (Nova York):</b> a bolsa cota em centavos de dólar por libra-peso.
-      Uma saca tem 60 kg = 132,277 lb.<br>
-      Bolsa em R$/saca = NY ÷ 100 × 132,277 × Dólar.<br><br>
-      <b>Deságio:</b> diferença entre o preço físico e a bolsa convertida. É negativo quando o físico
-      paga menos que a bolsa (qualidade inferior, frete, custo de exportação, oferta local).
-      Em pontos: Conilon em US$/t e Arábica em ¢/lb. O diferencial é definido pelo corretor.<br><br>
-      <b>Contratos:</b> o app troca sozinho para o próximo vencimento a partir do dia 15 do mês anterior.
+      <b>Conilon 7/8:</b> todo dia o preço é ajustado ao último fechamento do Indicador do Café
+      Robusta Cepea/Esalq, com um ajuste fixo de qualidade e região definido pelo corretor.<br><br>
+      <b>Durante o dia:</b> o preço acompanha a bolsa de Londres (US$ por tonelada) e o dólar.
+      Uma saca tem 60 kg = 0,06 t.<br>
+      Conilon = (Londres + diferencial) × 0,06 × Dólar, onde o diferencial é recalculado todo dia
+      a partir do Cepea.<br><br>
+      <b>Nova York:</b> cotação do café arábica em centavos de dólar por libra-peso.<br><br>
+      <b>Contratos:</b> o app troca sozinho para o próximo vencimento a partir do dia 15 do mês
+      anterior, sem salto no preço do Conilon.
     </p>
     <div class="actions"><button class="btn-ok" id="helpClose">Fechar</button></div>
   </div>
@@ -190,18 +192,17 @@
 (function () {
   "use strict";
 
-  var LB_PER_SACA = 60 / 0.45359237;      // 132,277 lb
   var T_PER_SACA = 0.06;                   // 60 kg
   var MONTHS = { F: "Jan", G: "Fev", H: "Mar", J: "Abr", K: "Mai", M: "Jun",
                  N: "Jul", Q: "Ago", U: "Set", V: "Out", X: "Nov", Z: "Dez" };
 
   // Configuração central: config.json publicado no GitHub (o app não permite alterar).
   // Estes valores só são usados se o config.json ainda não pôde ser lido.
-  // Cada diferencial vale para o contrato de referência; na troca de vencimento o app
-  // soma a diferença entre os dois contratos (ver ajusteTroca) e o GitHub regrava o config.
-  var cfg = { diferencialConilon: -278.95, referenciaLondres: "RCF2027",
-              diferencialArabica: -113.13, referenciaNovaYork: "KCZ2026",
-              contratoLondres: "auto", contratoNovaYork: "auto", posicaoLondres: 2, posicaoNovaYork: 1 };
+  var cfg = { ajusteConilonCepea: -11, contratoLondres: "auto", contratoNovaYork: "auto",
+              posicaoLondres: 2, posicaoNovaYork: 1 };
+  // Calibração de reserva (25/09/2026), usada só se o historico.json nunca pôde ser lido.
+  var CALIB_RESERVA = { data: "2026-09-25", cepeaConilon: 952.72, ajusteConilonCepea: -11,
+                        contrato: "RCF2027", diferencialConilon: -317.85 };
 
   // ---------- armazenamento local (cache para abrir sem internet) ----------
   function load(k) {
@@ -326,14 +327,14 @@
     el.querySelector(".d").textContent = bottom;
   }
 
-  function difConilon() { return Number(cfg.diferencialConilon) + (last && last.ajLdn || 0); }
-  function difArabica() { return Number(cfg.diferencialArabica) + (last && last.ajNy || 0); }
+  // Calibração diária pelo Cepea (gerada no GitHub, em historico.json → calibracao).
+  function calib() { return (hist && hist.calibracao) || CALIB_RESERVA; }
+  function difConilon() { return Number(calib().diferencialConilon) + (last && last.ajLdn || 0); }
   function fisicoConilon(ldn, usd) { return (ldn + difConilon()) * T_PER_SACA * usd; }
-  function fisicoArabica(ny, usd) { return (ny + difArabica()) / 100 * LB_PER_SACA * usd; }
 
-  // Troca de vencimento: o diferencial foi definido sobre o contrato de referência. Se o app já
-  // usa outro contrato, soma (referência − atual) pelo fechamento anterior dos dois, para o preço
-  // físico não saltar. Mesma conta do scripts/rolagem.py, que depois regrava o config.json.
+  // Troca de vencimento: a calibração foi feita sobre um contrato. Se o app já usa outro, soma
+  // (contrato da calibração − atual) pelo fechamento anterior dos dois, para o preço não saltar.
+  // Na calibração seguinte o GitHub já usa o contrato novo.
   function ajusteTroca(qRef, qAtual) {
     if (!qRef || !qAtual) return 0;
     var pRef = qRef.prev != null ? qRef.prev : qRef.close;
@@ -349,10 +350,11 @@
     // Dólar arredondado a 2 casas, tanto na tela quanto no cálculo da saca.
     var usd = Math.round(last.usd * 100) / 100, ldn = last.ldn, ny = last.ny;
     var fisCon = fisicoConilon(ldn, usd);
-    var fisAra = fisicoArabica(ny, usd);
+    var c = calib();
 
     $("fisConilon").textContent = fmt(fisCon, 2);
-    $("fisArabica").textContent = fmt(fisAra, 2);
+    $("conRef").textContent = "Cepea " + c.data.slice(8, 10) + "/" + c.data.slice(5, 7) + ": R$ " +
+      fmt(c.cepeaConilon, 2) + " · ajuste " + signed(Number(c.ajusteConilonCepea), 2);
 
     paintMkt($("mUsd"), last.qUsd, fmt(usd, 2), ddmm(last.qUsd.time) + "/" + new Date().getFullYear());
     paintMkt($("mLdn"), last.qLdn, fmt(ldn, 0), ctrLabel(last.ctrLdn) + " - " + ddmm(last.qLdn.time));
@@ -361,20 +363,20 @@
   }
 
   var loading = false;
-  function refresh() {
+  function refresh(forcarHist) {
     if (loading) return;
     loading = true;
     $("upd").textContent = "atualizando…";
     var tUsd = "FX_IDC:USDBRL", cLdn, cNy;
-    siteJson("config.json").then(function (c) {
+    var cfgPronta = siteJson("config.json").then(function (c) {
       cfg = Object.assign(cfg, c);
       save("config", JSON.stringify(c));
-    }).catch(function () { /* sem config nova: usa a última salva */ }).then(function () {
+    }).catch(function () { /* sem config nova: usa a última salva */ });
+    Promise.all([cfgPronta, refreshHist(!!forcarHist)]).then(function () {
       cLdn = candidatos("londres"); cNy = candidatos("novaYork");
-      var tickers = cLdn.concat([String(cfg.referenciaLondres || "").toUpperCase()]).filter(Boolean)
+      var tickers = cLdn.concat([String(calib().contrato || "").toUpperCase()]).filter(Boolean)
         .map(function (c) { return "ICEEUR:" + c; })
-        .concat(cNy.concat([String(cfg.referenciaNovaYork || "").toUpperCase()]).filter(Boolean)
-        .map(function (c) { return "ICEUS:" + c; }));
+        .concat(cNy.map(function (c) { return "ICEUS:" + c; }));
       return Promise.all([scan("futures", tickers), scan("forex", [tUsd])]);
     }).then(function (r) {
       var f = r[0], fx = r[1];
@@ -384,12 +386,10 @@
       if (!ctrNy) throw new Error("Contrato de NY sem cotação: " + cNy.join(", "));
       if (!fx[tUsd]) throw new Error("Cotação do dólar indisponível");
       var qLdn = f["ICEEUR:" + ctrLdn], qNy = f["ICEUS:" + ctrNy];
-      var refLdn = String(cfg.referenciaLondres || ctrLdn).toUpperCase();
-      var refNy = String(cfg.referenciaNovaYork || ctrNy).toUpperCase();
+      var refLdn = String(calib().contrato || ctrLdn).toUpperCase();
       last = { usd: fx[tUsd].close, ldn: qLdn.close, ny: qNy.close,
                qUsd: fx[tUsd], qLdn: qLdn, qNy: qNy, ctrLdn: ctrLdn, ctrNy: ctrNy,
-               ajLdn: refLdn === ctrLdn ? 0 : ajusteTroca(f["ICEEUR:" + refLdn], qLdn),
-               ajNy: refNy === ctrNy ? 0 : ajusteTroca(f["ICEUS:" + refNy], qNy) };
+               ajLdn: refLdn === ctrLdn ? 0 : ajusteTroca(f["ICEEUR:" + refLdn], qLdn) };
       save("last", JSON.stringify(last));
       $("err").style.display = "none";
       var now = new Date();
@@ -404,7 +404,7 @@
 
   $("help").onclick = function () { $("helpModal").classList.add("open"); };
   $("helpClose").onclick = function () { $("helpModal").classList.remove("open"); };
-  $("refresh").onclick = function () { refresh(); refreshWeather(true); refreshHist(true); };
+  $("refresh").onclick = function () { refresh(true); refreshWeather(true); };
 
   // ---------- previsão de chuva (Itamaraju-BA) ----------
   var WEATHER_URL = "https://api.open-meteo.com/v1/forecast?latitude=-17.0392&longitude=-39.5311" +
@@ -466,7 +466,6 @@
   var hist = null, serie = "conilon", lastHistFetch = 0;
   var SERIES = {
     conilon: function (v) { return "R$ " + fmt(v, 2); },
-    arabica: function (v) { return "R$ " + fmt(v, 2); },
     londres: function (v) { return fmt(v, 0) + " US$/t"; },
     novaYork: function (v) { return fmt(v, 2) + " ¢/lb"; },
     usd: function (v) { return "R$ " + fmt(v, 2); }
@@ -474,8 +473,11 @@
 
   function valor(nome, d) {
     var usd = Math.round(d.usd * 100) / 100;
-    if (nome === "conilon") return fisicoConilon(d.londres, usd);
-    if (nome === "arabica") return fisicoArabica(d.novaYork, usd);
+    if (nome === "conilon") {
+      // Dias fechados: o próprio Cepea + ajuste (mercado físico real); hoje: cálculo ao vivo.
+      if (d.cepeaConilon != null) return d.cepeaConilon + Number(calib().ajusteConilonCepea);
+      return fisicoConilon(d.londres, usd);
+    }
     if (nome === "usd") return usd;
     return d[nome];
   }
@@ -539,12 +541,12 @@
 
   function refreshHist(force) {
     // O histórico é regerado de hora em hora pelo GitHub.
-    if (!force && Date.now() - lastHistFetch < 30 * 60000) return;
+    if (!force && Date.now() - lastHistFetch < 30 * 60000) return Promise.resolve();
     lastHistFetch = Date.now();
-    siteJson("historico.json").then(function (h) {
+    return siteJson("historico.json").then(function (h) {
       hist = h;
       save("hist", JSON.stringify(h));
-      renderChart();
+      if (last) render(); else renderChart();
     }).catch(function () { lastHistFetch = 0; renderChart(); });
   }
 
@@ -560,16 +562,15 @@
   try { var ch = load("hist"); if (ch) hist = JSON.parse(ch); } catch (e) {}
   try { var cached = load("last"); if (cached) { last = JSON.parse(cached); render(); } } catch (e) {}
   try { var cw = load("weather"); if (cw) renderWeather(JSON.parse(cw)); } catch (e) {}
-  window.onAppResume = function () { refresh(); refreshWeather(false); refreshHist(false); };
+  window.onAppResume = function () { refresh(); refreshWeather(false); };
   // No navegador/iPhone: atualiza ao voltar para o app.
   document.addEventListener("visibilitychange", function () { if (!document.hidden) window.onAppResume(); });
   if ("serviceWorker" in navigator && /^https?:/.test(location.protocol)) {
     navigator.serviceWorker.register("sw.js").catch(function () {});
   }
-  refresh();
+  refresh(true);
   refreshWeather(true);
-  refreshHist(true);
-  setInterval(function () { if (!document.hidden) { refresh(); refreshWeather(false); refreshHist(false); } }, 60000);
+  setInterval(function () { if (!document.hidden) { refresh(); refreshWeather(false); } }, 60000);
 })();
 </script>
 </body>

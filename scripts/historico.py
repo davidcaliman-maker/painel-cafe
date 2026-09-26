@@ -1,8 +1,14 @@
-"""Gera historico.json com os fechamentos diários de Londres, Nova York e do dólar.
+"""Gera historico.json: fechamentos diários de Londres, Nova York e do dólar, o indicador
+CEPEA/Esalq do Conilon e a calibração do preço físico do Conilon.
 
-Roda no GitHub Actions antes de publicar o site (o celular não consegue buscar
-esse histórico direto). Os contratos seguem a mesma regra de troca automática
-do app (index.html): um vencimento fica ativo até o dia 15 do mês anterior.
+Calibração: preço-alvo = último CEPEA Conilon + "ajusteConilonCepea" (config.json). O
+diferencial sobre Londres sai do fechamento de Londres e do dólar do mesmo dia do CEPEA:
+    diferencial = alvo / (0,06 × dólar) − Londres
+Durante o dia o app aplica esse diferencial às cotações ao vivo.
+
+Roda no GitHub Actions antes de publicar o site (o celular não consegue buscar esses
+dados direto). Os contratos seguem a mesma regra de troca automática do app (index.html):
+um vencimento fica ativo até o dia 15 do mês anterior.
 
 Uso: python scripts/historico.py <config.json> <saida.json>
 """
@@ -13,6 +19,7 @@ import random
 import re
 import string
 import sys
+import urllib.request
 
 import websockets
 
@@ -24,6 +31,8 @@ MERCADOS = {
 }
 CODIGOS = {1: "F", 3: "H", 5: "K", 7: "N", 9: "U", 11: "X", 12: "Z"}
 BRT = dt.timezone(dt.timedelta(hours=-3))
+SITE = "https://davidcaliman-maker.github.io/painel-cafe/"
+CEPEA_URL = "https://www.cepea.org.br/br/indicador/cafe.aspx"
 
 
 def contrato_auto(mercado, posicao, hoje):
@@ -84,6 +93,36 @@ async def historico_diario(simbolo, barras=DIAS + 5):
                     raise RuntimeError(f"{simbolo}: {d}")
 
 
+def cepea_conilon():
+    """Indicador CEPEA/Esalq do café Robusta (Conilon), R$/saca: {data ISO: valor}."""
+    req = urllib.request.Request(CEPEA_URL, headers={
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+                      "Chrome/128.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "pt-BR,pt;q=0.9",
+    })
+    with urllib.request.urlopen(req, timeout=30) as r:
+        html = r.read().decode("utf-8", "replace")
+    tabela = re.search(r'id="imagenet-indicador2".*?</table>', html, re.S)
+    if not tabela:
+        raise RuntimeError("tabela do Robusta não encontrada no CEPEA")
+    valores = {}
+    for d, m, a, v in re.findall(r"<td>(\d{2})/(\d{2})/(\d{4})</td>\s*<td>([\d.]+,\d+)</td>", tabela.group(0)):
+        valores[f"{a}-{m}-{d}"] = float(v.replace(".", "").replace(",", "."))
+    if not valores:
+        raise RuntimeError("CEPEA sem valores")
+    return valores
+
+
+def publicado_anterior():
+    """historico.json atualmente no ar (reserva se o CEPEA estiver fora)."""
+    try:
+        with urllib.request.urlopen(SITE + "historico.json", timeout=30) as r:
+            return json.load(r)
+    except Exception:
+        return {}
+
+
 async def main(caminho_config, caminho_saida):
     with open(caminho_config, encoding="utf-8") as f:
         cfg = json.load(f)
@@ -102,14 +141,48 @@ async def main(caminho_config, caminho_saida):
             continue
         dias.append({"data": data, "usd": usd[max(anteriores)], "londres": ldn[data], "novaYork": ny[data]})
 
+    anterior = publicado_anterior()
+    cepea_falhou = False
+    try:
+        cepea = cepea_conilon()
+    except Exception as e:  # CEPEA fora do ar: mantém os valores já publicados
+        print(f"aviso: CEPEA indisponível ({e}); usando o último publicado")
+        cepea_falhou = True
+        cepea = {d["data"]: d["cepeaConilon"] for d in anterior.get("dias", []) if d.get("cepeaConilon")}
+    for d in dias:
+        if d["data"] in cepea:
+            d["cepeaConilon"] = cepea[d["data"]]
+
+    # Calibra pelo dia mais recente que tem CEPEA e fechamento de Londres.
+    ajuste = float(cfg.get("ajusteConilonCepea", 0))
+    calibracao = anterior.get("calibracao")
+    com_cepea = [d for d in dias if "cepeaConilon" in d]
+    if com_cepea:
+        d = com_cepea[-1]
+        usd_dia = round(d["usd"], 2)  # o app também usa o dólar com 2 casas
+        alvo = d["cepeaConilon"] + ajuste
+        calibracao = {
+            "data": d["data"],
+            "cepeaConilon": d["cepeaConilon"],
+            "ajusteConilonCepea": ajuste,
+            "precoConilon": round(alvo, 2),
+            "londres": d["londres"],
+            "usd": usd_dia,
+            "contrato": contratos["londres"],
+            "diferencialConilon": round(alvo / (0.06 * usd_dia) - d["londres"], 2),
+        }
+
     saida = {
         "geradoEm": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
         "contratos": contratos,
+        "calibracao": calibracao,
         "dias": dias[-DIAS:],
     }
     with open(caminho_saida, "w", encoding="utf-8") as f:
         json.dump(saida, f, ensure_ascii=False, indent=1)
-    print(f'{len(saida["dias"])} dias, contratos {contratos}')
+    print(f'{len(saida["dias"])} dias, contratos {contratos}, calibração {calibracao}')
+    if cepea_falhou:
+        sys.exit(2)  # arquivo gravado, mas a execução fica marcada como falha (aviso por e-mail)
 
 
 if __name__ == "__main__":
