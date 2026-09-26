@@ -30,7 +30,7 @@ Só é preciso mexer se quiser mudar o ajuste. Edite no GitHub (lápis ✏️ �
 
 | Campo | O que é | Valor |
 |---|---|---|
-| `ajusteConilonCepea` | Diferença do seu Conilon 7/8 para o Cepea, em R$/saca | `-11.0` |
+| `ajusteConilonCepea` | Diferença do seu Conilon 7/8 para o Cepea, em R$/saca (0 = igual ao Cepea) | `0` |
 | `contratoLondres` / `contratoNovaYork` | `"auto"` troca sozinho; ou fixe um código, ex. `"RCF2027"` | `"auto"` |
 | `posicaoLondres` / `posicaoNovaYork` | Qual vencimento usar no modo auto (1 = o mais próximo) | `2` / `1` |
 

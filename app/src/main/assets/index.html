@@ -157,7 +157,7 @@
   </div>
   <div class="hero-stats">
     <div><span id="stCepeaLbl">Cepea</span><b id="stCepea">—</b></div>
-    <div><span>Ajuste</span><b id="stAjuste">—</b></div>
+    <div><span>Arroba 15 kg</span><b id="stArroba">—</b></div>
     <div><span>Semana</span><b id="stSemana">—</b></div>
   </div>
 </div>
@@ -210,14 +210,14 @@
     <h3>Como o painel calcula</h3>
     <p>
       <b>Conilon 7/8:</b> todo dia o preço é ajustado ao último fechamento do Indicador do Café
-      Robusta Cepea/Esalq, com um ajuste fixo de qualidade e região definido pelo corretor.<br><br>
+      Robusta Cepea/Esalq.<br><br>
       <b>Durante o dia:</b> o preço acompanha a bolsa de Londres (US$ por tonelada) e o dólar.
       Uma saca tem 60 kg = 0,06 t.<br>
       Conilon = (Londres + diferencial) × 0,06 × Dólar, onde o diferencial é recalculado todo dia
       a partir do Cepea.<br><br>
       <b>AO VIVO · ESTIMATIVA:</b> durante o pregão o preço é estimado pela bolsa.<br>
       <b>FECHAMENTO CEPEA:</b> quando o Cepea do dia é publicado (fim da tarde), o preço passa a ser
-      o do Cepea + ajuste. É também o preço da abertura do dia seguinte.<br><br>
+      o do Cepea. É também o preço da abertura do dia seguinte.<br><br>
       <b>Nova York:</b> cotação do café arábica em centavos de dólar por libra-peso.<br><br>
       <b>Contratos:</b> o app troca sozinho para o próximo vencimento a partir do dia 15 do mês
       anterior, sem salto no preço do Conilon.
@@ -236,11 +236,11 @@
 
   // Configuração central: config.json publicado no GitHub (o app não permite alterar).
   // Estes valores só são usados se o config.json ainda não pôde ser lido.
-  var cfg = { ajusteConilonCepea: -11, contratoLondres: "auto", contratoNovaYork: "auto",
+  var cfg = { ajusteConilonCepea: 0, contratoLondres: "auto", contratoNovaYork: "auto",
               posicaoLondres: 2, posicaoNovaYork: 1 };
   // Calibração de reserva (25/09/2026), usada só se o historico.json nunca pôde ser lido.
-  var CALIB_RESERVA = { data: "2026-09-25", cepeaConilon: 952.72, ajusteConilonCepea: -11,
-                        contrato: "RCF2027", diferencialConilon: -317.85 };
+  var CALIB_RESERVA = { data: "2026-09-25", cepeaConilon: 952.72, ajusteConilonCepea: 0,
+                        contrato: "RCF2027", diferencialConilon: -282.53 };
 
   // ---------- armazenamento local (cache para abrir sem internet) ----------
   function load(k) {
@@ -417,7 +417,7 @@
     var badge = $("conEstado");
     badge.className = "badge " + (estado === "fechamento" ? "close" : "live");
     badge.textContent = estado === "fechamento" ? "FECHAMENTO " + diaCepea : "AO VIVO";
-    badge.title = estado === "fechamento" ? "Preço do Cepea + ajuste" : "Estimativa pela bolsa até o Cepea do dia sair";
+    badge.title = estado === "fechamento" ? "Preço de fechamento do Cepea" : "Estimativa pela bolsa até o Cepea do dia sair";
 
     // Variação do dia: contra o fechamento anterior (Cepea + ajuste).
     var ant = fechamentoAnterior(estado);
@@ -433,7 +433,7 @@
 
     $("stCepeaLbl").textContent = "Cepea " + diaCepea;
     $("stCepea").textContent = "R$ " + fmt(c.cepeaConilon, 2);
-    $("stAjuste").textContent = signed(Number(c.ajusteConilonCepea), 2).replace(/^([+−]?)/, "$1R$ ");
+    $("stArroba").textContent = "R$ " + fmt(fisCon / 4, 2);
     var sem = pontos("conilon");
     $("stSemana").textContent = sem.length > 1 ? signed((sem[sem.length - 1].v / sem[0].v - 1) * 100, 2, "%") : "—";
     $("stSemana").className = sem.length > 1 ? (sem[sem.length - 1].v < sem[0].v ? "down-t" : "up-t") : "";
