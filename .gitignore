@@ -6,3 +6,4 @@ local.properties
 # gerado pelo GitHub Actions (scripts/historico.py)
 app/src/main/assets/historico.json
 app/src/main/assets/versao.json
+monitoramento/
