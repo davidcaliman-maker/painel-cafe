@@ -39,6 +39,8 @@ public class AlertaService extends JobService {
 
     /** Agenda a verificação periódica (chamado ao abrir o app; sobrevive a reinicializações). */
     static void agendar(Context ctx) {
+        // Criar o canal com o app aberto faz o Android 13+ pedir a permissão de notificação.
+        criarCanal(ctx);
         JobScheduler js = (JobScheduler) ctx.getSystemService(Context.JOB_SCHEDULER_SERVICE);
         if (js == null) return;
         for (JobInfo j : js.getAllPendingJobs()) if (j.getId() == JOB_ID) return;
@@ -134,12 +136,7 @@ public class AlertaService extends JobService {
                                   String refData, boolean estimativa, boolean teste) {
         NotificationManager nm = (NotificationManager) ctx.getSystemService(NOTIFICATION_SERVICE);
         if (nm == null) return;
-        if (Build.VERSION.SDK_INT >= 26) {
-            NotificationChannel canal = new NotificationChannel(CANAL, "Alertas do Conilon",
-                    NotificationManager.IMPORTANCE_HIGH);
-            canal.setDescription("Forte alta ou forte baixa no preço do Conilon");
-            nm.createNotificationChannel(canal);
-        }
+        criarCanal(ctx);
         NumberFormat nf = NumberFormat.getNumberInstance(new Locale("pt", "BR"));
         nf.setMinimumFractionDigits(2);
         nf.setMaximumFractionDigits(2);
@@ -165,6 +162,16 @@ public class AlertaService extends JobService {
             b.setPriority(Notification.PRIORITY_HIGH).setDefaults(Notification.DEFAULT_ALL);
         }
         nm.notify(alta ? 1 : 2, b.build());
+    }
+
+    private static void criarCanal(Context ctx) {
+        if (Build.VERSION.SDK_INT < 26) return;
+        NotificationManager nm = (NotificationManager) ctx.getSystemService(NOTIFICATION_SERVICE);
+        if (nm == null) return;
+        NotificationChannel canal = new NotificationChannel(CANAL, "Alertas do Conilon",
+                NotificationManager.IMPORTANCE_HIGH);
+        canal.setDescription("Forte alta ou forte baixa no preço do Conilon");
+        nm.createNotificationChannel(canal);
     }
 
     private static JSONObject scan(String mercado, String tickers) throws Exception {
