@@ -185,6 +185,18 @@
   .chips button.on { background: var(--orange); color: var(--on-accent); border-color: var(--orange); }
   .news-empty { color: var(--muted); font-size: 13px; padding: 14px 4px; }
 
+  /* Escolha da cidade da previsão */
+  .cidade-btn { background: none; border: 0; padding: 0; color: var(--orange); font: inherit; font-weight: 800;
+    display: inline-flex; align-items: center; gap: 4px; text-decoration: underline dotted; text-underline-offset: 4px; }
+  .cidade-btn svg { width: 16px; height: 16px; flex: none; }
+  .busca { width: 100%; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 8px;
+    padding: 12px; font-size: 17px; margin: 4px 0 8px; }
+  .resultados { max-height: 45vh; overflow-y: auto; }
+  .resultados button { display: block; width: 100%; text-align: left; background: var(--card); color: var(--text);
+    border: 0; border-bottom: 1px solid var(--line); padding: 12px 10px; font-size: 16px; }
+  .resultados button small { color: var(--muted); font-size: 13px; margin-left: 6px; }
+  .resultados .aviso { color: var(--muted); font-size: 14px; padding: 12px 4px; }
+
   .foot { color: var(--muted); font-size: 12px; text-align: center; margin-top: 12px; line-height: 1.5; }
   .err { background: var(--red); border-radius: 6px; padding: 8px 10px; font-size: 14px; margin-bottom: 8px; display: none; }
 
@@ -293,7 +305,12 @@
 
 <div id="vChuva" hidden>
   <h2>CHUVA</h2>
-  <div class="sec-sub">Itamaraju-BA · próximos 10 dias <small id="wUpd"></small></div>
+  <div class="sec-sub">
+    <button class="cidade-btn" id="cidadeBtn" aria-label="Trocar cidade da previsão">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.4"/></svg>
+      <span id="cidadeNome">Itamaraju-BA</span> ▾
+    </button> · próximos 10 dias <small id="wUpd"></small>
+  </div>
 
   <div class="rain-total">
     <span>TOTAL 10 DIAS</span>
@@ -343,6 +360,20 @@
     <span>NOTÍCIAS</span>
   </button>
 </nav>
+
+<!-- Escolha da cidade da previsão de chuva -->
+<div class="modal" id="cidadeModal">
+  <div class="sheet">
+    <h3>Cidade da previsão</h3>
+    <p>Digite o nome de qualquer cidade do Brasil.</p>
+    <input class="busca" id="cidadeBusca" type="search" placeholder="Ex.: Linhares, Eunápolis…" autocomplete="off">
+    <div class="resultados" id="cidadeResultados"></div>
+    <div class="actions">
+      <button class="btn-cancel" id="cidadePadrao">Voltar para Itamaraju-BA</button>
+      <button class="btn-ok" id="cidadeFechar">Fechar</button>
+    </div>
+  </div>
+</div>
 
 <!-- Ajuda -->
 <div class="modal" id="helpModal">
@@ -638,10 +669,24 @@
   }
   $("refresh").onclick = function () { refresh(true); refreshWeather(true); };
 
-  // ---------- previsão de chuva (Itamaraju-BA) ----------
-  var WEATHER_URL = "https://api.open-meteo.com/v1/forecast?latitude=-17.0392&longitude=-39.5311" +
-    "&daily=precipitation_sum,precipitation_probability_max,temperature_2m_max,temperature_2m_min,weather_code" +
-    "&timezone=America%2FBahia&forecast_days=10";
+  // ---------- previsão de chuva (padrão Itamaraju-BA; cada usuário pode escolher outra cidade) ----------
+  var CIDADE_PADRAO = { nome: "Itamaraju", uf: "BA", lat: -17.0392, lon: -39.5311 };
+  var UFS = { "Acre": "AC", "Alagoas": "AL", "Amapá": "AP", "Amazonas": "AM", "Bahia": "BA", "Ceará": "CE",
+    "Distrito Federal": "DF", "Espírito Santo": "ES", "Goiás": "GO", "Maranhão": "MA", "Mato Grosso": "MT",
+    "Mato Grosso do Sul": "MS", "Minas Gerais": "MG", "Pará": "PA", "Paraíba": "PB", "Paraná": "PR",
+    "Pernambuco": "PE", "Piauí": "PI", "Rio de Janeiro": "RJ", "Rio Grande do Norte": "RN",
+    "Rio Grande do Sul": "RS", "Rondônia": "RO", "Roraima": "RR", "Santa Catarina": "SC",
+    "São Paulo": "SP", "Sergipe": "SE", "Tocantins": "TO" };
+  var cidade = CIDADE_PADRAO;
+  try { var cs = load("cidadeChuva"); if (cs) cidade = JSON.parse(cs); } catch (e) {}
+
+  function chaveCidade(c) { return c.lat.toFixed(3) + "," + c.lon.toFixed(3); }
+  function nomeCidade(c) { return c.nome + (c.uf ? "-" + c.uf : ""); }
+  function urlPrevisao(c) {
+    return "https://api.open-meteo.com/v1/forecast?latitude=" + c.lat + "&longitude=" + c.lon +
+      "&daily=precipitation_sum,precipitation_probability_max,temperature_2m_max,temperature_2m_min,weather_code" +
+      "&timezone=America%2FSao_Paulo&forecast_days=10";
+  }
   var WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
   var lastWeatherFetch = 0;
 
@@ -682,9 +727,11 @@
     if (!force && Date.now() - lastWeatherFetch < 30 * 60000) return;
     lastWeatherFetch = Date.now();
     $("wUpd").textContent = "· atualizando…";
-    getJson(WEATHER_URL).then(function (w) {
+    var alvo = cidade, chave = chaveCidade(cidade);
+    getJson(urlPrevisao(alvo)).then(function (w) {
       if (!w.daily) throw new Error(w.reason || "resposta inválida");
-      save("weather", JSON.stringify(w));
+      if (chave !== chaveCidade(cidade)) return;  // usuário trocou de cidade no meio da busca
+      save("weather", JSON.stringify({ cidade: chave, w: w }));
       renderWeather(w);
       var now = new Date();
       $("wUpd").textContent = "· " + String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
@@ -693,6 +740,54 @@
       $("wUpd").textContent = "· offline";
     });
   }
+
+  // Janela de escolha da cidade
+  function mostrarCidade() { $("cidadeNome").textContent = nomeCidade(cidade); }
+  function escolherCidade(c) {
+    cidade = c;
+    save("cidadeChuva", JSON.stringify(c));
+    mostrarCidade();
+    $("rainList").innerHTML = "";
+    $("rainTotal").textContent = "— mm";
+    $("cidadeModal").classList.remove("open");
+    refreshWeather(true);
+  }
+  var buscaTimer = null, buscaSeq = 0, achadas = [];
+  function buscarCidades(texto) {
+    var box = $("cidadeResultados"), seqAtual = ++buscaSeq;
+    if (texto.trim().length < 3) { box.innerHTML = '<div class="aviso">Digite pelo menos 3 letras.</div>'; return; }
+    box.innerHTML = '<div class="aviso">Procurando…</div>';
+    getJson("https://geocoding-api.open-meteo.com/v1/search?count=15&language=pt&countryCode=BR&name=" +
+            encodeURIComponent(texto.trim())).then(function (r) {
+      if (seqAtual !== buscaSeq) return;
+      achadas = (r.results || []).filter(function (x) { return /^PPL/.test(x.feature_code || ""); }).slice(0, 10);
+      box.innerHTML = achadas.length ? achadas.map(function (x, i) {
+        return '<button data-i="' + i + '">' + esc(x.name) + '<small>' + esc(x.admin1 || "") + '</small></button>';
+      }).join("") : '<div class="aviso">Nenhuma cidade encontrada.</div>';
+    }).catch(function () {
+      if (seqAtual === buscaSeq) box.innerHTML = '<div class="aviso">Sem conexão. Tente de novo.</div>';
+    });
+  }
+  $("cidadeBtn").onclick = function () {
+    $("cidadeBusca").value = "";
+    $("cidadeResultados").innerHTML = "";
+    $("cidadeModal").classList.add("open");
+    setTimeout(function () { $("cidadeBusca").focus(); }, 50);
+  };
+  $("cidadeBusca").addEventListener("input", function () {
+    clearTimeout(buscaTimer);
+    var t = this.value;
+    buscaTimer = setTimeout(function () { buscarCidades(t); }, 350);
+  });
+  $("cidadeResultados").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-i]");
+    if (!b) return;
+    var x = achadas[+b.getAttribute("data-i")];
+    escolherCidade({ nome: x.name, uf: UFS[x.admin1] || "", lat: x.latitude, lon: x.longitude });
+  });
+  $("cidadePadrao").onclick = function () { escolherCidade(CIDADE_PADRAO); };
+  $("cidadeFechar").onclick = function () { $("cidadeModal").classList.remove("open"); };
+  mostrarCidade();
 
   // ---------- gráfico da semana ----------
   var hist = null, serie = "conilon", lastHistFetch = 0;
@@ -890,7 +985,10 @@
   if (location.hash) history.replaceState(null, "", location.pathname + location.search);
   try { var ch = load("hist"); if (ch) hist = JSON.parse(ch); } catch (e) {}
   try { var cached = load("last"); if (cached) { last = JSON.parse(cached); render(); } } catch (e) {}
-  try { var cw = load("weather"); if (cw) renderWeather(JSON.parse(cw)); } catch (e) {}
+  try {
+    var cw = load("weather"), cwj = cw && JSON.parse(cw);
+    if (cwj && cwj.cidade === chaveCidade(cidade)) renderWeather(cwj.w);  // só se for da cidade escolhida
+  } catch (e) {}
   // ---------- atualização automática da tela ----------
   // O GitHub troca __VERSAO__ pelo código da publicação e grava o mesmo código em versao.json.
   // Se o app estiver com uma tela antiga (ex.: Android que só voltou do segundo plano),
