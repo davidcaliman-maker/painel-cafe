@@ -24,6 +24,13 @@ Se o Cepea ficar fora do ar, o app mantém a última calibração e o GitHub avi
 
 O Arábica aparece só como cotação de Nova York (sem preço físico).
 
+## Aba Notícias
+
+`scripts/noticias.py` (no GitHub Actions, junto com o histórico) busca no Google Notícias os
+últimos 7 dias sobre clima (geada, El Niño), safra/Conab, consumo, logística, geopolítica e
+concorrentes (Vietnã etc.), com destaque para Sul da Bahia e Espírito Santo. Filtra assuntos
+fora do mercado e notícias repetidas, e grava só título, fonte, data e link em `noticias.json`.
+
 ## Configuração (`app/src/main/assets/config.json`)
 
 Só é preciso mexer se quiser mudar o ajuste. Edite no GitHub (lápis ✏️ → **Commit changes**).

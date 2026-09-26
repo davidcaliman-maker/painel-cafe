@@ -115,6 +115,39 @@
   .up-t { color: #4cd964; }
   .down-t { color: #ff5a5f; }
 
+  /* Barra de abas (rodapé) */
+  body { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+  .tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; display: flex;
+    background: #0d0d0e; border-top: 1px solid #2c2c2f; padding-bottom: env(safe-area-inset-bottom); }
+  .tabbar button { flex: 1; background: none; border: 0; color: var(--muted); padding: 8px 0 9px;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    font-size: 11px; font-weight: 800; letter-spacing: 1px; }
+  .tabbar button svg { width: 24px; height: 24px; }
+  .tabbar button.on { color: var(--orange); }
+  .tabbar button.on::before { content: ""; position: absolute; top: 0; width: 44px; height: 3px;
+    background: var(--orange); border-radius: 0 0 3px 3px; }
+  .tabbar button { position: relative; }
+
+  /* Notícias */
+  .news-h { font-size: 13px; font-weight: 800; letter-spacing: 1.5px; color: var(--muted); margin: 14px 2px 8px; }
+  .news-h.reg { color: var(--orange); }
+  .news { display: block; background: var(--card-2); border-radius: 8px; padding: 10px 12px 9px; margin-bottom: 7px;
+    color: var(--text); text-decoration: none; border-left: 4px solid transparent; }
+  .news.reg { background: #2b2519; border-left-color: var(--orange); }
+  .news b { display: block; font-size: 15.5px; font-weight: 700; line-height: 1.3; margin: 5px 0 5px; }
+  .news small { color: var(--muted); font-size: 12px; }
+  .tag { display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: 1px; padding: 2px 7px;
+    border-radius: 4px; text-transform: uppercase; background: #3a3a3d; color: #fff; }
+  .tag.Clima { background: #0a84ff; } .tag.Safra { background: #1f8f3a; } .tag.Logística { background: #8e44ad; }
+  .tag.Geopolítica { background: #c4161c; } .tag.Concorrentes { background: #b8860b; }
+  .tag.Consumo { background: #d35400; } .tag.Regional { background: var(--orange); color: #000; }
+  .chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin: 0 -2px; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chips button { flex: none; background: var(--card); color: var(--muted); border: 1px solid #333;
+    border-radius: 16px; padding: 6px 12px; font-size: 12px; font-weight: 700; }
+  .chips button.on { background: var(--orange); color: #000; border-color: var(--orange); }
+  .news-empty { color: var(--muted); font-size: 13px; padding: 14px 4px; }
+
   .foot { color: var(--muted); font-size: 12px; text-align: center; margin-top: 12px; line-height: 1.5; }
   .err { background: var(--red); border-radius: 6px; padding: 8px 10px; font-size: 14px; margin-bottom: 8px; display: none; }
 
@@ -139,6 +172,7 @@
 </div>
 <div class="sub">Indicadores Técnicos do Mercado Físico <button id="help">?</button></div>
 
+<div id="vPainel">
 <div class="err" id="err"></div>
 
 <div class="hero">
@@ -193,6 +227,43 @@
   durante o dia pela bolsa de Londres. Fonte: Cepea/Esalq.<br>
   Previsão: Open-Meteo.
 </div>
+
+</div><!-- /vPainel -->
+
+<div id="vNoticias" hidden>
+  <h2>NOTÍCIAS</h2>
+  <div class="sec-sub">O que pode mexer no preço do café <small id="nUpd"></small></div>
+
+  <div class="news-h reg">SUL DA BAHIA E ESPÍRITO SANTO</div>
+  <div id="nRegional"><div class="news-empty">carregando notícias…</div></div>
+
+  <div class="news-h">MERCADO, CLIMA E SAFRA</div>
+  <div class="chips" id="nChips">
+    <button data-c="" class="on">Todas</button>
+    <button data-c="Clima">Clima</button>
+    <button data-c="Safra">Safra</button>
+    <button data-c="Logística">Logística</button>
+    <button data-c="Geopolítica">Geopolítica</button>
+    <button data-c="Concorrentes">Concorrentes</button>
+    <button data-c="Consumo">Consumo</button>
+    <button data-c="Mercado">Mercado</button>
+  </div>
+  <div id="nMercado"></div>
+
+  <div class="foot">Notícias dos últimos 7 dias, reunidas pelo Google Notícias.<br>
+    Toque numa notícia para abrir a matéria no site original.</div>
+</div>
+
+<nav class="tabbar" id="tabbar">
+  <button data-v="painel" class="on" aria-label="Painel">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 20V11M10 20V5M16 20v-7M22 20H2"/></svg>
+    <span>PAINEL</span>
+  </button>
+  <button data-v="noticias" aria-label="Notícias">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 5h13v14a1 1 0 0 0 1 1H6a2 2 0 0 1-2-2z"/><path d="M17 9h3v9a2 2 0 0 1-2 2"/><path d="M7 9h7M7 13h7M7 16h4" stroke-linecap="round"/></svg>
+    <span>NOTÍCIAS</span>
+  </button>
+</nav>
 
 <!-- Ajuda -->
 <div class="modal" id="helpModal">
@@ -645,7 +716,79 @@
     });
   });
 
+  // ---------- notícias ----------
+  var noticias = null, filtro = "", lastNewsFetch = 0;
+
+  function haQuanto(iso) {
+    var min = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+    if (min < 60) return "há " + Math.max(1, min) + " min";
+    var h = Math.round(min / 60);
+    if (h < 24) return "há " + h + " h";
+    var d = Math.round(h / 24);
+    return d === 1 ? "ontem" : "há " + d + " dias";
+  }
+  function esc(t) {
+    return String(t).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; });
+  }
+  function cartao(n, reg) {
+    var link = /^https:\/\//.test(n.link) ? n.link : "#";
+    return '<a class="news' + (reg ? " reg" : "") + '" href="' + esc(link) + '" target="_blank" rel="noopener">' +
+      '<span class="tag ' + esc(n.categoria) + '">' + esc(n.categoria) + '</span>' +
+      '<b>' + esc(n.titulo) + '</b><small>' + esc(n.fonte) + " · " + haQuanto(n.data) + '</small></a>';
+  }
+  function renderNoticias() {
+    if (!noticias) return;
+    var reg = noticias.regional || [], merc = (noticias.mercado || []).filter(function (n) {
+      return !filtro || n.categoria === filtro;
+    });
+    $("nRegional").innerHTML = reg.length ? reg.map(function (n) { return cartao(n, true); }).join("")
+      : '<div class="news-empty">Nenhuma notícia regional nos últimos dias.</div>';
+    $("nMercado").innerHTML = merc.length ? merc.map(function (n) { return cartao(n, false); }).join("")
+      : '<div class="news-empty">Nenhuma notícia deste tema nos últimos dias.</div>';
+  }
+  function refreshNoticias(force) {
+    if (!force && Date.now() - lastNewsFetch < 30 * 60000) return;
+    lastNewsFetch = Date.now();
+    siteJson("noticias.json").then(function (n) {
+      noticias = n;
+      save("noticias", JSON.stringify(n));
+      var g = new Date(n.geradoEm);
+      $("nUpd").textContent = "· " + String(g.getHours()).padStart(2, "0") + ":" + String(g.getMinutes()).padStart(2, "0");
+      renderNoticias();
+    }).catch(function () { lastNewsFetch = 0; renderNoticias(); });
+  }
+  document.querySelectorAll("#nChips button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      filtro = b.getAttribute("data-c");
+      document.querySelectorAll("#nChips button").forEach(function (x) { x.classList.toggle("on", x === b); });
+      renderNoticias();
+    });
+  });
+
+  // ---------- abas (rodapé) ----------
+  // Usa o endereço (#noticias) para o botão "voltar" do Android retornar ao painel.
+  function mostrarAba() {
+    var noticiasAberta = location.hash === "#noticias";
+    $("vPainel").hidden = noticiasAberta;
+    $("vNoticias").hidden = !noticiasAberta;
+    document.querySelectorAll("#tabbar button").forEach(function (b) {
+      b.classList.toggle("on", (b.getAttribute("data-v") === "noticias") === noticiasAberta);
+    });
+    if (noticiasAberta) refreshNoticias(false);
+    window.scrollTo(0, 0);
+  }
+  document.querySelectorAll("#tabbar button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var alvo = b.getAttribute("data-v") === "noticias" ? "#noticias" : "";
+      if (location.hash === alvo || (!alvo && !location.hash)) { window.scrollTo(0, 0); return; }
+      if (alvo) location.hash = alvo; else history.back();
+    });
+  });
+  window.addEventListener("hashchange", mostrarAba);
+
   // ---------- inicialização ----------
+  try { var cn = load("noticias"); if (cn) { noticias = JSON.parse(cn); renderNoticias(); } } catch (e) {}
+  if (location.hash === "#noticias") history.replaceState(null, "", location.pathname + location.search);
   try { var ch = load("hist"); if (ch) hist = JSON.parse(ch); } catch (e) {}
   try { var cached = load("last"); if (cached) { last = JSON.parse(cached); render(); } } catch (e) {}
   try { var cw = load("weather"); if (cw) renderWeather(JSON.parse(cw)); } catch (e) {}

@@ -45,6 +45,15 @@ jobs:
         continue-on-error: true
         run: python scripts/historico.py app/src/main/assets/config.json app/src/main/assets/historico.json
 
+      - name: Buscar notícias do café
+        id: noticias
+        continue-on-error: true
+        run: python scripts/noticias.py app/src/main/assets/noticias.json
+
+      - name: Manter as notícias publicadas se a busca falhou
+        if: steps.noticias.outcome == 'failure'
+        run: curl -sf https://davidcaliman-maker.github.io/painel-cafe/noticias.json -o app/src/main/assets/noticias.json || true
+
       - name: Manter o histórico publicado se não foi possível gerar um novo
         if: steps.historico.outcome == 'failure' && hashFiles('app/src/main/assets/historico.json') == ''
         run: curl -sf https://davidcaliman-maker.github.io/painel-cafe/historico.json -o app/src/main/assets/historico.json || true
@@ -58,15 +67,15 @@ jobs:
           echo "{\"versao\": \"$V\"}" > app/src/main/assets/versao.json
           cat app/src/main/assets/versao.json
 
-      # Push ou execução manual: publica sempre. Agendada: só se o histórico mudou.
+      # Push ou execução manual: publica sempre. Agendada: só se o histórico ou as notícias mudaram.
       - uses: actions/configure-pages@v5
-        if: github.event_name != 'schedule' || steps.historico.outputs.mudou != 'false'
+        if: github.event_name != 'schedule' || steps.historico.outputs.mudou != 'false' || steps.noticias.outputs.mudou == 'true'
       - uses: actions/upload-pages-artifact@v3
-        if: github.event_name != 'schedule' || steps.historico.outputs.mudou != 'false'
+        if: github.event_name != 'schedule' || steps.historico.outputs.mudou != 'false' || steps.noticias.outputs.mudou == 'true'
         with:
           path: app/src/main/assets
       - id: deployment
-        if: github.event_name != 'schedule' || steps.historico.outputs.mudou != 'false'
+        if: github.event_name != 'schedule' || steps.historico.outputs.mudou != 'false' || steps.noticias.outputs.mudou == 'true'
         uses: actions/deploy-pages@v4
 
       # O GitHub desliga agendamentos após 60 dias sem atividade no repositório; isto evita.
