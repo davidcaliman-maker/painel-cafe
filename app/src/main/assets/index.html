@@ -46,7 +46,7 @@
   .hero-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
   .hero-t { display: block; font-size: 19px; font-weight: 800; letter-spacing: .5px; }
   .hero-u { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
-  .hero-main { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; margin: 10px 0 12px; }
+  .hero-main { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; margin: 12px 0 2px; }
   .hero-price { font-size: min(58px, 13.6vw); font-weight: 800; line-height: .95; letter-spacing: -1px;
     white-space: nowrap; font-variant-numeric: tabular-nums; }
   .hero-price small { font-size: .36em; font-weight: 700; color: var(--muted); letter-spacing: 0;
@@ -56,12 +56,6 @@
     background: rgba(76, 217, 100, .16); color: #4cd964; font-variant-numeric: tabular-nums; }
   .hero-var.down .pill { background: rgba(255, 90, 95, .16); color: #ff5a5f; }
   .hero-var small { display: block; color: var(--muted); font-size: 11px; margin-top: 5px; font-variant-numeric: tabular-nums; }
-  .hero-stats { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid #333; padding-top: 10px; }
-  .hero-stats > div { padding: 0 10px; border-left: 1px solid #333; min-width: 0; }
-  .hero-stats > div:first-child { padding-left: 0; border-left: 0; }
-  .hero-stats span { display: block; color: var(--muted); font-size: 10.5px; font-weight: 700; letter-spacing: .6px;
-    text-transform: uppercase; white-space: nowrap; }
-  .hero-stats b { display: block; font-size: 15px; margin-top: 3px; white-space: nowrap; font-variant-numeric: tabular-nums; }
   .badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; white-space: nowrap;
     border-radius: 12px; font-size: 11px; font-weight: 800; letter-spacing: 1px; }
   .badge.live { background: var(--orange); color: #000; }
@@ -154,11 +148,6 @@
   <div class="hero-main">
     <div class="hero-price"><small>R$</small><span id="fisConilon">—</span></div>
     <div class="hero-var" id="conVar"></div>
-  </div>
-  <div class="hero-stats">
-    <div><span id="stCepeaLbl">Cepea</span><b id="stCepea">—</b></div>
-    <div><span>Arroba 15 kg</span><b id="stArroba">—</b></div>
-    <div><span>Semana</span><b id="stSemana">—</b></div>
   </div>
 </div>
 
@@ -431,12 +420,6 @@
       boxVar.innerHTML = "";
     }
 
-    $("stCepeaLbl").textContent = "Cepea " + diaCepea;
-    $("stCepea").textContent = "R$ " + fmt(c.cepeaConilon, 2);
-    $("stArroba").textContent = "R$ " + fmt(fisCon / 4, 2);
-    var sem = pontos("conilon");
-    $("stSemana").textContent = sem.length > 1 ? signed((sem[sem.length - 1].v / sem[0].v - 1) * 100, 2, "%") : "—";
-    $("stSemana").className = sem.length > 1 ? (sem[sem.length - 1].v < sem[0].v ? "down-t" : "up-t") : "";
 
     paintMkt($("mUsd"), last.qUsd, fmt(usd, 2), ddmm(last.qUsd.time) + "/" + new Date().getFullYear());
     paintMkt($("mLdn"), last.qLdn, fmt(ldn, 0), ctrLabel(last.ctrLdn) + " - " + ddmm(last.qLdn.time));
