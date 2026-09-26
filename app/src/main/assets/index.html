@@ -35,17 +35,34 @@
   .logo .bean { width: min(38px, 8.5vw); height: min(38px, 8.5vw); }
   .brand h1 { margin: 0; white-space: nowrap; line-height: 1.05; font-size: min(34px, 7.2vw); font-weight: 800; letter-spacing: .5px; }
   .sub { display: flex; justify-content: space-between; align-items: center;
-    color: var(--orange); font-weight: 700; font-size: 17px; padding: 0 8px 6px; }
+    color: var(--orange); font-weight: 700; font-size: min(17px, 4.1vw); padding: 0 8px 6px; white-space: nowrap; }
   .sub button { background: none; border: 0; color: var(--orange); font-size: 22px; font-weight: 700; padding: 0 4px; }
 
   .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 8px; }
 
-  .card { background: var(--card); border-radius: 8px; text-align: center; padding: 12px 6px 14px; }
-  .card .t { font-size: 20px; font-weight: 600; }
-  .card .v { font-size: 34px; font-weight: 700; margin-top: 8px; font-variant-numeric: tabular-nums; }
-  .card.solo { margin-bottom: 8px; }
-  .card .ref { color: var(--muted); font-size: 12px; margin-top: 4px; }
-  .badge { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 3px 10px;
+  /* Destaque do Conilon: a informação principal do app */
+  .hero { background: linear-gradient(165deg, #26262a 0%, #18181a 100%); border: 1px solid #2f2f33;
+    border-top: 3px solid var(--orange); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; }
+  .hero-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .hero-t { display: block; font-size: 19px; font-weight: 800; letter-spacing: .5px; }
+  .hero-u { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .hero-main { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; margin: 10px 0 12px; }
+  .hero-price { font-size: min(58px, 13.6vw); font-weight: 800; line-height: .95; letter-spacing: -1px;
+    white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .hero-price small { font-size: .36em; font-weight: 700; color: var(--muted); letter-spacing: 0;
+    margin-right: 4px; vertical-align: .95em; }
+  .hero-var { text-align: right; white-space: nowrap; padding-bottom: 3px; }
+  .hero-var .pill { display: inline-block; padding: 4px 9px; border-radius: 7px; font-size: 16px; font-weight: 800;
+    background: rgba(76, 217, 100, .16); color: #4cd964; font-variant-numeric: tabular-nums; }
+  .hero-var.down .pill { background: rgba(255, 90, 95, .16); color: #ff5a5f; }
+  .hero-var small { display: block; color: var(--muted); font-size: 11px; margin-top: 5px; font-variant-numeric: tabular-nums; }
+  .hero-stats { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid #333; padding-top: 10px; }
+  .hero-stats > div { padding: 0 10px; border-left: 1px solid #333; min-width: 0; }
+  .hero-stats > div:first-child { padding-left: 0; border-left: 0; }
+  .hero-stats span { display: block; color: var(--muted); font-size: 10.5px; font-weight: 700; letter-spacing: .6px;
+    text-transform: uppercase; white-space: nowrap; }
+  .hero-stats b { display: block; font-size: 15px; margin-top: 3px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; white-space: nowrap;
     border-radius: 12px; font-size: 11px; font-weight: 800; letter-spacing: 1px; }
   .badge.live { background: var(--orange); color: #000; }
   .badge.live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #000;
@@ -53,10 +70,10 @@
   .badge.close { background: #3a3a3d; color: #fff; }
   @keyframes pisca { 50% { opacity: .25; } }
 
-  .mkt { overflow: hidden; border-radius: 6px; padding: 6px 6px 8px; text-align: center; background: #444; }
+  .mkt { overflow: hidden; border-radius: 6px; padding: 6px 4px 8px; text-align: center; background: #444; }
   .mkt.down { background: var(--red); }
   .mkt.up { background: var(--green); }
-  .mkt .h { display: flex; justify-content: space-between; font-size: min(14px, 3.4vw); font-weight: 600; }
+  .mkt .h { display: flex; justify-content: space-between; gap: 2px; font-size: min(14px, 3.15vw); font-weight: 600; white-space: nowrap; }
   .mkt .v { font-size: min(26px, 6.6vw); font-weight: 700; margin: 4px 0 2px; font-variant-numeric: tabular-nums; }
   .mkt .d { font-size: 13px; font-weight: 500; }
 
@@ -129,10 +146,20 @@
 
 <div class="err" id="err"></div>
 
-<div class="card solo">
-  <div class="t">CONILON 7/8</div><div class="v" id="fisConilon">—</div>
-  <div class="badge" id="conEstado"></div>
-  <div class="ref" id="conRef"></div>
+<div class="hero">
+  <div class="hero-top">
+    <div><span class="hero-t">CONILON 7/8</span><span class="hero-u">R$ por saca de 60 kg</span></div>
+    <div class="badge" id="conEstado"></div>
+  </div>
+  <div class="hero-main">
+    <div class="hero-price"><small>R$</small><span id="fisConilon">—</span></div>
+    <div class="hero-var" id="conVar"></div>
+  </div>
+  <div class="hero-stats">
+    <div><span id="stCepeaLbl">Cepea</span><b id="stCepea">—</b></div>
+    <div><span>Ajuste</span><b id="stAjuste">—</b></div>
+    <div><span>Semana</span><b id="stSemana">—</b></div>
+  </div>
 </div>
 
 <div class="grid3">
@@ -355,6 +382,17 @@
     return isoUTC(last.qLdn.time) > c.data ? "estimativa" : "fechamento";
   }
 
+  // Fechamento anterior do Conilon (Cepea + ajuste) para a variação do dia:
+  // em estimativa, é o último Cepea; em fechamento, o Cepea do pregão anterior a ele.
+  function fechamentoAnterior(estado) {
+    var c = calib(), aj = Number(c.ajusteConilonCepea);
+    var dd = function (iso) { return iso.slice(8, 10) + "/" + iso.slice(5, 7); };
+    if (estado === "estimativa") return { preco: c.cepeaConilon + aj, dia: dd(c.data) };
+    var dias = (hist && hist.dias || []).filter(function (d) { return d.cepeaConilon != null && d.data < c.data; });
+    var d = dias[dias.length - 1];
+    return d ? { preco: d.cepeaConilon + aj, dia: dd(d.data) } : null;
+  }
+
   // Troca de vencimento: a calibração foi feita sobre um contrato. Se o app já usa outro, soma
   // (contrato da calibração − atual) pelo fechamento anterior dos dois, para o preço não saltar.
   // Na calibração seguinte o GitHub já usa o contrato novo.
@@ -378,9 +416,27 @@
     $("fisConilon").textContent = fmt(fisCon, 2);
     var badge = $("conEstado");
     badge.className = "badge " + (estado === "fechamento" ? "close" : "live");
-    badge.textContent = estado === "fechamento" ? "FECHAMENTO CEPEA " + diaCepea : "AO VIVO · ESTIMATIVA PELA BOLSA";
-    $("conRef").textContent = (estado === "fechamento" ? "Cepea " : "Base: Cepea ") + diaCepea + " R$ " +
-      fmt(c.cepeaConilon, 2) + " · ajuste " + signed(Number(c.ajusteConilonCepea), 2);
+    badge.textContent = estado === "fechamento" ? "FECHAMENTO " + diaCepea : "AO VIVO";
+    badge.title = estado === "fechamento" ? "Preço do Cepea + ajuste" : "Estimativa pela bolsa até o Cepea do dia sair";
+
+    // Variação do dia: contra o fechamento anterior (Cepea + ajuste).
+    var ant = fechamentoAnterior(estado);
+    var boxVar = $("conVar");
+    if (ant) {
+      var dv = fisCon - ant.preco, dp = dv / ant.preco * 100;
+      boxVar.className = "hero-var" + (dv < 0 ? " down" : "");
+      boxVar.innerHTML = '<span class="pill">' + (dv < 0 ? "▼ " : "▲ ") + fmt(Math.abs(dp), 2) + '%</span>' +
+        '<small>' + signed(dv, 2).replace(/^([+−]?)/, "$1R$ ") + " · vs " + ant.dia + '</small>';
+    } else {
+      boxVar.innerHTML = "";
+    }
+
+    $("stCepeaLbl").textContent = "Cepea " + diaCepea;
+    $("stCepea").textContent = "R$ " + fmt(c.cepeaConilon, 2);
+    $("stAjuste").textContent = signed(Number(c.ajusteConilonCepea), 2).replace(/^([+−]?)/, "$1R$ ");
+    var sem = pontos("conilon");
+    $("stSemana").textContent = sem.length > 1 ? signed((sem[sem.length - 1].v / sem[0].v - 1) * 100, 2, "%") : "—";
+    $("stSemana").className = sem.length > 1 ? (sem[sem.length - 1].v < sem[0].v ? "down-t" : "up-t") : "";
 
     paintMkt($("mUsd"), last.qUsd, fmt(usd, 2), ddmm(last.qUsd.time) + "/" + new Date().getFullYear());
     paintMkt($("mLdn"), last.qLdn, fmt(ldn, 0), ctrLabel(last.ctrLdn) + " - " + ddmm(last.qLdn.time));
@@ -514,7 +570,7 @@
   }
 
   // Últimos 7 pregões: histórico publicado + cotação ao vivo de hoje (dias úteis).
-  function pontos() {
+  function pontos(nome) {
     var dias = hist && hist.dias ? hist.dias.slice() : [];
     // Só entra ponto de hoje se Londres já negociou hoje.
     if (last && last.ctrLdn && isoUTC(last.qLdn.time) === hojeISO()) {
@@ -527,11 +583,11 @@
         dias.push(vivo);
       }
     }
-    return dias.slice(-7).map(function (d) { return { data: d.data, v: valor(serie, d) }; });
+    return dias.slice(-7).map(function (d) { return { data: d.data, v: valor(nome, d) }; });
   }
 
   function renderChart() {
-    var p = pontos(), body = $("chBody");
+    var p = pontos(serie), body = $("chBody");
     if (p.length < 2) { body.innerHTML = '<div class="empty">histórico indisponível no momento</div>'; return; }
     var first = p[0].v, lastV = p[p.length - 1].v, varPct = (lastV / first - 1) * 100;
     var up = varPct >= 0, color = up ? "#4cd964" : "#ff5a5f";
