@@ -1,9 +1,13 @@
-# Publica a versão web (iPhone / navegador) no GitHub Pages a cada push na main.
+# Publica a versão web (iPhone / navegador / Android) no GitHub Pages.
+# Roda a cada push na main e de hora em hora nos dias úteis, para atualizar
+# o histórico de preços usado no gráfico da semana (historico.json).
 name: Publicar no GitHub Pages
 
 on:
   push:
     branches: [main]
+  schedule:
+    - cron: "5 9-23 * * 1-5"   # 06:05 às 20:05 (horário de Brasília), seg a sex
   workflow_dispatch:
 
 permissions:
@@ -23,6 +27,15 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Gerar histórico de preços
+        # Se falhar, publica o site mesmo assim (o app mostra o último histórico salvo).
+        continue-on-error: true
+        run: |
+          pip install --quiet websockets
+          python scripts/historico.py app/src/main/assets/config.json app/src/main/assets/historico.json
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

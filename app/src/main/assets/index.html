@@ -44,8 +44,6 @@
   .card { background: var(--card); border-radius: 8px; text-align: center; padding: 12px 6px 14px; }
   .card .t { font-size: 20px; font-weight: 600; }
   .card .v { font-size: 34px; font-weight: 700; margin-top: 8px; font-variant-numeric: tabular-nums; }
-  .card.edit { position: relative; }
-  .card.edit::after { content: "✎"; position: absolute; top: 6px; right: 8px; color: var(--muted); font-size: 13px; }
 
   .mkt { overflow: hidden; border-radius: 6px; padding: 6px 6px 8px; text-align: center; background: #444; }
   .mkt.down { background: var(--red); }
@@ -83,6 +81,21 @@
   .day .mm.zero { color: var(--muted); font-weight: 500; }
   .sec-sub small { color: var(--muted); font-weight: 500; font-size: 12px; }
 
+  /* Gráfico da semana */
+  .tabs { display: flex; gap: 4px; margin-bottom: 6px; overflow-x: auto; }
+  .tabs button { flex: 1; background: var(--card); color: var(--muted); border: 1px solid #333; border-radius: 5px;
+    font-size: 12px; font-weight: 700; padding: 7px 2px; white-space: nowrap; }
+  .tabs button.on { background: var(--orange); color: #000; border-color: var(--orange); }
+  .chart { background: var(--card-2); border-radius: 6px; padding: 10px 10px 6px; margin-bottom: 14px; }
+  .chart .top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+  .chart .now { font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .chart .var { font-size: 15px; font-weight: 700; text-align: right; }
+  .chart .var small { display: block; color: var(--muted); font-weight: 500; font-size: 11px; }
+  .chart svg { display: block; width: 100%; height: auto; }
+  .chart .empty { color: var(--muted); font-size: 13px; text-align: center; padding: 30px 0; }
+  .up-t { color: #4cd964; }
+  .down-t { color: #ff5a5f; }
+
   .foot { color: var(--muted); font-size: 12px; text-align: center; margin-top: 12px; line-height: 1.5; }
   .err { background: var(--red); border-radius: 6px; padding: 8px 10px; font-size: 14px; margin-bottom: 8px; display: none; }
 
@@ -93,14 +106,9 @@
     max-height: 92vh; overflow-y: auto; border-top: 3px solid var(--orange); }
   .sheet h3 { margin: 0 0 4px; font-size: 20px; }
   .sheet p { color: var(--muted); font-size: 13px; margin: 0 0 12px; line-height: 1.45; }
-  .sheet label { display: block; font-size: 13px; color: var(--orange); font-weight: 700; margin: 10px 0 4px; }
-  .sheet input { width: 100%; background: #000; color: #fff; border: 1px solid #444; border-radius: 6px;
-    padding: 10px; font-size: 18px; }
-  .sheet .hint { color: var(--muted); font-size: 12px; margin-top: 3px; }
   .sheet .actions { display: flex; gap: 8px; margin-top: 16px; }
   .sheet .actions button { flex: 1; padding: 12px; border-radius: 6px; border: 0; font-size: 16px; font-weight: 800; }
   .btn-ok { background: var(--orange); color: #000; }
-  .btn-cancel { background: #333; color: #fff; }
 </style>
 </head>
 <body>
@@ -114,8 +122,8 @@
 <div class="err" id="err"></div>
 
 <div class="grid2">
-  <div class="card edit" data-edit="conilon"><div class="t">CONILON 7/8</div><div class="v" id="fisConilon">—</div></div>
-  <div class="card edit" data-edit="arabica"><div class="t">ARÁBICA RIO</div><div class="v" id="fisArabica">—</div></div>
+  <div class="card"><div class="t">CONILON 7/8</div><div class="v" id="fisConilon">—</div></div>
+  <div class="card"><div class="t">ARÁBICA RIO</div><div class="v" id="fisArabica">—</div></div>
 </div>
 
 <div class="grid3">
@@ -127,6 +135,21 @@
 <div class="bar">
   <span>COTAÇÕES <small id="upd">carregando…</small></span>
   <button id="refresh">ATUALIZAR</button>
+</div>
+
+<h2>SEMANA</h2>
+<div class="sec-sub">Variação nos últimos 7 pregões</div>
+
+<div class="tabs" id="tabs">
+  <button data-s="conilon" class="on">CONILON</button>
+  <button data-s="arabica">ARÁBICA</button>
+  <button data-s="londres">LONDRES</button>
+  <button data-s="novaYork">N.YORK</button>
+  <button data-s="usd">DÓLAR</button>
+</div>
+<div class="chart">
+  <div class="top"><div class="now" id="chNow">—</div><div class="var" id="chVar"></div></div>
+  <div id="chBody"><div class="empty">carregando histórico…</div></div>
 </div>
 
 <h2>CHUVA</h2>
@@ -141,28 +164,7 @@
 
 <div class="foot">
   Cotações: ICE Futures (Londres / Nova York) e câmbio USD/BRL, com atraso de ~10 min.<br>
-  Previsão: Open-Meteo. Toque num preço físico para ajustar o diferencial.
-</div>
-
-<!-- Modal de ajuste -->
-<div class="modal" id="modal">
-  <div class="sheet">
-    <h3 id="mTitle">Ajustar</h3>
-    <p id="mDesc"></p>
-    <label id="lDiff">Diferencial</label>
-    <input id="iDiff" inputmode="decimal">
-    <div class="hint" id="hDiff"></div>
-    <label>Ou informe o preço físico de hoje (R$/saca)</label>
-    <input id="iFis" inputmode="decimal" placeholder="ex.: 893,22">
-    <div class="hint">O diferencial é recalculado a partir desse preço e da bolsa atual.</div>
-    <label id="lCtr">Contrato</label>
-    <input id="iCtr" autocapitalize="characters">
-    <div class="hint">Código TradingView, ex.: RCF2027 (Londres Jan/27) ou KCZ2026 (NY Dez/26).</div>
-    <div class="actions">
-      <button class="btn-cancel" id="mCancel">Cancelar</button>
-      <button class="btn-ok" id="mSave">Salvar</button>
-    </div>
-  </div>
+  Previsão: Open-Meteo. Preço físico = bolsa + diferencial definido pelo corretor.
 </div>
 
 <!-- Ajuda -->
@@ -177,7 +179,8 @@
       Bolsa em R$/saca = NY ÷ 100 × 132,277 × Dólar.<br><br>
       <b>Deságio:</b> diferença entre o preço físico e a bolsa convertida. É negativo quando o físico
       paga menos que a bolsa (qualidade inferior, frete, custo de exportação, oferta local).
-      Em pontos: Conilon em US$/t e Arábica em ¢/lb.
+      Em pontos: Conilon em US$/t e Arábica em ¢/lb. O diferencial é definido pelo corretor.<br><br>
+      <b>Contratos:</b> o app troca sozinho para o próximo vencimento a partir do dia 15 do mês anterior.
     </p>
     <div class="actions"><button class="btn-ok" id="helpClose">Fechar</button></div>
   </div>
@@ -192,13 +195,12 @@
   var MONTHS = { F: "Jan", G: "Fev", H: "Mar", J: "Abr", K: "Mai", M: "Jun",
                  N: "Jul", Q: "Ago", U: "Set", V: "Out", X: "Nov", Z: "Dez" };
 
-  // Padrões calibrados em 25/09/2026 (dólar 5,19 · Londres Jan27 3.304 · NY Dez26 280,35)
-  // para bater com Conilon 7/8 = R$ 942,00 e Arábica Rio = R$ 1.148,00.
-  var DEFAULTS = { diffConilon: -278.95, diffArabica: -113.13, ctrLdn: "RCF2027", ctrNy: "KCZ2026" };
-  // Ao mudar os padrões, incremente para substituir os valores já salvos no celular.
-  var CFG_VERSION = "2";
+  // Configuração central: config.json publicado no GitHub (o app não permite alterar).
+  // Estes valores só são usados se o config.json ainda não pôde ser lido.
+  var cfg = { diferencialConilon: -278.95, diferencialArabica: -113.13,
+              contratoLondres: "auto", contratoNovaYork: "auto", posicaoLondres: 2, posicaoNovaYork: 1 };
 
-  // ---------- armazenamento ----------
+  // ---------- armazenamento local (cache para abrir sem internet) ----------
   function load(k) {
     try { var v = window.Native ? Native.load(k) : localStorage.getItem(k); return v == null ? null : v; }
     catch (e) { return null; }
@@ -206,15 +208,43 @@
   function save(k, v) {
     try { if (window.Native) Native.save(k, String(v)); else localStorage.setItem(k, String(v)); } catch (e) {}
   }
-  if (load("cfgVersion") !== CFG_VERSION) {
-    Object.keys(DEFAULTS).forEach(function (k) { save(k, DEFAULTS[k]); });
-    save("cfgVersion", CFG_VERSION);
+  try { var cc = load("config"); if (cc) cfg = Object.assign(cfg, JSON.parse(cc)); } catch (e) {}
+
+  // Busca um arquivo do próprio site, sempre a versão mais nova.
+  function siteJson(name) {
+    return fetch(name + "?t=" + Date.now(), { cache: "no-store" }).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    });
   }
-  var cfg = {};
-  Object.keys(DEFAULTS).forEach(function (k) {
-    var v = load(k);
-    cfg[k] = v == null ? DEFAULTS[k] : (typeof DEFAULTS[k] === "number" ? parseFloat(v) : v);
-  });
+
+  // ---------- troca automática de contrato ----------
+  // Um vencimento fica ativo até o dia 15 do mês anterior (antes do aviso de entrega).
+  // Mesma regra do scripts/historico.py.
+  var MERCADOS = {
+    londres: { raiz: "RC", meses: [1, 3, 5, 7, 9, 11] },
+    novaYork: { raiz: "KC", meses: [3, 5, 7, 9, 12] }
+  };
+  var CODIGOS = { 1: "F", 3: "H", 5: "K", 7: "N", 9: "U", 11: "X", 12: "Z" };
+
+  function contratosAtivos(m) {
+    var hoje = new Date(), lista = [];
+    hoje.setHours(0, 0, 0, 0);
+    for (var ano = hoje.getFullYear(); ano <= hoje.getFullYear() + 2; ano++) {
+      m.meses.forEach(function (mes) {
+        if (hoje < new Date(ano, mes - 2, 15)) lista.push(m.raiz + CODIGOS[mes] + ano);
+      });
+    }
+    return lista;
+  }
+  // Devolve [contrato escolhido, próximo]: o próximo é reserva caso o escolhido não tenha cotação.
+  function candidatos(nome) {
+    var ldn = nome === "londres";
+    var manual = String(cfg[ldn ? "contratoLondres" : "contratoNovaYork"] || "auto").trim().toUpperCase();
+    if (manual && manual !== "AUTO") return [manual];
+    var i = Math.max(0, (parseInt(cfg[ldn ? "posicaoLondres" : "posicaoNovaYork"], 10) || 1) - 1);
+    return contratosAtivos(MERCADOS[nome]).slice(i, i + 2);
+  }
 
   // ---------- HTTP (via Java para evitar CORS; fetch no navegador para testes) ----------
   var cbs = {}, seq = 0;
@@ -293,6 +323,9 @@
     el.querySelector(".d").textContent = bottom;
   }
 
+  function fisicoConilon(ldn, usd) { return (ldn + Number(cfg.diferencialConilon)) * T_PER_SACA * usd; }
+  function fisicoArabica(ny, usd) { return (ny + Number(cfg.diferencialArabica)) / 100 * LB_PER_SACA * usd; }
+
   // ---------- estado ----------
   var last = null;  // { usd, ldn, ny, qUsd, qLdn, qNy }
 
@@ -300,16 +333,16 @@
     if (!last) return;
     // Dólar arredondado a 2 casas, tanto na tela quanto no cálculo da saca.
     var usd = Math.round(last.usd * 100) / 100, ldn = last.ldn, ny = last.ny;
-    var fisCon = (ldn + cfg.diffConilon) * T_PER_SACA * usd;
-    var fisAra = (ny + cfg.diffArabica) / 100 * LB_PER_SACA * usd;
+    var fisCon = fisicoConilon(ldn, usd);
+    var fisAra = fisicoArabica(ny, usd);
 
     $("fisConilon").textContent = fmt(fisCon, 2);
     $("fisArabica").textContent = fmt(fisAra, 2);
 
     paintMkt($("mUsd"), last.qUsd, fmt(usd, 2), ddmm(last.qUsd.time) + "/" + new Date().getFullYear());
-    paintMkt($("mLdn"), last.qLdn, fmt(ldn, 0), ctrLabel(cfg.ctrLdn) + " - " + ddmm(last.qLdn.time));
-    paintMkt($("mNy"), last.qNy, fmt(ny, 2), ctrLabel(cfg.ctrNy) + " - " + ddmm(last.qNy.time));
-
+    paintMkt($("mLdn"), last.qLdn, fmt(ldn, 0), ctrLabel(last.ctrLdn) + " - " + ddmm(last.qLdn.time));
+    paintMkt($("mNy"), last.qNy, fmt(ny, 2), ctrLabel(last.ctrNy) + " - " + ddmm(last.qNy.time));
+    renderChart();
   }
 
   var loading = false;
@@ -317,14 +350,24 @@
     if (loading) return;
     loading = true;
     $("upd").textContent = "atualizando…";
-    var tLdn = "ICEEUR:" + cfg.ctrLdn, tNy = "ICEUS:" + cfg.ctrNy, tUsd = "FX_IDC:USDBRL";
-    Promise.all([scan("futures", [tLdn, tNy]), scan("forex", [tUsd])]).then(function (r) {
+    var tUsd = "FX_IDC:USDBRL", cLdn, cNy;
+    siteJson("config.json").then(function (c) {
+      cfg = Object.assign(cfg, c);
+      save("config", JSON.stringify(c));
+    }).catch(function () { /* sem config nova: usa a última salva */ }).then(function () {
+      cLdn = candidatos("londres"); cNy = candidatos("novaYork");
+      var tickers = cLdn.map(function (c) { return "ICEEUR:" + c; }).concat(cNy.map(function (c) { return "ICEUS:" + c; }));
+      return Promise.all([scan("futures", tickers), scan("forex", [tUsd])]);
+    }).then(function (r) {
       var f = r[0], fx = r[1];
-      if (!f[tLdn]) throw new Error("Contrato de Londres não encontrado: " + cfg.ctrLdn);
-      if (!f[tNy]) throw new Error("Contrato de NY não encontrado: " + cfg.ctrNy);
+      var ctrLdn = cLdn.filter(function (c) { return f["ICEEUR:" + c]; })[0];
+      var ctrNy = cNy.filter(function (c) { return f["ICEUS:" + c]; })[0];
+      if (!ctrLdn) throw new Error("Contrato de Londres sem cotação: " + cLdn.join(", "));
+      if (!ctrNy) throw new Error("Contrato de NY sem cotação: " + cNy.join(", "));
       if (!fx[tUsd]) throw new Error("Cotação do dólar indisponível");
-      last = { usd: fx[tUsd].close, ldn: f[tLdn].close, ny: f[tNy].close,
-               qUsd: fx[tUsd], qLdn: f[tLdn], qNy: f[tNy] };
+      var qLdn = f["ICEEUR:" + ctrLdn], qNy = f["ICEUS:" + ctrNy];
+      last = { usd: fx[tUsd].close, ldn: qLdn.close, ny: qNy.close,
+               qUsd: fx[tUsd], qLdn: qLdn, qNy: qNy, ctrLdn: ctrLdn, ctrNy: ctrNy };
       save("last", JSON.stringify(last));
       $("err").style.display = "none";
       var now = new Date();
@@ -337,57 +380,9 @@
     }).then(function () { loading = false; });
   }
 
-  // ---------- modal de ajuste ----------
-  var editing = null;
-  function parseBR(s) { return parseFloat(String(s).trim().replace(/\./g, "").replace(",", ".")); }
-
-  document.querySelectorAll("[data-edit]").forEach(function (el) {
-    el.addEventListener("click", function () {
-      editing = el.getAttribute("data-edit");
-      var isCon = editing === "conilon";
-      $("mTitle").textContent = isCon ? "Conilon 7/8" : "Arábica Rio";
-      $("mDesc").textContent = isCon
-        ? "Preço físico = (Londres + diferencial) × 0,06 × Dólar."
-        : "Preço físico = (NY + diferencial) ÷ 100 × 132,277 × Dólar.";
-      $("lDiff").textContent = isCon ? "Diferencial (US$/t)" : "Diferencial (¢/lb)";
-      $("hDiff").textContent = "Negativo = deságio. Padrão: " + (isCon ? "−278,95" : "−113,13") + ".";
-      $("iDiff").value = String(isCon ? cfg.diffConilon : cfg.diffArabica).replace(".", ",");
-      $("iFis").value = "";
-      $("lCtr").textContent = isCon ? "Contrato de Londres" : "Contrato de Nova York";
-      $("iCtr").value = isCon ? cfg.ctrLdn : cfg.ctrNy;
-      $("modal").classList.add("open");
-    });
-  });
-
-  $("mCancel").onclick = function () { $("modal").classList.remove("open"); };
-  $("mSave").onclick = function () {
-    var isCon = editing === "conilon";
-    var diff = parseFloat(String($("iDiff").value).replace(",", "."));
-    var fis = parseBR($("iFis").value);
-    if (!isNaN(fis) && fis > 0 && last) {
-      diff = isCon ? fis / (T_PER_SACA * last.usd) - last.ldn
-                   : fis / (LB_PER_SACA * last.usd) * 100 - last.ny;
-    }
-    var ctr = $("iCtr").value.trim().toUpperCase();
-    if (!isNaN(diff)) {
-      diff = Math.round(diff * 100) / 100;
-      if (isCon) { cfg.diffConilon = diff; save("diffConilon", diff); }
-      else { cfg.diffArabica = diff; save("diffArabica", diff); }
-    }
-    var ctrChanged = false;
-    if (ctr) {
-      var key = isCon ? "ctrLdn" : "ctrNy";
-      ctrChanged = cfg[key] !== ctr;
-      cfg[key] = ctr; save(key, ctr);
-    }
-    $("modal").classList.remove("open");
-    render();
-    if (ctrChanged) refresh();
-  };
-
   $("help").onclick = function () { $("helpModal").classList.add("open"); };
   $("helpClose").onclick = function () { $("helpModal").classList.remove("open"); };
-  $("refresh").onclick = function () { refresh(); refreshWeather(true); };
+  $("refresh").onclick = function () { refresh(); refreshWeather(true); refreshHist(true); };
 
   // ---------- previsão de chuva (Itamaraju-BA) ----------
   var WEATHER_URL = "https://api.open-meteo.com/v1/forecast?latitude=-17.0392&longitude=-39.5311" +
@@ -445,10 +440,105 @@
     });
   }
 
+  // ---------- gráfico da semana ----------
+  var hist = null, serie = "conilon", lastHistFetch = 0;
+  var SERIES = {
+    conilon: function (v) { return "R$ " + fmt(v, 2); },
+    arabica: function (v) { return "R$ " + fmt(v, 2); },
+    londres: function (v) { return fmt(v, 0) + " US$/t"; },
+    novaYork: function (v) { return fmt(v, 2) + " ¢/lb"; },
+    usd: function (v) { return "R$ " + fmt(v, 2); }
+  };
+
+  function valor(nome, d) {
+    var usd = Math.round(d.usd * 100) / 100;
+    if (nome === "conilon") return fisicoConilon(d.londres, usd);
+    if (nome === "arabica") return fisicoArabica(d.novaYork, usd);
+    if (nome === "usd") return usd;
+    return d[nome];
+  }
+
+  function hojeISO() {
+    var n = new Date();
+    return n.getFullYear() + "-" + String(n.getMonth() + 1).padStart(2, "0") + "-" + String(n.getDate()).padStart(2, "0");
+  }
+
+  // Últimos 7 pregões: histórico publicado + cotação ao vivo de hoje (dias úteis).
+  function pontos() {
+    var dias = hist && hist.dias ? hist.dias.slice() : [];
+    if (last && last.ctrLdn) {
+      var hoje = hojeISO(), vivo = { data: hoje, usd: last.usd, londres: last.ldn, novaYork: last.ny };
+      var dow = new Date().getDay();
+      if (dias.length && dias[dias.length - 1].data === hoje) dias[dias.length - 1] = vivo;
+      else if (dow !== 0 && dow !== 6) dias.push(vivo);
+    }
+    return dias.slice(-7).map(function (d) { return { data: d.data, v: valor(serie, d) }; });
+  }
+
+  function renderChart() {
+    var p = pontos(), body = $("chBody");
+    if (p.length < 2) { body.innerHTML = '<div class="empty">histórico indisponível no momento</div>'; return; }
+    var first = p[0].v, lastV = p[p.length - 1].v, varPct = (lastV / first - 1) * 100;
+    var up = varPct >= 0, color = up ? "#4cd964" : "#ff5a5f";
+    $("chNow").textContent = SERIES[serie](lastV);
+    $("chVar").innerHTML = '<span class="' + (up ? "up-t" : "down-t") + '">' + (up ? "▲ +" : "▼ −") +
+      fmt(Math.abs(varPct), 2) + '%</span><small>desde ' + p[0].data.slice(8, 10) + "/" + p[0].data.slice(5, 7) + '</small>';
+
+    var W = 340, H = 150, L = 8, R = 8, T = 18, B = 22;
+    var vals = p.map(function (x) { return x.v; });
+    var vMax = Math.max.apply(null, vals), vMin = Math.min.apply(null, vals);
+    var pad = (vMax - vMin) * 0.15 || Math.abs(vMax) * 0.01 || 1;
+    var min = vMin - pad, max = vMax + pad;
+    var X = function (i) { return L + i * (W - L - R) / (p.length - 1); };
+    var Y = function (v) { return T + (max - v) / (max - min) * (H - T - B); };
+    var line = p.map(function (x, i) { return (i ? "L" : "M") + X(i).toFixed(1) + "," + Y(x.v).toFixed(1); }).join(" ");
+    var area = line + " L" + X(p.length - 1).toFixed(1) + "," + (H - B) + " L" + X(0).toFixed(1) + "," + (H - B) + " Z";
+    var svg = '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Gráfico da semana">' +
+      '<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + color +
+      '" stop-opacity=".35"/><stop offset="1" stop-color="' + color + '" stop-opacity="0"/></linearGradient></defs>' +
+      '<path d="' + area + '" fill="url(#g)"/>' +
+      '<path d="' + line + '" fill="none" stroke="' + color + '" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>';
+    var iMax = vals.indexOf(vMax), iMin = vals.indexOf(vMin);
+    p.forEach(function (x, i) {
+      var cx = X(i), cy = Y(x.v), lastPt = i === p.length - 1;
+      var anchor = i === 0 ? "start" : lastPt ? "end" : "middle";
+      svg += '<circle cx="' + cx.toFixed(1) + '" cy="' + cy.toFixed(1) + '" r="' + (lastPt ? 4 : 2.5) +
+        '" fill="' + (lastPt ? color : "#fff") + '"/>';
+      svg += '<text x="' + cx.toFixed(1) + '" y="' + (H - 6) + '" fill="#b8b8bd" font-size="10" text-anchor="' + anchor + '">' +
+        x.data.slice(8, 10) + "/" + x.data.slice(5, 7) + '</text>';
+      if (i === iMax || i === iMin) {
+        var ty = i === iMax ? cy - 7 : cy + 14;
+        svg += '<text x="' + cx.toFixed(1) + '" y="' + ty.toFixed(1) + '" fill="#fff" font-size="10" font-weight="700" text-anchor="' +
+          anchor + '">' + fmt(x.v, serie === "londres" ? 0 : 2) + '</text>';
+      }
+    });
+    body.innerHTML = svg + "</svg>";
+  }
+
+  function refreshHist(force) {
+    // O histórico é regerado de hora em hora pelo GitHub.
+    if (!force && Date.now() - lastHistFetch < 30 * 60000) return;
+    lastHistFetch = Date.now();
+    siteJson("historico.json").then(function (h) {
+      hist = h;
+      save("hist", JSON.stringify(h));
+      renderChart();
+    }).catch(function () { lastHistFetch = 0; renderChart(); });
+  }
+
+  document.querySelectorAll("#tabs button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      serie = b.getAttribute("data-s");
+      document.querySelectorAll("#tabs button").forEach(function (x) { x.classList.toggle("on", x === b); });
+      renderChart();
+    });
+  });
+
   // ---------- inicialização ----------
+  try { var ch = load("hist"); if (ch) hist = JSON.parse(ch); } catch (e) {}
   try { var cached = load("last"); if (cached) { last = JSON.parse(cached); render(); } } catch (e) {}
   try { var cw = load("weather"); if (cw) renderWeather(JSON.parse(cw)); } catch (e) {}
-  window.onAppResume = function () { refresh(); refreshWeather(false); };
+  window.onAppResume = function () { refresh(); refreshWeather(false); refreshHist(false); };
   // No navegador/iPhone: atualiza ao voltar para o app.
   document.addEventListener("visibilitychange", function () { if (!document.hidden) window.onAppResume(); });
   if ("serviceWorker" in navigator && /^https?:/.test(location.protocol)) {
@@ -456,7 +546,8 @@
   }
   refresh();
   refreshWeather(true);
-  setInterval(function () { if (!document.hidden) { refresh(); refreshWeather(false); } }, 60000);
+  refreshHist(true);
+  setInterval(function () { if (!document.hidden) { refresh(); refreshWeather(false); refreshHist(false); } }, 60000);
 })();
 </script>
 </body>

@@ -3,3 +3,5 @@ local.properties
 .gradle/
 *.iml
 .idea/
+# gerado pelo GitHub Actions (scripts/historico.py)
+app/src/main/assets/historico.json
