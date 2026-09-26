@@ -1,0 +1,26 @@
+# Conferência diária do Conilon: app × preço principal do cotacaodocafe.com (Cepea).
+# Se houver diferença, a execução falha e o GitHub avisa por e-mail. Se estiver tudo certo,
+# não acontece nada.
+name: Conferência do Conilon
+
+on:
+  schedule:
+    - cron: "30 1 * * 2-6"   # 22:30 (horário de Brasília), seg a sex — depois do Cepea do dia
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write   # manter o agendamento ativo (keepalive)
+
+jobs:
+  conferir:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Comparar app e cotacaodocafe.com
+        run: cd scripts && python conferencia.py
+      - uses: liskin/gh-workflow-keepalive@v1
+        if: ${{ !cancelled() }}

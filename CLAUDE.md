@@ -18,6 +18,8 @@ português e não é programador: responda em português, com passos simples.
 - `scripts/historico.py` (no workflow): fechamentos diários, indicador Cepea/Esalq do
   Conilon e a calibração do preço → `historico.json` (gerado, não versionado).
 - `scripts/noticias.py` (no workflow): notícias do Google Notícias → `noticias.json`.
+- `.github/workflows/conferencia.yml` + `scripts/conferencia.py`: todo dia útil às 22h30 confere
+  o Cepea do app × preço principal do cotacaodocafe.com; se divergir, falha e o GitHub avisa por e-mail.
 - Chuva: Open-Meteo (cidade escolhida pelo usuário, padrão Itamaraju-BA).
 - `app/src/main/assets/config.json`: ajuste do Conilon sobre o Cepea (hoje 0), regra de
   contratos e limite dos alertas (`alertaVariacaoPct`).
