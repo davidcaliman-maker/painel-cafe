@@ -68,6 +68,7 @@ public class MainActivity extends Activity {
         });
         setContentView(web);
         web.loadUrl(SITE);
+        AlertaService.agendar(this);  // alertas de forte alta/baixa em segundo plano
     }
 
     private void openExternal(String url) {
@@ -125,6 +126,17 @@ public class MainActivity extends Activity {
             runOnUiThread(() -> openExternal(url));
         }
 
+        /** Botão "Testar alerta" (tela de ajuda): mostra uma notificação com o preço de agora. */
+        @JavascriptInterface
+        public void testarAlerta() {
+            new Thread(() -> {
+                try {
+                    AlertaService.verificar(getApplicationContext(), true);
+                } catch (Exception ignored) {
+                }
+            }).start();
+        }
+
         @JavascriptInterface
         public String load(String key) {
             return prefs.getString(key, null);
@@ -137,7 +149,7 @@ public class MainActivity extends Activity {
     }
 
     /** GET quando body é null; senão POST com JSON. */
-    private static String http(String url, String body) throws Exception {
+    static String http(String url, String body) throws Exception {
         HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
         c.setConnectTimeout(30000);
         c.setReadTimeout(30000);

@@ -128,6 +128,7 @@
   .sheet .actions { display: flex; gap: 8px; margin-top: 16px; }
   .sheet .actions button { flex: 1; padding: 12px; border-radius: 6px; border: 0; font-size: 16px; font-weight: 800; }
   .btn-ok { background: var(--orange); color: #000; }
+  .btn-cancel { background: #333; color: #fff; }
 </style>
 </head>
 <body>
@@ -211,7 +212,14 @@
       <b>Contratos:</b> o app troca sozinho para o próximo vencimento a partir do dia 15 do mês
       anterior, sem salto no preço do Conilon.
     </p>
-    <div class="actions"><button class="btn-ok" id="helpClose">Fechar</button></div>
+    <p id="alertaInfo" style="display:none">
+      <b>Alertas:</b> o app avisa com uma notificação quando o Conilon tem FORTE ALTA ou FORTE BAIXA
+      no dia, mesmo com o app fechado.
+    </p>
+    <div class="actions">
+      <button class="btn-cancel" id="testarAlerta" style="display:none">Testar alerta</button>
+      <button class="btn-ok" id="helpClose">Fechar</button>
+    </div>
   </div>
 </div>
 
@@ -469,6 +477,15 @@
 
   $("help").onclick = function () { $("helpModal").classList.add("open"); };
   $("helpClose").onclick = function () { $("helpModal").classList.remove("open"); };
+  // Alertas existem só no app Android (versão 3.0+), que expõe Native.testarAlerta.
+  if (window.Native && Native.testarAlerta) {
+    $("alertaInfo").style.display = "block";
+    $("testarAlerta").style.display = "block";
+    $("testarAlerta").onclick = function () {
+      Native.testarAlerta();
+      this.textContent = "Alerta enviado ✓";
+    };
+  }
   $("refresh").onclick = function () { refresh(true); refreshWeather(true); };
 
   // ---------- previsão de chuva (Itamaraju-BA) ----------

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ícone da barra de notificações: grão de café (branco, como o Android exige) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <group android:rotation="35" android:pivotX="12" android:pivotY="12">
+        <path android:fillColor="#FFFFFFFF"
+            android:pathData="M12,1.5a7.2,10.5 0 1,0 0.01,0zM12.9,3.2c-2.6,2.9 -2.6,5.6 0,8.8s2.6,5.9 0,8.8l-1.8,0c2.6,-2.9 2.6,-5.6 0,-8.8s-2.6,-5.9 0,-8.8z" />
+    </group>
+</vector>
