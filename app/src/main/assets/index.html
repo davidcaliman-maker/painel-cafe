@@ -19,9 +19,39 @@
     --card-2: #2a2a2d;
     --text: #fff;
     --muted: #b8b8bd;
-    --orange: #f5a623;
+    --orange: #f5a623;       /* cor de destaque do tema */
+    --on-accent: #000;       /* texto sobre a cor de destaque */
+    --line: #333;
+    --line-2: #3a3a3d;
+    --hero-a: #26262a;
+    --hero-b: #18181a;
+    --hero-border: #2f2f33;
+    --reg-bg: #2b2519;
+    --tabbar: #0d0d0e;
+    --tabbar-line: #2c2c2f;
+    --sheet: #161618;
+    --mkt-neutro: #444;
     --red: #c4161c;
     --green: #1f8f3a;
+  }
+  /* Tema rosa (botão no canto superior direito) */
+  html[data-tema="rosa"] {
+    --bg: #1a0c15;
+    --card: #2a1422;
+    --card-2: #33192a;
+    --muted: #e0b6cb;
+    --orange: #ff5fa2;
+    --on-accent: #fff;
+    --line: #4a2a3c;
+    --line-2: #4f2c40;
+    --hero-a: #3a1a2d;
+    --hero-b: #220f1b;
+    --hero-border: #5a2a45;
+    --reg-bg: #3d1830;
+    --tabbar: #140810;
+    --tabbar-line: #3a1c2f;
+    --sheet: #22101b;
+    --mkt-neutro: #5a3a4c;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; background: var(--bg); color: var(--text);
@@ -33,7 +63,7 @@
   .brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px 6px; }
   .logo { display: flex; align-items: flex-end; gap: 1px; }
   .logo .bean { width: min(38px, 8.5vw); height: min(38px, 8.5vw); }
-  .brand h1 { margin: 0; white-space: nowrap; line-height: 1.05; font-size: min(34px, 7.2vw); font-weight: 800; letter-spacing: .5px; }
+  .brand h1 { margin: 0; white-space: nowrap; line-height: 1.05; font-size: min(32px, 6.5vw); font-weight: 800; letter-spacing: .5px; }
   .sub { display: flex; justify-content: space-between; align-items: center;
     color: var(--orange); font-weight: 700; font-size: min(17px, 4.1vw); padding: 0 8px 6px; white-space: nowrap; }
   .sub button { background: none; border: 0; color: var(--orange); font-size: 22px; font-weight: 700; padding: 0 4px; }
@@ -41,7 +71,7 @@
   .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 8px; }
 
   /* Destaque do Conilon: a informação principal do app */
-  .hero { background: linear-gradient(165deg, #26262a 0%, #18181a 100%); border: 1px solid #2f2f33;
+  .hero { background: linear-gradient(165deg, var(--hero-a) 0%, var(--hero-b) 100%); border: 1px solid var(--hero-border);
     border-top: 3px solid var(--orange); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; }
   .hero-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
   .hero-t { display: block; font-size: 19px; font-weight: 800; letter-spacing: .5px; }
@@ -58,13 +88,13 @@
   .hero-var small { display: block; color: var(--muted); font-size: 11px; margin-top: 5px; font-variant-numeric: tabular-nums; }
   .badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; white-space: nowrap;
     border-radius: 12px; font-size: 11px; font-weight: 800; letter-spacing: 1px; }
-  .badge.live { background: var(--orange); color: #000; }
-  .badge.live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #000;
+  .badge.live { background: var(--orange); color: var(--on-accent); }
+  .badge.live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--on-accent);
     animation: pisca 1.4s ease-in-out infinite; }
-  .badge.close { background: #3a3a3d; color: #fff; }
+  .badge.close { background: var(--line-2); color: #fff; }
   @keyframes pisca { 50% { opacity: .25; } }
 
-  .mkt { overflow: hidden; border-radius: 6px; padding: 6px 4px 8px; text-align: center; background: #444; }
+  .mkt { overflow: hidden; border-radius: 6px; padding: 6px 4px 8px; text-align: center; background: var(--mkt-neutro); }
   .mkt.down { background: var(--red); }
   .mkt.up { background: var(--green); }
   .mkt .h { display: flex; justify-content: space-between; gap: 2px; font-size: min(14px, 3.15vw); font-weight: 600; white-space: nowrap; }
@@ -75,7 +105,7 @@
     justify-content: space-between; padding: 8px 12px; margin-bottom: 14px; }
   .bar span { font-weight: 800; letter-spacing: 3px; font-size: 18px; }
   .bar small { color: var(--muted); font-size: 12px; letter-spacing: 0; font-weight: 500; }
-  .bar button { background: var(--orange); color: #000; border: 0; border-radius: 4px;
+  .bar button { background: var(--orange); color: var(--on-accent); border: 0; border-radius: 4px;
     font-weight: 800; font-size: 13px; padding: 7px 10px; letter-spacing: 1px; }
 
   h2 { font-size: 36px; font-weight: 800; margin: 4px 2px 0; }
@@ -87,14 +117,14 @@
   .rain-total b { font-size: 30px; font-weight: 800; color: #5ac8fa; font-variant-numeric: tabular-nums; }
   .rain-list { background: var(--card-2); border-radius: 6px; padding: 4px 10px; }
   .day { display: grid; grid-template-columns: 74px 28px 1fr 64px; align-items: center; gap: 6px;
-    padding: 9px 0; border-bottom: 1px solid #3a3a3d; font-size: 15px; }
+    padding: 9px 0; border-bottom: 1px solid var(--line-2); font-size: 15px; }
   .day:last-child { border-bottom: 0; }
   .day .dt b { display: block; font-size: 15px; }
   .day .dt small { color: var(--muted); font-size: 12px; }
   .day .ic { font-size: 20px; text-align: center; }
   .day .mid { display: flex; flex-direction: column; gap: 4px; }
   .day .info { color: var(--muted); font-size: 12px; }
-  .day .track { height: 6px; background: #3a3a3d; border-radius: 3px; overflow: hidden; }
+  .day .track { height: 6px; background: var(--line-2); border-radius: 3px; overflow: hidden; }
   .day .fill { height: 100%; background: #5ac8fa; border-radius: 3px; }
   .day .mm { text-align: right; font-weight: 700; font-size: 17px; font-variant-numeric: tabular-nums; }
   .day .mm.zero { color: var(--muted); font-weight: 500; }
@@ -102,9 +132,9 @@
 
   /* Gráfico da semana */
   .tabs { display: flex; gap: 4px; margin-bottom: 6px; overflow-x: auto; }
-  .tabs button { flex: 1; background: var(--card); color: var(--muted); border: 1px solid #333; border-radius: 5px;
+  .tabs button { flex: 1; background: var(--card); color: var(--muted); border: 1px solid var(--line); border-radius: 5px;
     font-size: 12px; font-weight: 700; padding: 7px 2px; white-space: nowrap; }
-  .tabs button.on { background: var(--orange); color: #000; border-color: var(--orange); }
+  .tabs button.on { background: var(--orange); color: var(--on-accent); border-color: var(--orange); }
   .chart { background: var(--card-2); border-radius: 6px; padding: 10px 10px 6px; margin-bottom: 14px; }
   .chart .top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
   .chart .now { font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; }
@@ -115,10 +145,17 @@
   .up-t { color: #4cd964; }
   .down-t { color: #ff5a5f; }
 
+  /* Botão do tema rosa */
+  .tema-btn { margin-left: auto; flex: none; width: min(44px, 11vw); height: min(44px, 11vw); padding: 0;
+    border-radius: 50%; border: 2px solid #ff5fa2; background: transparent; display: flex;
+    align-items: center; justify-content: center; transition: background .2s; }
+  .tema-btn svg { width: 86%; height: 86%; }
+  html[data-tema="rosa"] .tema-btn { background: #fff; box-shadow: 0 0 0 3px rgba(255, 95, 162, .45); }
+
   /* Barra de abas (rodapé) */
   body { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
   .tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; display: flex;
-    background: #0d0d0e; border-top: 1px solid #2c2c2f; padding-bottom: env(safe-area-inset-bottom); }
+    background: var(--tabbar); border-top: 1px solid var(--tabbar-line); padding-bottom: env(safe-area-inset-bottom); }
   .tabbar button { flex: 1; background: none; border: 0; color: var(--muted); padding: 8px 0 9px;
     display: flex; flex-direction: column; align-items: center; gap: 3px;
     font-size: 11px; font-weight: 800; letter-spacing: 1px; }
@@ -133,19 +170,19 @@
   .news-h.reg { color: var(--orange); }
   .news { display: block; background: var(--card-2); border-radius: 8px; padding: 10px 12px 9px; margin-bottom: 7px;
     color: var(--text); text-decoration: none; border-left: 4px solid transparent; }
-  .news.reg { background: #2b2519; border-left-color: var(--orange); }
+  .news.reg { background: var(--reg-bg); border-left-color: var(--orange); }
   .news b { display: block; font-size: 15.5px; font-weight: 700; line-height: 1.3; margin: 5px 0 5px; }
   .news small { color: var(--muted); font-size: 12px; }
   .tag { display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: 1px; padding: 2px 7px;
-    border-radius: 4px; text-transform: uppercase; background: #3a3a3d; color: #fff; }
+    border-radius: 4px; text-transform: uppercase; background: var(--line-2); color: #fff; }
   .tag.Clima { background: #0a84ff; } .tag.Safra { background: #1f8f3a; } .tag.Logística { background: #8e44ad; }
   .tag.Geopolítica { background: #c4161c; } .tag.Concorrentes { background: #b8860b; }
-  .tag.Consumo { background: #d35400; } .tag.Regional { background: var(--orange); color: #000; }
+  .tag.Consumo { background: #d35400; } .tag.Regional { background: var(--orange); color: var(--on-accent); }
   .chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin: 0 -2px; scrollbar-width: none; }
   .chips::-webkit-scrollbar { display: none; }
-  .chips button { flex: none; background: var(--card); color: var(--muted); border: 1px solid #333;
+  .chips button { flex: none; background: var(--card); color: var(--muted); border: 1px solid var(--line);
     border-radius: 16px; padding: 6px 12px; font-size: 12px; font-weight: 700; }
-  .chips button.on { background: var(--orange); color: #000; border-color: var(--orange); }
+  .chips button.on { background: var(--orange); color: var(--on-accent); border-color: var(--orange); }
   .news-empty { color: var(--muted); font-size: 13px; padding: 14px 4px; }
 
   .foot { color: var(--muted); font-size: 12px; text-align: center; margin-top: 12px; line-height: 1.5; }
@@ -154,21 +191,50 @@
   /* Modal */
   .modal { position: fixed; inset: 0; background: rgba(0,0,0,.75); display: none; align-items: flex-end; z-index: 10; }
   .modal.open { display: flex; }
-  .sheet { background: #161618; width: 100%; border-radius: 14px 14px 0 0; padding: 16px 16px 22px;
+  .sheet { background: var(--sheet); width: 100%; border-radius: 14px 14px 0 0; padding: 16px 16px 22px;
     max-height: 92vh; overflow-y: auto; border-top: 3px solid var(--orange); }
   .sheet h3 { margin: 0 0 4px; font-size: 20px; }
   .sheet p { color: var(--muted); font-size: 13px; margin: 0 0 12px; line-height: 1.45; }
   .sheet .actions { display: flex; gap: 8px; margin-top: 16px; }
   .sheet .actions button { flex: 1; padding: 12px; border-radius: 6px; border: 0; font-size: 16px; font-weight: 800; }
-  .btn-ok { background: var(--orange); color: #000; }
-  .btn-cancel { background: #333; color: #fff; }
+  .btn-ok { background: var(--orange); color: var(--on-accent); }
+  .btn-cancel { background: var(--line); color: #fff; }
 </style>
+<script>
+  // Aplica o tema salvo antes de desenhar a tela (evita piscar a cor padrão).
+  try {
+    var t = window.Native ? Native.load("tema") : localStorage.getItem("tema");
+    if (t === "rosa") document.documentElement.setAttribute("data-tema", "rosa");
+  } catch (e) {}
+</script>
 </head>
 <body>
 
 <div class="brand">
-  <div class="logo"><svg class="bean" viewBox="0 0 24 24" aria-hidden="true"><g transform="rotate(35 12 12)"><ellipse cx="12" cy="12" rx="7.2" ry="10.5" fill="#F5A623"/><path d="M12 1.8c-3.2 3.4-3.2 6.6 0 10.2s3.2 6.8 0 10.2" stroke="#000" stroke-width="1.7" fill="none" stroke-linecap="round"/></g></svg></div>
+  <div class="logo"><svg class="bean" viewBox="0 0 24 24" aria-hidden="true"><g transform="rotate(35 12 12)"><ellipse cx="12" cy="12" rx="7.2" ry="10.5" fill="var(--orange)"/><path d="M12 1.8c-3.2 3.4-3.2 6.6 0 10.2s3.2 6.8 0 10.2" stroke="#000" stroke-width="1.7" fill="none" stroke-linecap="round"/></g></svg></div>
   <h1>PAINEL DO AGRO</h1>
+  <button class="tema-btn" id="temaBtn" aria-label="Tema rosa" aria-pressed="false" title="Tema rosa">
+    <!-- Rosto de mulher com chapéu -->
+    <svg viewBox="5 6 38 37" aria-hidden="true">
+      <!-- cabelo -->
+      <path d="M12.5 21c-1.6 6.5-1 13.5 2.6 19.5 1.4-1 2.1-2.6 2.4-4.4 1.4 1.8 3.5 2.9 6.5 2.9s5.1-1.1 6.5-2.9c.3 1.8 1 3.4 2.4 4.4 3.6-6 4.2-13 2.6-19.5z" fill="#c2185b"/>
+      <!-- rosto -->
+      <ellipse cx="24" cy="28" rx="8.6" ry="9.6" fill="#ffd1e3"/>
+      <!-- olhos e sorriso -->
+      <circle cx="20.6" cy="27" r="1.2" fill="#8e1049"/>
+      <circle cx="27.4" cy="27" r="1.2" fill="#8e1049"/>
+      <path d="M20.8 31.6c1.8 1.6 4.6 1.6 6.4 0" stroke="#8e1049" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <!-- bochechas -->
+      <circle cx="18.6" cy="30.4" r="1.5" fill="#ff8fbf" opacity=".8"/>
+      <circle cx="29.4" cy="30.4" r="1.5" fill="#ff8fbf" opacity=".8"/>
+      <!-- chapéu: copa, fita, aba e flor -->
+      <path d="M15 19.5c0-6.8 4-10.5 9-10.5s9 3.7 9 10.5z" fill="#ff5fa2"/>
+      <path d="M15.2 17h17.6v2.6H15.2z" fill="#c2185b"/>
+      <ellipse cx="24" cy="20" rx="17" ry="3.6" fill="#ff5fa2"/>
+      <circle cx="30.5" cy="15.2" r="2.2" fill="#ffd1e3"/>
+      <circle cx="30.5" cy="15.2" r="0.9" fill="#c2185b"/>
+    </svg>
+  </button>
 </div>
 <div class="sub">Indicadores Técnicos do Mercado Físico <button id="help">?</button></div>
 
@@ -715,6 +781,22 @@
       renderChart();
     });
   });
+
+  // ---------- tema rosa ----------
+  function aplicarTema(rosa) {
+    if (rosa) document.documentElement.setAttribute("data-tema", "rosa");
+    else document.documentElement.removeAttribute("data-tema");
+    $("temaBtn").setAttribute("aria-pressed", rosa ? "true" : "false");
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", rosa ? "#1a0c15" : "#000000");
+    renderChart();
+  }
+  $("temaBtn").onclick = function () {
+    var rosa = document.documentElement.getAttribute("data-tema") !== "rosa";
+    save("tema", rosa ? "rosa" : "padrao");
+    aplicarTema(rosa);
+  };
+  aplicarTema(load("tema") === "rosa");
 
   // ---------- notícias ----------
   var noticias = null, filtro = "", lastNewsFetch = 0;
