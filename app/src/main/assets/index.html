@@ -164,6 +164,11 @@
   .tabbar button.on::before { content: ""; position: absolute; top: 0; width: 44px; height: 3px;
     background: var(--orange); border-radius: 0 0 3px 3px; }
   .tabbar button { position: relative; }
+  /* Total de chuva dos 10 dias ao lado do ícone da aba Chuva */
+  .tab-mm { position: absolute; top: 4px; left: calc(50% + 10px); background: #5ac8fa; color: #002b3d;
+    font-size: 10.5px; font-weight: 800; letter-spacing: 0; line-height: 1; padding: 3px 6px;
+    border-radius: 9px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .tab-mm:empty { display: none; }
 
   /* Notícias */
   .news-h { font-size: 13px; font-weight: 800; letter-spacing: 1.5px; color: var(--muted); margin: 14px 2px 8px; }
@@ -354,6 +359,7 @@
   <button data-v="chuva" aria-label="Chuva">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 15a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 17.7 7.5 3.8 3.8 0 0 1 17.5 15z"/><path d="M8 18.5 7 21M12.5 18.5l-1 2.5M17 18.5l-1 2.5"/></svg>
     <span>CHUVA</span>
+    <b class="tab-mm" id="tabMm"></b>
   </button>
   <button data-v="noticias" aria-label="Notícias">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 5h13v14a1 1 0 0 0 1 1H6a2 2 0 0 1-2-2z"/><path d="M17 9h3v9a2 2 0 0 1-2 2"/><path d="M7 9h7M7 13h7M7 16h4" stroke-linecap="round"/></svg>
@@ -720,6 +726,7 @@
     });
     $("rainList").innerHTML = html;
     $("rainTotal").textContent = fmt(total, 1) + " mm";
+    $("tabMm").textContent = fmt(total, total >= 100 ? 0 : 1) + " mm";
   }
 
   function refreshWeather(force) {
@@ -749,6 +756,7 @@
     mostrarCidade();
     $("rainList").innerHTML = "";
     $("rainTotal").textContent = "— mm";
+    $("tabMm").textContent = "";
     $("cidadeModal").classList.remove("open");
     refreshWeather(true);
   }
