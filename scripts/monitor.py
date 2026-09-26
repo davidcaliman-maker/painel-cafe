@@ -1,4 +1,5 @@
-"""Compara o Conilon do nosso app com o preço de Itamaraju no cotacaodocafe.com.
+"""Compara o Conilon do nosso app com o preço principal do Conilon no cotacaodocafe.com
+(indicador nacional Cepea/Esalq exibido no topo do site).
 
 Calcula o preço do app com a mesma regra do index.html (calibração do historico.json
 publicado + Londres e dólar ao vivo) e grava uma linha em monitoramento/conilon.csv.
@@ -15,7 +16,7 @@ import sys
 import urllib.request
 
 SITE_APP = "https://davidcaliman-maker.github.io/painel-cafe/"
-SITE_REF = "https://cotacaodocafe.com/cotacao/cafe-conilon-itamaraju-ba/"
+SITE_REF = "https://cotacaodocafe.com/"
 BRT = dt.timezone(dt.timedelta(hours=-3))
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36"
 CSV = os.path.join(os.path.dirname(__file__), "..", "monitoramento", "conilon.csv")
@@ -55,16 +56,15 @@ def preco_app():
 
 
 def preco_site():
-    """Preço de Itamaraju no cotacaodocafe.com e a data da última cotação local."""
+    """Preço principal do Conilon no cotacaodocafe.com e a data do fechamento a que se refere."""
     t = get(SITE_REF)
     t = re.sub(r"<script.*?</script>|<style.*?</style>", "", t, flags=re.S)
     t = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", t)))
-    hoje = re.search(r"Itamaraju \(BA\) está cotado a R\$ ([\d.]+,\d{2})", t)
-    hist = re.findall(r"(\d{2}/\d{2}/\d{4}) R\$ ([\d.]+,\d{2})", t)
-    num = lambda v: float(v.replace(".", "").replace(",", "."))
-    if not hoje:
-        raise RuntimeError("preço de Itamaraju não encontrado no site")
-    return {"preco": num(hoje.group(1)), "data": hist[0][0] if hist else ""}
+    preco = re.search(r"Indicador nacional conilon R\$ ([\d.]+,\d{2})", t)
+    data = re.search(r"Fechamento de [^,]+, (\d{2}/\d{2})", t)
+    if not preco:
+        raise RuntimeError("preço principal do Conilon não encontrado no site")
+    return {"preco": float(preco.group(1).replace(".", "").replace(",", ".")), "data": data.group(1) if data else ""}
 
 
 def main():
@@ -74,7 +74,7 @@ def main():
     linha = {
         "quando": agora.strftime("%Y-%m-%d %H:%M"),
         "app": app["preco"], "estado_app": app["estado"],
-        "itamaraju_site": site["preco"], "data_site": site["data"],
+        "site_principal": site["preco"], "data_site": site["data"],
         "diferenca": dif, "diferenca_pct": round(dif / site["preco"] * 100, 2),
         "cepea": app["cepea"], "cepea_data": app["cepea_data"], "ajuste_atual": app["ajuste"],
         "ajuste_que_zeraria": round(app["ajuste"] - dif, 2),
