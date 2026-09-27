@@ -63,7 +63,9 @@
   <div class="card">
     <h2>DEPOIS DE TOCAR NO BOTÃO</h2>
     <ol>
-      <li>Toque em <b class="k">Permitir</b> e depois em <b class="k">Fechar</b>.</li>
+      <li>Toque em <b class="k">Permitir</b> e depois em <b class="k">Fechar</b>.
+        <span class="nota">Se em vez disso o arquivo for para <b>Downloads</b>, abra-o por lá (ícone de seta
+        azul no Safari ou app Arquivos).</span></li>
       <li>Abra os <b class="k">Ajustes</b> do iPhone e toque em <b class="k">Perfil Baixado</b>, logo abaixo do seu nome.</li>
       <li>Toque em <b class="k">Instalar</b> (canto superior direito), digite o código do iPhone e toque em
         <b class="k">Instalar</b> de novo.</li>
@@ -125,7 +127,22 @@
     document.getElementById("naoSafari").classList.remove("oculto");
   }
   function rastrear(nome, dados) { try { if (window.umami && umami.track) umami.track(nome, dados); } catch (e) {} }
-  document.getElementById("btnPerfil").addEventListener("click", function () { rastrear("instalar", { tipo: "perfil iPhone" }); });
+  // O GitHub entrega o .mobileconfig como arquivo genérico; o iPhone só abre a instalação se vier
+  // marcado como perfil. Então o botão baixa o arquivo e o reabre com o tipo certo. Se falhar,
+  // segue o link normal (o arquivo vai para Downloads e pode ser aberto de lá).
+  document.getElementById("btnPerfil").addEventListener("click", function (e) {
+    rastrear("instalar", { tipo: "perfil iPhone" });
+    if (!window.fetch || !window.Blob || !window.URL) return;
+    e.preventDefault();
+    var link = this.href;
+    fetch(link, { cache: "no-store" }).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.arrayBuffer();
+    }).then(function (dados) {
+      var blob = new Blob([dados], { type: "application/x-apple-aspen-config" });
+      location.href = URL.createObjectURL(blob);
+    }).catch(function () { location.href = link; });
+  });
   document.getElementById("btnApk").addEventListener("click", function () { rastrear("instalar", { tipo: "APK Android" }); });
 })();
 </script>
