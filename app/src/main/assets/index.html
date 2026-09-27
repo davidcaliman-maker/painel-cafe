@@ -12,6 +12,9 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <title>Painel do Agro</title>
+<!-- Estatísticas de uso anônimas (Umami: sem cookies, sem dados pessoais) -->
+<script defer src="https://cloud.umami.is/script.js" data-website-id="ddb0784e-ceb5-43d2-a619-468fb27c0b8c"
+        data-domains="davidcaliman-maker.github.io"></script>
 <style>
   :root {
     --bg: #000;
@@ -403,6 +406,8 @@
       <b>Alertas:</b> o app avisa com uma notificação quando o Conilon tem FORTE ALTA ou FORTE BAIXA
       no dia, mesmo com o app fechado.
     </p>
+    <p><b>Privacidade:</b> o app registra estatísticas de uso anônimas (quantos acessos, região
+      aproximada e tipo de aparelho), sem cookies e sem dados pessoais.</p>
     <div class="actions">
       <button class="btn-cancel" id="testarAlerta" style="display:none">Testar alerta</button>
       <button class="btn-ok" id="helpClose">Fechar</button>
@@ -673,7 +678,7 @@
       this.textContent = "Alerta enviado ✓";
     };
   }
-  $("refresh").onclick = function () { refresh(true); refreshWeather(true); };
+  $("refresh").onclick = function () { refresh(true); refreshWeather(true); rastrear("atualizar"); };
 
   // ---------- previsão de chuva (padrão Itamaraju-BA; cada usuário pode escolher outra cidade) ----------
   var CIDADE_PADRAO = { nome: "Itamaraju", uf: "BA", lat: -17.0392, lon: -39.5311 };
@@ -752,6 +757,7 @@
   function mostrarCidade() { $("cidadeNome").textContent = nomeCidade(cidade); }
   function escolherCidade(c) {
     cidade = c;
+    rastrear("cidade-chuva", { cidade: nomeCidade(c) });
     save("cidadeChuva", JSON.stringify(c));
     mostrarCidade();
     $("rainList").innerHTML = "";
@@ -898,6 +904,27 @@
     });
   });
 
+  // ---------- estatísticas de uso (Umami) ----------
+  function rastrear(nome, dados) {
+    try { if (window.umami && umami.track) umami.track(nome, dados); } catch (e) {}
+  }
+  function plataforma() {
+    if (window.Native) return "App Android";
+    var instalado = navigator.standalone || (window.matchMedia && matchMedia("(display-mode: standalone)").matches);
+    if (/iPhone|iPad|iPod/.test(navigator.userAgent)) return instalado ? "iPhone (tela inicial)" : "iPhone (Safari)";
+    if (/Android/.test(navigator.userAgent)) return instalado ? "Android (atalho)" : "Android (navegador)";
+    return "Computador";
+  }
+  // O script do Umami carrega depois da página: espera ele ficar pronto para registrar a abertura.
+  (function registrarAbertura(tentativa) {
+    if (window.umami && umami.track) {
+      rastrear("abertura", { plataforma: plataforma(), tema: load("tema") === "rosa" ? "rosa" : "padrão",
+                             cidade_chuva: nomeCidade(cidade) });
+    } else if (tentativa < 20) {
+      setTimeout(function () { registrarAbertura(tentativa + 1); }, 500);
+    }
+  })(0);
+
   // ---------- tema rosa ----------
   function aplicarTema(rosa) {
     if (rosa) document.documentElement.setAttribute("data-tema", "rosa");
@@ -911,6 +938,7 @@
     var rosa = document.documentElement.getAttribute("data-tema") !== "rosa";
     save("tema", rosa ? "rosa" : "padrao");
     aplicarTema(rosa);
+    rastrear("tema", { tema: rosa ? "rosa" : "padrão" });
   };
   aplicarTema(load("tema") === "rosa");
 
@@ -955,6 +983,11 @@
       renderNoticias();
     }).catch(function () { lastNewsFetch = 0; renderNoticias(); });
   }
+  $("vNoticias").addEventListener("click", function (e) {
+    var a = e.target.closest("a.news");
+    if (!a) return;
+    rastrear("noticia", { tema: a.querySelector(".tag").textContent, regional: a.classList.contains("reg") ? "sim" : "não" });
+  });
   document.querySelectorAll("#nChips button").forEach(function (b) {
     b.addEventListener("click", function () {
       filtro = b.getAttribute("data-c");
@@ -975,6 +1008,7 @@
     });
     if (atual === "noticias") refreshNoticias(false);
     if (atual === "chuva") refreshWeather(false);
+    if (atual !== "painel") rastrear("aba", { aba: atual });
     window.scrollTo(0, 0);
   }
   document.querySelectorAll("#tabbar button").forEach(function (b) {
