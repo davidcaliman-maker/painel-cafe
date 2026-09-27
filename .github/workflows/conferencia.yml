@@ -22,5 +22,5 @@ jobs:
           python-version: "3.12"
       - name: Comparar app e cotacaodocafe.com
         run: cd scripts && python conferencia.py
-      - uses: liskin/gh-workflow-keepalive@v1
+      - uses: liskin/gh-workflow-keepalive@f72ff1a1336129f29bf0166c0fd0ca6cf1bcb38c # v1
         if: ${{ !cancelled() }}

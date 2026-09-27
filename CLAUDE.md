@@ -57,6 +57,14 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   via Notícias Agrícolas (regionais ES; "Sul da Bahia" = mesmo valor de Vitória 7/8), PTAX (dólar).
 - `app/src/main/assets/config.json`: `ajusteConilonCepea` (0), contratos/posições, `alertaVariacaoPct` (2.0).
 
+## Segurança
+- Repo público: nada secreto nele (sem senhas, tokens nem a chave do APK). `config.json`, IDs do
+  Umami e scripts são públicos por natureza.
+- Commits usam o e-mail anônimo do GitHub (configurado no repo local); os 35 primeiros commits têm
+  o Gmail do usuário no histórico.
+- Ação de terceiros (`liskin/gh-workflow-keepalive`) fixada por SHA; as demais são oficiais do GitHub.
+- Maior risco: invasão da conta GitHub (controla o app de todos). Recomendar 2FA.
+
 ## Regras combinadas com o usuário
 - **Nunca altere `config.json` (preço/ajuste) sem aprovação explícita.**
 - Conilon = indicador Cepea (= preço principal do cotacaodocafe.com).

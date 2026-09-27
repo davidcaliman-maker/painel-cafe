@@ -86,7 +86,7 @@ jobs:
         uses: actions/deploy-pages@v4
 
       # O GitHub desliga agendamentos após 60 dias sem atividade no repositório; isto evita.
-      - uses: liskin/gh-workflow-keepalive@v1
+      - uses: liskin/gh-workflow-keepalive@f72ff1a1336129f29bf0166c0fd0ca6cf1bcb38c # v1
 
       - name: Marcar falha se o histórico não foi gerado
         if: steps.historico.outcome == 'failure'
