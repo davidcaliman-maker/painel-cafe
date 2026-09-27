@@ -93,10 +93,19 @@
 
 <!-- Android -->
 <section id="android" class="oculto">
-  <a class="btn" id="btnApk" href="https://github.com/davidcaliman-maker/painel-cafe/releases/latest/download/PainelAgro.apk">Baixar para Android</a>
+  <div id="naoChrome" class="aviso oculto" style="margin-bottom:14px">
+    Você abriu esta página <b>dentro de outro app</b> (WhatsApp, Instagram, Facebook…), que pode
+    bloquear o download. Toque em <b>⋮</b> e escolha <b>"Abrir no Chrome"</b> (ou no navegador).
+  </div>
+
+  <a class="btn" id="btnApk" href="PainelAgro.apk" download="PainelAgro.apk" type="application/vnd.android.package-archive">Baixar para Android</a>
+  <p class="nota" style="text-align:center;margin:8px 0 0">Não baixou?
+    <a class="link" id="btnApk2" href="https://github.com/davidcaliman-maker/painel-cafe/releases/latest/download/PainelAgro.apk">tente este link alternativo</a></p>
   <div class="card">
-    <h2>DEPOIS DE BAIXAR</h2>
+    <h2>DEPOIS DE TOCAR NO BOTÃO</h2>
     <ol>
+      <li>Se o Chrome avisar que <i>"o arquivo pode ser perigoso"</i>, toque em
+        <b class="k">Baixar mesmo assim</b>. (O aviso aparece para todo app que não vem da Play Store.)</li>
       <li>Abra o arquivo <b>PainelAgro.apk</b> (na notificação ou na pasta Downloads).</li>
       <li>Se o Android pedir, permita <b class="k">instalar de fontes desconhecidas</b>.</li>
       <li>Se aparecer o aviso do Play Protect, toque em <b class="k">Mais detalhes</b> →
@@ -126,6 +135,10 @@
   if (ios && /CriOS|FxiOS|EdgiOS|OPiOS|GSA|FBAN|FBAV|Instagram|WhatsApp/.test(ua)) {
     document.getElementById("naoSafari").classList.remove("oculto");
   }
+  // Navegadores internos de apps no Android (WebView: "; wv)") costumam bloquear downloads.
+  if (android && (/; wv\)|FBAN|FBAV|Instagram|WhatsApp|Line\//.test(ua))) {
+    document.getElementById("naoChrome").classList.remove("oculto");
+  }
   function rastrear(nome, dados) { try { if (window.umami && umami.track) umami.track(nome, dados); } catch (e) {} }
   // O GitHub entrega o .mobileconfig como arquivo genérico; o iPhone só abre a instalação se vier
   // marcado como perfil. Então o botão baixa o arquivo e o reabre com o tipo certo. Se falhar,
@@ -144,6 +157,7 @@
     }).catch(function () { location.href = link; });
   });
   document.getElementById("btnApk").addEventListener("click", function () { rastrear("instalar", { tipo: "APK Android" }); });
+  document.getElementById("btnApk2").addEventListener("click", function () { rastrear("instalar", { tipo: "APK Android (alternativo)" }); });
 })();
 </script>
 </body>

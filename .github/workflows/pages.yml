@@ -59,6 +59,12 @@ jobs:
         if: steps.historico.outcome == 'failure' && hashFiles('app/src/main/assets/historico.json') == ''
         run: curl -sf https://davidcaliman-maker.github.io/painel-cafe/historico.json -o app/src/main/assets/historico.json || true
 
+      # O APK mais recente também fica no próprio site: link direto, sem os redirecionamentos do
+      # GitHub (alguns celulares/navegadores falham neles).
+      - name: Copiar APK mais recente para o site
+        continue-on-error: true
+        run: curl -sfL https://github.com/davidcaliman-maker/painel-cafe/releases/latest/download/PainelAgro.apk -o app/src/main/assets/PainelAgro.apk
+
       # Marca a publicação com o código do commit: o app compara com versao.json e se
       # recarrega sozinho quando há tela nova.
       - name: Carimbar versão
