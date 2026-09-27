@@ -1,6 +1,6 @@
 // Service worker: guarda a "casca" do app para abrir mesmo sem internet.
 // As cotações e a previsão sempre vêm da rede (ficam salvas pelo próprio app).
-const CACHE = "painel-agro-v16";
+const CACHE = "painel-agro-v17";
 const SHELL = ["./", "index.html", "manifest.webmanifest",
   "apple-touch-icon.png", "icon-192.png", "icon-512.png"];
 
@@ -18,6 +18,9 @@ self.addEventListener("activate", (e) => {
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
   if (e.request.method !== "GET" || url.origin !== location.origin) return;
+  // Arquivos de instalação (APK, perfil do iPhone) e a página de instalação vão direto para a rede:
+  // no Chrome do Android, download interceptado pelo service worker pode ficar parado "esperando".
+  if (/\.(apk|mobileconfig)$/i.test(url.pathname) || /instalar\.html$/i.test(url.pathname)) return;
   e.respondWith(
     // no-cache: sempre confere com o servidor para pegar a versão nova do HTML.
     fetch(e.request, { cache: "no-cache" })
