@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>Instalar o Painel do Agro</title>
+<meta name="description" content="Cotação do café Conilon, chuva e notícias do café. Instale no seu celular.">
+<meta property="og:title" content="Painel do Agro · Cotação do Conilon">
+<meta property="og:description" content="Preço do Conilon, bolsas, chuva e notícias do café. Toque para instalar no seu celular.">
+<meta property="og:image" content="https://davidcaliman-maker.github.io/painel-cafe/icon-512.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script defer src="https://cloud.umami.is/script.js" data-website-id="ddb0784e-ceb5-43d2-a619-468fb27c0b8c"
+        data-domains="davidcaliman-maker.github.io"></script>
+<style>
+  :root { --bg: #000; --card: #1c1c1e; --card-2: #2a2a2d; --text: #fff; --muted: #b8b8bd; --orange: #f5a623; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text);
+    font-family: "Roboto", -apple-system, "Helvetica Neue", Arial, sans-serif; -webkit-text-size-adjust: 100%; }
+  body { padding: calc(20px + env(safe-area-inset-top)) 16px calc(28px + env(safe-area-inset-bottom)); max-width: 520px; margin: 0 auto; }
+  .topo { text-align: center; }
+  .topo img { width: 96px; height: 96px; border-radius: 22px; box-shadow: 0 6px 24px rgba(245, 166, 35, .25); }
+  h1 { font-size: 28px; font-weight: 800; margin: 14px 0 4px; }
+  .sub { color: var(--muted); font-size: 15px; margin: 0 0 18px; line-height: 1.4; }
+  .btn { display: block; width: 100%; text-align: center; background: var(--orange); color: #000; text-decoration: none;
+    font-weight: 800; font-size: 18px; padding: 16px; border-radius: 12px; border: 0; }
+  .btn.sec { background: var(--card-2); color: var(--text); font-size: 15px; padding: 13px; }
+  .card { background: var(--card); border-radius: 12px; padding: 14px 16px; margin: 14px 0; }
+  .card h2 { font-size: 16px; margin: 0 0 10px; color: var(--orange); letter-spacing: .5px; }
+  ol { margin: 0; padding-left: 0; list-style: none; counter-reset: passo; }
+  ol li { counter-increment: passo; position: relative; padding: 0 0 12px 40px; font-size: 15.5px; line-height: 1.4; }
+  ol li::before { content: counter(passo); position: absolute; left: 0; top: -2px; width: 28px; height: 28px; border-radius: 50%;
+    background: var(--orange); color: #000; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+  ol li:last-child { padding-bottom: 0; }
+  b.k { background: var(--card-2); padding: 1px 6px; border-radius: 5px; white-space: nowrap; }
+  .nota { color: var(--muted); font-size: 13px; line-height: 1.45; }
+  .aviso { background: #3a2a10; border-left: 4px solid var(--orange); padding: 10px 12px; border-radius: 8px; font-size: 14px; line-height: 1.4; }
+  details { margin-top: 10px; }
+  summary { cursor: pointer; color: var(--orange); font-weight: 700; font-size: 15px; padding: 6px 0; }
+  .oculto { display: none; }
+  .link { word-break: break-all; color: var(--orange); }
+  svg.ic { width: 18px; height: 18px; vertical-align: -3px; }
+</style>
+</head>
+<body>
+
+<div class="topo">
+  <img src="apple-touch-icon.png" alt="Ícone do Painel do Agro">
+  <h1>Painel do Agro</h1>
+  <p class="sub">Preço do café Conilon, bolsas de Londres e Nova York, previsão de chuva e notícias do café.</p>
+</div>
+
+<!-- iPhone -->
+<section id="ios" class="oculto">
+  <div id="naoSafari" class="aviso oculto" style="margin-bottom:14px">
+    Para instalar, abra esta página no <b>Safari</b>: toque em <b>⋯</b> ou no ícone de compartilhar e escolha
+    <b>"Abrir no Safari"</b>.
+  </div>
+
+  <a class="btn" id="btnPerfil" href="PainelAgro.mobileconfig">Instalar no iPhone</a>
+
+  <div class="card">
+    <h2>DEPOIS DE TOCAR NO BOTÃO</h2>
+    <ol>
+      <li>Toque em <b class="k">Permitir</b> e depois em <b class="k">Fechar</b>.</li>
+      <li>Abra os <b class="k">Ajustes</b> do iPhone e toque em <b class="k">Perfil Baixado</b>, logo abaixo do seu nome.</li>
+      <li>Toque em <b class="k">Instalar</b> (canto superior direito), digite o código do iPhone e toque em
+        <b class="k">Instalar</b> de novo.</li>
+      <li>Pronto! O ícone <b>Painel Agro</b> aparece na tela inicial.</li>
+    </ol>
+    <p class="nota" style="margin:12px 0 0">O iPhone mostra "Não Verificado" porque o perfil não tem certificado pago. Ele
+      só cria o ícone do app e não altera nenhuma configuração. Para remover: Ajustes → Geral →
+      VPN e Gerenciamento de Dispositivos → Painel do Agro → Remover.</p>
+  </div>
+
+  <details>
+    <summary>Prefere instalar sem perfil? (3 toques)</summary>
+    <div class="card">
+      <ol>
+        <li>No Safari, toque no botão <b class="k">Compartilhar
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg></b>
+          (quadrado com seta, na barra de baixo).</li>
+        <li>Role e toque em <b class="k">Adicionar à Tela de Início</b>.</li>
+        <li>Toque em <b class="k">Adicionar</b>.</li>
+      </ol>
+      <a class="btn sec" href="./" style="margin-top:12px">Abrir o app no Safari</a>
+    </div>
+  </details>
+</section>
+
+<!-- Android -->
+<section id="android" class="oculto">
+  <a class="btn" id="btnApk" href="https://github.com/davidcaliman-maker/painel-cafe/releases/latest/download/PainelAgro.apk">Baixar para Android</a>
+  <div class="card">
+    <h2>DEPOIS DE BAIXAR</h2>
+    <ol>
+      <li>Abra o arquivo <b>PainelAgro.apk</b> (na notificação ou na pasta Downloads).</li>
+      <li>Se o Android pedir, permita <b class="k">instalar de fontes desconhecidas</b>.</li>
+      <li>Se aparecer o aviso do Play Protect, toque em <b class="k">Mais detalhes</b> →
+        <b class="k">Instalar assim mesmo</b>.</li>
+      <li>Abra o app e <b>permita as notificações</b> para receber os alertas de forte alta e forte baixa.</li>
+    </ol>
+  </div>
+</section>
+
+<!-- Computador / outros -->
+<section id="outros" class="oculto">
+  <a class="btn" href="./">Abrir o Painel do Agro</a>
+  <div class="card">
+    <h2>PARA INSTALAR NO CELULAR</h2>
+    <p class="nota" style="margin:0">Abra este endereço no celular:<br>
+      <span class="link">davidcaliman-maker.github.io/painel-cafe/instalar.html</span></p>
+  </div>
+</section>
+
+<script>
+(function () {
+  var ua = navigator.userAgent;
+  var ios = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  var android = /Android/.test(ua);
+  document.getElementById(ios ? "ios" : android ? "android" : "outros").classList.remove("oculto");
+  // Perfis só instalam pelo Safari; outros navegadores do iPhone se identificam no userAgent.
+  if (ios && /CriOS|FxiOS|EdgiOS|OPiOS|GSA|FBAN|FBAV|Instagram|WhatsApp/.test(ua)) {
+    document.getElementById("naoSafari").classList.remove("oculto");
+  }
+  function rastrear(nome, dados) { try { if (window.umami && umami.track) umami.track(nome, dados); } catch (e) {} }
+  document.getElementById("btnPerfil").addEventListener("click", function () { rastrear("instalar", { tipo: "perfil iPhone" }); });
+  document.getElementById("btnApk").addEventListener("click", function () { rastrear("instalar", { tipo: "APK Android" }); });
+})();
+</script>
+</body>
+</html>

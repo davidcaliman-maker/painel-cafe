@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Perfil do iPhone: cria o ícone do Painel do Agro na tela inicial (Web Clip). -->
+<plist version="1.0">
+<dict>
+  <key>PayloadContent</key>
+  <array>
+    <dict>
+      <key>PayloadType</key>
+      <string>com.apple.webClip.managed</string>
+      <key>PayloadVersion</key>
+      <integer>1</integer>
+      <key>PayloadIdentifier</key>
+      <string>io.github.davidcaliman-maker.painelagro.webclip</string>
+      <key>PayloadUUID</key>
+      <string>9A3AB02A-06A3-4A81-BA6F-4310845CC541</string>
+      <key>PayloadDisplayName</key>
+      <string>Painel do Agro</string>
+      <key>Label</key>
+      <string>Painel Agro</string>
+      <key>URL</key>
+      <string>https://davidcaliman-maker.github.io/painel-cafe/</string>
+      <key>FullScreen</key>
+      <true/>
+      <key>IsRemovable</key>
+      <true/>
+      <key>Precomposed</key>
+      <true/>
+      <key>Icon</key>
+      <data>
+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
+      </data>
+    </dict>
+  </array>
+  <key>PayloadType</key>
+  <string>Configuration</string>
+  <key>PayloadVersion</key>
+  <integer>1</integer>
+  <key>PayloadIdentifier</key>
+  <string>io.github.davidcaliman-maker.painelagro</string>
+  <key>PayloadUUID</key>
+  <string>2E8CE11B-B35E-4076-86EC-CA615863C1FF</string>
+  <key>PayloadDisplayName</key>
+  <string>Painel do Agro</string>
+  <key>PayloadOrganization</key>
+  <string>Painel do Agro</string>
+  <key>PayloadDescription</key>
+  <string>Adiciona o ícone do Painel do Agro (cotação do café Conilon, chuva e notícias) à tela inicial do iPhone. Não altera nenhuma configuração do aparelho.</string>
+  <key>PayloadRemovalDisallowed</key>
+  <false/>
+</dict>
+</plist>
