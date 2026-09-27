@@ -71,6 +71,9 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   usuário foi orientado a guardar cópia em pen drive/Drive.
 - Publicar: aumentar `--version-code/--version-name` no `build-apk.sh`, copiar para
   `build/PainelAgro.apk` e `gh release create vX.Y build/PainelAgro.apk build/PainelCafe.apk`.
+  Depois rode `gh workflow run pages.yml`: o deploy copia o APK da última release para o site
+  (`/painel-cafe/PainelAgro.apk`), que é o link do botão "Baixar para Android" em `instalar.html`
+  (link direto, sem redirecionamentos — o link do GitHub Releases falhava em alguns celulares).
 - `MainActivity.java`: WebView que carrega o site (fallback offline para a cópia nos assets),
   ponte `Native` (post/get HTTP sem CORS, load/save, openUrl, testarAlerta).
 - `AlertaService.java`: JobScheduler a cada ~15 min (5h–22h), app fechado; notifica FORTE ALTA /
