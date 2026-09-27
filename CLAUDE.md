@@ -1,40 +1,113 @@
 # Painel do Agro
 
-App de cotação do café Conilon para um corretor de café do Sul da Bahia. O usuário fala
-português e não é programador: responda em português, com passos simples.
+App de cotação do café Conilon para um corretor de café do Sul da Bahia (Itamaraju-BA).
+O usuário fala português e não é programador: responda em português, com passos simples e
+numerados. Ele usa Android; o app também é distribuído para iPhone.
+
+## Links
+- App (site): https://davidcaliman-maker.github.io/painel-cafe/
+- **Página de instalação (link para divulgar):** https://davidcaliman-maker.github.io/painel-cafe/instalar.html
+- APK Android (sempre a última versão): https://github.com/davidcaliman-maker/painel-cafe/releases/latest/download/PainelAgro.apk
+  (o nome antigo `PainelCafe.apk` também é publicado em cada release, para links antigos)
+- Repositório: https://github.com/davidcaliman-maker/painel-cafe (público; `gh` CLI logado na conta davidcaliman-maker)
+- Estatísticas: https://cloud.umami.is (conta do usuário; website id ddb0784e-ceb5-43d2-a619-468fb27c0b8c)
 
 ## Como o app funciona
 - **Toda a interface está em `app/src/main/assets/index.html`** (HTML/CSS/JS num arquivo só).
-- Cada push na `main` publica essa pasta no GitHub Pages
-  (https://davidcaliman-maker.github.io/painel-cafe/) via `.github/workflows/pages.yml`.
-- **Android** (APK) e **iPhone** (atalho do Safari/PWA) carregam essa página do site e se
-  recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow).
+- Cada push na `main` publica essa pasta no GitHub Pages via `.github/workflows/pages.yml`.
+- **Android** (APK) e **iPhone** (atalho do Safari/PWA ou perfil) carregam a página do site e se
+  recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`).
+  (`painel-agro-vN` → `vN+1`; hoje v16).
+- Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
+  `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial).
 
-## Dados
-- Cotações ao vivo: `scanner.tradingview.com` (não oficial, ~10 min de atraso).
-- `scripts/historico.py` (no workflow): fechamentos diários, indicador Cepea/Esalq do
-  Conilon e a calibração do preço → `historico.json` (gerado, não versionado).
-- `scripts/noticias.py` (no workflow): notícias do Google Notícias → `noticias.json`.
-- `.github/workflows/conferencia.yml` + `scripts/conferencia.py`: todo dia útil às 22h30 confere
-  o Cepea do app × preço principal do cotacaodocafe.com; se divergir, falha e o GitHub avisa por e-mail.
-- Chuva: Open-Meteo (cidade escolhida pelo usuário, padrão Itamaraju-BA).
-- `app/src/main/assets/config.json`: ajuste do Conilon sobre o Cepea (hoje 0), regra de
-  contratos e limite dos alertas (`alertaVariacaoPct`).
+## Telas (barra de abas no rodapé: PAINEL · CHUVA · NOTÍCIAS; roteamento por `#chuva`/`#noticias`)
+- **Painel:** card destaque do Conilon (preço grande, selo AO VIVO/FECHAMENTO dd/mm, variação do
+  dia vs fechamento anterior), cards Dólar/Londres/N.York (vermelho/verde), botão ATUALIZAR,
+  gráfico SEMANA (7 pregões; abas Conilon/Londres/N.York/Dólar).
+- **Chuva:** previsão de 10 dias (Open-Meteo). Padrão Itamaraju-BA; usuário escolhe qualquer
+  cidade do Brasil (busca no geocoding do Open-Meteo), salvo no aparelho. O ícone da aba mostra
+  o total de mm dos 10 dias.
+- **Notícias:** `noticias.json` — seção "Sul da Bahia e Espírito Santo" em destaque + "Mercado,
+  clima e safra" com filtro por tema. Só título/fonte/link (abre a matéria original).
+- **Tema rosa:** botão no canto superior direito (ícone de mulher de chapéu com óculos, SVG
+  inline). Cores em variáveis CSS; `html[data-tema="rosa"]`. Verde/vermelho de alta e baixa não mudam.
+- **Ajuda (?):** explica cálculo, selos, contratos, alertas e aviso de privacidade; no Android 3.0+
+  mostra o botão "Testar alerta".
+- Card do Conilon NÃO deve mostrar ajuste, arroba nem faixa de indicadores (pedido do usuário).
+  Não há preço físico do Arábica (só cotação de NY).
+
+## Dados e automações (GitHub Actions)
+- Cotações ao vivo: `scanner.tradingview.com` (não oficial, grátis, ~10 min de atraso; pode parar).
+- `scripts/historico.py`: fechamentos diários (canal de gráficos do TradingView), indicador
+  Cepea/Esalq do Conilon (Robusta) e a calibração → `historico.json` (gerado, não versionado).
+  Preço do Conilon = Cepea + `ajusteConilonCepea` (hoje 0). Durante o pregão o app estima por
+  Londres × dólar a partir do último Cepea; quando o Cepea do dia sai (~21h), vira FECHAMENTO.
+- Contratos trocam sozinhos (dia 15 do mês anterior ao vencimento; Londres 2ª posição, NY 1ª),
+  sem salto no preço (ajuste pela diferença entre contratos).
+- `scripts/noticias.py`: Google Notícias RSS (últimos 7 dias), filtra fora do assunto e repetidas.
+- `pages.yml` roda: dias úteis de hora em hora 06–15h e a cada 15 min 16–22h (Brasília);
+  sáb/dom 09h, 15h, 20h. Agendadas só republicam se histórico ou notícias mudaram. Keepalive incluso.
+- `conferencia.yml` + `scripts/conferencia.py`: dias úteis 22h30 confere o Cepea do app × preço
+  principal do cotacaodocafe.com; se divergir (data ou > R$ 0,50) falha e o GitHub avisa por e-mail.
+- `scripts/monitor.py`: comparação manual app × cotacaodocafe.com (grava `monitoramento/conilon.csv`, local).
+- cotacaodocafe.com NÃO calcula: copia o Cepea (preço principal, atualiza 1x/dia ~21h), CCCV/Cooabriel
+  via Notícias Agrícolas (regionais ES; "Sul da Bahia" = mesmo valor de Vitória 7/8), PTAX (dólar).
+- `app/src/main/assets/config.json`: `ajusteConilonCepea` (0), contratos/posições, `alertaVariacaoPct` (2.0).
 
 ## Regras combinadas com o usuário
 - **Nunca altere `config.json` (preço/ajuste) sem aprovação explícita.**
-- Conilon 7/8 = indicador Cepea (preço principal do cotacaodocafe.com). Não mostrar o ajuste,
-  arroba nem faixa de indicadores no card do Conilon. Arábica só como cotação de NY.
-- Teste no navegador (larguras 375 e 412 px) antes de publicar.
+- Conilon = indicador Cepea (= preço principal do cotacaodocafe.com).
+- Confirmar com o usuário antes de publicar/instalar coisas que custem ou que baixem ferramentas grandes
+  (ele recusou baixar Gradle/SDK novo; APK é feito sem Gradle).
 
-## APK Android (só para mudanças nativas: ícone, nome, Java, alertas)
-- `bash build-apk.sh` → `build/PainelCafe.apk` (sem Gradle; usa Android SDK build-tools
-  30.0.0 + platform android-30 + JDK 17).
+## APK Android (só para mudanças nativas: ícone, nome, Java, alertas) — versão atual 3.0
+- `bash build-apk.sh` → `build/PainelCafe.apk` (sem Gradle; Android SDK build-tools 30.0.0 +
+  platform android-30 + JDK 17; targetSdk 30).
 - Assinado com `~/.android/debug.keystore`. **Esse arquivo precisa ser o mesmo em qualquer
-  computador**, senão o APK novo não instala por cima do antigo. Ele não fica no GitHub.
-- Publicar: aumentar `--version-code/--version-name` no `build-apk.sh` e criar release com
-  `gh release create vX.Y build/PainelAgro.apk build/PainelCafe.apk`.
-- Alertas de FORTE ALTA/BAIXA: `app/src/main/java/br/painelcafe/AlertaService.java`.
+  computador**, senão o APK novo não instala por cima. Não fica no GitHub (repo público);
+  usuário foi orientado a guardar cópia em pen drive/Drive.
+- Publicar: aumentar `--version-code/--version-name` no `build-apk.sh`, copiar para
+  `build/PainelAgro.apk` e `gh release create vX.Y build/PainelAgro.apk build/PainelCafe.apk`.
+- `MainActivity.java`: WebView que carrega o site (fallback offline para a cópia nos assets),
+  ponte `Native` (post/get HTTP sem CORS, load/save, openUrl, testarAlerta).
+- `AlertaService.java`: JobScheduler a cada ~15 min (5h–22h), app fechado; notifica FORTE ALTA /
+  FORTE BAIXA quando a variação do dia passa de `alertaVariacaoPct` (repete a cada novo degrau).
+  Usuário confirmou que o alerta de teste chegou (26/09/2026).
+- Emulador não roda neste PC (virtualização desligada na BIOS) → testes nativos só no celular do usuário.
+
+## iPhone
+- Funciona pelo Safari → Compartilhar → Adicionar à Tela de Início (PWA, abre em tela cheia).
+- `PainelAgro.mobileconfig` (Web Clip) cria o ícone via perfil. GitHub Pages serve como
+  octet-stream; o botão de `instalar.html` refaz o arquivo como `application/x-apple-aspen-config`.
+  **Ainda não testado num iPhone real** — pedir ao usuário o resultado antes de divulgar para iPhone.
+- iPhone não recebe alertas (precisaria serviço de push, ex. OneSignal, conta do usuário).
+
+## Divulgação
+- Divulgar o LINK `instalar.html` (detecta iPhone/Android/computador), não o arquivo.
+- `divulgacao/cartaz-painel-do-agro.png` (A5 com QR) e `divulgacao/qrcode-instalar.png`.
+- Mensagem de WhatsApp sugerida: título, 5 benefícios, link, "No iPhone, abra pelo Safari".
+- Umami: eventos `abertura` (plataforma, tema, cidade_chuva), `aba`, `tema`, `cidade-chuva`,
+  `noticia`, `atualizar`, `instalar` (tipo).
+
+## Custos e riscos conhecidos (explicados ao usuário)
+- GitHub: grátis enquanto o repo for público. Umami: grátis até 100 mil eventos/mês.
+- Open-Meteo: plano grátis é para uso não comercial → risco; alternativa grátis comercial: MET Norway.
+- TradingView: não oficial, pode bloquear. Dólar poderia ir para fonte oficial grátis (BCB/AwesomeAPI).
+- Cepea: consulta livre; republicação comercial pode exigir autorização (sugerido e-mail ao Cepea).
+- Play Store: US$ 25 uma vez + teste fechado 14 dias/12 testadores; exigiria targetSdk atual, AAB
+  (Gradle), chave própria, política de privacidade. Usuário decidiu "por enquanto não".
+- App Store: US$ 99/ano, precisa Mac (ou Mac na nuvem via GitHub), risco de recusa (4.2 "só site").
+- Google anunciou verificação obrigatória de desenvolvedores Android no Brasil a partir de set/2026
+  (pode afetar APK por link) — conferir situação atual.
+
+## Pendências / ideias oferecidas e ainda não feitas
+- Nome do card "CONILON 7/8" × dado do Cepea (Robusta tipo 6 peneira 13): renomear para
+  "Conilon · Indicador Cepea" ou usar o Tipo 7/8 do CCCV (Notícias Agrícolas) — usuário não decidiu.
+- Medir acerto da estimativa ao vivo (snapshots 10h/13h/16h × fechamento) — oferecido, não feito.
+- Trocas gratuitas: chuva → MET Norway; dólar → fonte oficial — oferecido, não feito.
+- Alertas no iPhone (OneSignal) — oferecido, não feito.
+- Ícone da tela inicial ainda é "A + grão" (o logo dentro do app é só o grão).
+- Tarefas agendadas locais `monitor-conilon-itamaraju(-tarde)` estão DESATIVADAS (substituídas pelo GitHub).
