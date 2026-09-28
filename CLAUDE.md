@@ -19,14 +19,21 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v20).
+  (`painel-agro-vN` → `vN+1`; hoje v21).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial).
 
 ## Telas (barra de abas no rodapé: PAINEL · CHUVA · NOTÍCIAS; roteamento por `#chuva`/`#noticias`)
 - **Painel:** card destaque do Conilon (preço grande, selo AO VIVO/FECHAMENTO dd/mm, variação do
   dia vs fechamento anterior), cards Dólar/Londres/N.York (vermelho/verde), botão ATUALIZAR,
-  gráfico SEMANA (7 pregões; abas Conilon/Londres/N.York/Dólar).
+  gráfico com seletor HOJE/SEMANA (escolha salva no aparelho; abas Conilon/Londres/N.York/Dólar).
+  - SEMANA: 7 pregões (`historico.json`).
+  - HOJE: pontos de 5 em 5 min, eixo 05h–18h, linha pontilhada = fechamento anterior, máx/mín,
+    arrastar o dedo mostra preço/hora no topo. Dados em `intradia.json` (~5 KB), baixado SÓ com
+    HOJE aberto e no máximo a cada 10 min (pedido do usuário: pouco tráfego); o último ponto vem
+    da cotação que o app já busca (`pontosDia`). Fim de semana mostra o último pregão.
+    Conilon do dia usa a calibração do Cepea ANTERIOR ao dia (a linha não muda quando o Cepea sai);
+    depois do Cepea o topo mostra "fechamento Cepea".
 - **Chuva:** previsão de 10 dias (Open-Meteo). Padrão Itamaraju-BA; usuário escolhe qualquer
   cidade do Brasil (busca no geocoding do Open-Meteo), salvo no aparelho. O ícone da aba mostra
   o total de mm dos 10 dias.
@@ -53,7 +60,8 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
 - Contratos trocam sozinhos (dia 15 do mês anterior ao vencimento; Londres 2ª posição, NY 1ª),
   sem salto no preço (ajuste pela diferença entre contratos).
 - `scripts/noticias.py`: Google Notícias RSS (últimos 7 dias), filtra fora do assunto e repetidas.
-- `pages.yml` roda: dias úteis de hora em hora 06–15h e a cada 15 min 16–22h (Brasília);
+- `historico.py` também gera `intradia.json` (barras de 5 min do TradingView; `gerar_intradia`).
+- `pages.yml` roda: dias úteis a cada 15 min das 05h às 22h (Brasília);
   sáb/dom 09h, 15h, 20h. Agendadas só republicam se histórico ou notícias mudaram. Keepalive incluso.
 - `conferencia.yml` + `scripts/conferencia.py`: dias úteis 22h30 confere o Cepea do app × preço
   principal do cotacaodocafe.com; se divergir (data ou > R$ 0,50) falha e o GitHub avisa por e-mail.

@@ -1,7 +1,7 @@
 # Publica a versão web (iPhone / navegador / Android) no GitHub Pages.
-# Roda a cada push na main e, nos dias úteis, de hora em hora (06h–15h) e a cada 15 min
-# (16h–22h, quando o Cepea publica), para atualizar o historico.json: fechamentos das bolsas,
-# indicador Cepea e calibração do Conilon. Execuções agendadas só republicam se algo mudou.
+# Roda a cada push na main e, nos dias úteis, a cada 15 min das 05h às 22h, para atualizar o
+# historico.json (fechamentos das bolsas, indicador Cepea e calibração do Conilon) e o
+# intradia.json (gráfico HOJE). Execuções agendadas só republicam se algo mudou.
 name: Publicar no GitHub Pages
 
 on:
@@ -9,8 +9,7 @@ on:
     branches: [main]
   schedule:
     # Horários em UTC (Brasília = UTC−3), seg a sex.
-    - cron: "5 9-18 * * 1-5"      # 06:05 às 15:05, de hora em hora
-    - cron: "*/15 19-23 * * 1-5"  # 16:00 às 20:45, a cada 15 min
+    - cron: "3-59/15 8-23 * * 1-5"  # 05:03 às 20:48, a cada 15 min (gráfico HOJE e Cepea)
     - cron: "*/15 0 * * 2-6"      # 21:00 às 21:45
     - cron: "0 1 * * 2-6"         # 22:00
     - cron: "0 12,18,23 * * 0,6"  # sáb e dom: 09h, 15h e 20h (notícias)
@@ -58,6 +57,10 @@ jobs:
       - name: Manter o histórico publicado se não foi possível gerar um novo
         if: steps.historico.outcome == 'failure' && hashFiles('app/src/main/assets/historico.json') == ''
         run: curl -sf https://davidcaliman-maker.github.io/painel-cafe/historico.json -o app/src/main/assets/historico.json || true
+
+      - name: Manter o gráfico do dia publicado se não foi possível gerar um novo
+        if: hashFiles('app/src/main/assets/intradia.json') == ''
+        run: curl -sf https://davidcaliman-maker.github.io/painel-cafe/intradia.json -o app/src/main/assets/intradia.json || true
 
       # O APK mais recente também fica no próprio site: link direto, sem os redirecionamentos do
       # GitHub (alguns celulares/navegadores falham neles).

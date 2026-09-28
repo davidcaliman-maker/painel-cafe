@@ -1,5 +1,5 @@
-"""Gera historico.json: fechamentos diários de Londres, Nova York e do dólar, o indicador
-CEPEA/Esalq do Conilon e a calibração do preço físico do Conilon.
+"""Gera historico.json e intradia.json: fechamentos diários de Londres, Nova York e do dólar, o indicador
+CEPEA/Esalq do Conilon e a calibração do preço físico do Conilon. intradia.json tem o gráfico do dia (5 em 5 min).
 
 Calibração: preço-alvo = último CEPEA Conilon + "ajusteConilonCepea" (config.json). O
 diferencial sobre Londres sai do fechamento de Londres e do dólar do mesmo dia do CEPEA:
@@ -25,6 +25,7 @@ import urllib.request
 import websockets
 
 DIAS = 10  # pregões guardados (o app mostra os últimos 7)
+INTRA_INI, INTRA_FIM = 4 * 60, 18 * 60  # gráfico do dia: 04h às 18h (Brasília)
 
 MERCADOS = {
     "londres": {"bolsa": "ICEEUR", "raiz": "RC", "meses": [1, 3, 5, 7, 9, 11]},
@@ -61,8 +62,8 @@ def _msg(func, params):
     return f"~m~{len(p)}~m~{p}"
 
 
-async def historico_diario(simbolo, barras=DIAS + 5):
-    """Fechamentos diários via canal de gráficos do TradingView: {data ISO: fechamento}."""
+async def barras(simbolo, resolucao, quantidade):
+    """Barras do canal de gráficos do TradingView: lista de [tempo, abertura, máx, mín, fechamento, …]."""
     cs = "cs_" + "".join(random.choices(string.ascii_lowercase, k=12))
     async with websockets.connect(
         "wss://data.tradingview.com/socket.io/websocket",
@@ -72,7 +73,7 @@ async def historico_diario(simbolo, barras=DIAS + 5):
         await ws.send(_msg("set_auth_token", ["unauthorized_user_token"]))
         await ws.send(_msg("chart_create_session", [cs, ""]))
         await ws.send(_msg("resolve_symbol", [cs, "sym_1", '={"symbol":"%s","adjustment":"splits"}' % simbolo]))
-        await ws.send(_msg("create_series", [cs, "s1", "s1", "sym_1", "1D", barras, ""]))
+        await ws.send(_msg("create_series", [cs, "s1", "s1", "sym_1", resolucao, quantidade, ""]))
         while True:
             bruto = await asyncio.wait_for(ws.recv(), 30)
             for parte in re.split(r"~m~\d+~m~", bruto):
@@ -83,15 +84,82 @@ async def historico_diario(simbolo, barras=DIAS + 5):
                     continue
                 d = json.loads(parte)
                 if d.get("m") == "timescale_update":
-                    saida = {}
-                    for barra in d["p"][1]["s1"]["s"]:
-                        t, fechamento = barra["v"][0], barra["v"][4]
-                        # Barras do câmbio começam na noite anterior (UTC); +12h cai no dia do pregão.
-                        dia = dt.datetime.fromtimestamp(t + 12 * 3600, dt.timezone.utc).date()
-                        saida[dia.isoformat()] = fechamento
-                    return saida
+                    return [b["v"] for b in d["p"][1]["s1"]["s"]]
                 if d.get("m") in ("symbol_error", "series_error", "critical_error"):
                     raise RuntimeError(f"{simbolo}: {d}")
+
+
+async def historico_diario(simbolo, barras_=DIAS + 5):
+    """Fechamentos diários: {data ISO: fechamento}."""
+    saida = {}
+    for v in await barras(simbolo, "1D", barras_):
+        # Barras do câmbio começam na noite anterior (UTC); +12h cai no dia do pregão.
+        dia = dt.datetime.fromtimestamp(v[0] + 12 * 3600, dt.timezone.utc).date()
+        saida[dia.isoformat()] = v[4]
+    return saida
+
+
+def por_minuto(lista, dia):
+    """Barras de 5 min de um dia (horário de Brasília, 04h–18h): {minuto do dia: fechamento}."""
+    saida = {}
+    for v in lista:
+        h = dt.datetime.fromtimestamp(v[0], BRT)
+        m = h.hour * 60 + h.minute
+        if h.date().isoformat() == dia and INTRA_INI <= m <= INTRA_FIM:
+            saida[m] = v[4]
+    return saida
+
+
+def ultimo_ate(pontos, m):
+    """Último valor com minuto <= m (ou None)."""
+    antes = [k for k in pontos if k <= m]
+    return pontos[max(antes)] if antes else None
+
+
+async def gerar_intradia(dias, usd_diario, simbolos, ajuste):
+    """Gráfico do dia (intradia.json): pontos de 5 em 5 min do último pregão de Londres.
+
+    O Conilon do dia é a mesma estimativa do app (Londres × dólar) com a calibração do Cepea
+    anterior ao dia; por isso a linha não muda depois que o Cepea do dia sai. O dólar só vale
+    "ao vivo" a partir das 9h; antes disso vale o fechamento anterior (como no app).
+    """
+    b_ldn = await barras(simbolos["londres"], "5", 400)
+    b_ny = await barras(simbolos["novaYork"], "5", 400)
+    b_usd = await barras("FX_IDC:USDBRL", "5", 400)
+    dia = dt.datetime.fromtimestamp(b_ldn[-1][0], BRT).date().isoformat()
+    ldn, ny, usd = por_minuto(b_ldn, dia), por_minuto(b_ny, dia), por_minuto(b_usd, dia)
+
+    anteriores = [d for d in dias if d["data"] < dia]
+    com_cepea = [d for d in anteriores if "cepeaConilon" in d]
+    if not ldn or not anteriores or not com_cepea:
+        raise RuntimeError(f"intradia sem dados suficientes para {dia}")
+    ant, cal = anteriores[-1], com_cepea[-1]
+    preco_cal = cal["cepeaConilon"] + ajuste
+    dif = preco_cal / (0.06 * round(cal["usd"], 2)) - cal["londres"]
+    usd_ant = usd_diario[max(d for d in usd_diario if d < dia)]
+
+    def usd_vigente(m):
+        v = ultimo_ate(usd, m) if m >= 9 * 60 else None
+        return usd_ant if v is None else v
+
+    arred = lambda v: round(v * 10) / 10  # de 10 em 10 centavos, como no app
+    inicio_ldn = min(ldn)
+    minutos = sorted(set(ldn) | {m for m in usd if m >= 9 * 60 and m >= inicio_ldn})
+    conilon = [[m, arred((ultimo_ate(ldn, m) + dif) * 0.06 * round(usd_vigente(m), 2))] for m in minutos]
+
+    hoje = next((d for d in dias if d["data"] == dia), {})
+    return {
+        "data": dia,
+        "anterior": {"data": ant["data"], "dataCepea": cal["data"], "conilon": arred(preco_cal),
+                     "londres": ant["londres"], "novaYork": ant["novaYork"], "usd": round(usd_ant, 4)},
+        "fechamentoCepea": arred(hoje["cepeaConilon"] + ajuste) if "cepeaConilon" in hoje else None,
+        "series": {
+            "conilon": conilon,
+            "londres": [[m, v] for m, v in sorted(ldn.items())],
+            "novaYork": [[m, v] for m, v in sorted(ny.items())],
+            "usd": [[m, round(v, 4)] for m, v in sorted(usd.items()) if m >= 9 * 60],
+        },
+    }
 
 
 def cepea_conilon():
@@ -115,10 +183,10 @@ def cepea_conilon():
     return valores
 
 
-def publicado_anterior():
-    """historico.json atualmente no ar (reserva se o CEPEA estiver fora)."""
+def publicado_anterior(nome="historico.json"):
+    """Arquivo atualmente no ar (reserva se o CEPEA ou a bolsa estiverem fora)."""
     try:
-        with urllib.request.urlopen(SITE + "historico.json", timeout=30) as r:
+        with urllib.request.urlopen(SITE + nome, timeout=30) as r:
             return json.load(r)
     except Exception:
         return {}
@@ -183,10 +251,24 @@ async def main(caminho_config, caminho_saida):
         json.dump(saida, f, ensure_ascii=False, indent=1)
     print(f'{len(saida["dias"])} dias, contratos {contratos}, calibração {calibracao}')
 
+    # Gráfico do dia. Se falhar, mantém o publicado (o app mostra o que tiver).
+    caminho_intra = os.path.join(os.path.dirname(caminho_saida), "intradia.json")
+    intra_anterior = publicado_anterior("intradia.json")
+    try:
+        simbolos = {nome: f'{MERCADOS[nome]["bolsa"]}:{contratos[nome]}' for nome in MERCADOS}
+        intra = await gerar_intradia(dias, usd, simbolos, ajuste)
+        print(f'intradia {intra["data"]}: ' + ", ".join(f"{k} {len(v)}" for k, v in intra["series"].items()))
+    except Exception as e:
+        print(f"aviso: gráfico do dia indisponível ({e}); mantendo o publicado")
+        intra = intra_anterior
+    if intra:
+        with open(caminho_intra, "w", encoding="utf-8") as f:
+            json.dump(intra, f, ensure_ascii=False, separators=(",", ":"))
+
     # Informa ao GitHub Actions se algo mudou em relação ao que está no ar (sem contar a hora
     # de geração): as execuções agendadas só republicam o site quando há dado novo.
     sem_hora = lambda h: {k: v for k, v in h.items() if k != "geradoEm"}
-    mudou = sem_hora(saida) != sem_hora(anterior)
+    mudou = sem_hora(saida) != sem_hora(anterior) or intra != intra_anterior
     print("mudou" if mudou else "sem mudança em relação ao publicado")
     if os.environ.get("GITHUB_OUTPUT"):
         with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
