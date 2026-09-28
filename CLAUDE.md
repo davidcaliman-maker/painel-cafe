@@ -19,7 +19,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v22).
+  (`painel-agro-vN` → `vN+1`; hoje v23).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial).
 
@@ -44,6 +44,8 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
 - Sem faixa "Indicadores Técnicos do Mercado Físico", sem botão "?" nem janela de ajuda (inclusive o
   "Testar alerta") — retirados a pedido do usuário em 28/09/2026. O aviso de privacidade (Umami) fica
   numa linha do rodapé do Painel. `Native.testarAlerta` continua no APK, só não é usado.
+- Rodapés NÃO mostram de onde vêm as cotações (pedido do usuário). Única exceção, pequena no
+  Painel: "Fontes: Cepea/Esalq · Open-Meteo" (crédito exigido por essas duas; não retirar).
 - Preço do Conilon mostrado arredondado de 10 em 10 centavos (`arred10`: card, variação e gráfico).
   O fechamento do app (ex. 952,70) pode diferir em centavos do Cepea/cotacaodocafe (952,72) — intencional.
 - Dólar (`dolarVigente`): ao vivo só das 9h até o fechamento do pregão de câmbio (~18h Brasília);
