@@ -67,9 +67,6 @@
   .logo { display: flex; align-items: flex-end; gap: 1px; }
   .logo .bean { width: min(38px, 8.5vw); height: min(38px, 8.5vw); }
   .brand h1 { margin: 0; white-space: nowrap; line-height: 1.05; font-size: min(32px, 6.5vw); font-weight: 800; letter-spacing: .5px; }
-  .sub { display: flex; justify-content: space-between; align-items: center;
-    color: var(--orange); font-weight: 700; font-size: min(17px, 4.1vw); padding: 0 8px 6px; white-space: nowrap; }
-  .sub button { background: none; border: 0; color: var(--orange); font-size: 22px; font-weight: 700; padding: 0 4px; }
 
   .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 8px; }
 
@@ -270,7 +267,6 @@
     </svg>
   </button>
 </div>
-<div class="sub">Indicadores Técnicos do Mercado Físico <button id="help">?</button></div>
 
 <div id="vPainel">
 <div class="err" id="err"></div>
@@ -320,7 +316,8 @@
 <div class="foot">
   Cotações: ICE Futures (Londres / Nova York) e câmbio USD/BRL, com atraso de ~10 min.<br>
   Conilon 7/8: calibrado todo dia pelo Indicador do Café Robusta Cepea/Esalq e atualizado
-  durante o dia pela bolsa de Londres. Fonte: Cepea/Esalq.
+  durante o dia pela bolsa de Londres. Fonte: Cepea/Esalq.<br>
+  Estatísticas de uso anônimas, sem cookies e sem dados pessoais.
 </div>
 
 </div><!-- /vPainel -->
@@ -394,43 +391,6 @@
     <div class="actions">
       <button class="btn-cancel" id="cidadePadrao">Voltar para Itamaraju-BA</button>
       <button class="btn-ok" id="cidadeFechar">Fechar</button>
-    </div>
-  </div>
-</div>
-
-<!-- Ajuda -->
-<div class="modal" id="helpModal">
-  <div class="sheet">
-    <h3>Como o painel calcula</h3>
-    <p>
-      <b>Conilon 7/8:</b> todo dia o preço é ajustado ao último fechamento do Indicador do Café
-      Robusta Cepea/Esalq.<br><br>
-      <b>Durante o dia:</b> o preço acompanha a bolsa de Londres (US$ por tonelada) e o dólar.
-      Uma saca tem 60 kg = 0,06 t.<br>
-      Conilon = (Londres + diferencial) × 0,06 × Dólar, onde o diferencial é recalculado todo dia
-      a partir do Cepea.<br><br>
-      <b>Dólar:</b> acompanha o mercado das 9h até o fechamento do dia (18h). Fora desse horário,
-      e nos fins de semana, fica o valor do último fechamento.<br><br>
-      <b>AO VIVO · ESTIMATIVA:</b> durante o pregão o preço é estimado pela bolsa.<br>
-      <b>FECHAMENTO CEPEA:</b> quando o Cepea do dia é publicado (fim da tarde), o preço passa a ser
-      o do Cepea. É também o preço da abertura do dia seguinte.<br><br>
-      <b>Gráfico HOJE:</b> mostra o dia de 5 em 5 minutos (05h às 18h). A linha do Conilon é a
-      estimativa pela bolsa; a linha pontilhada é o fechamento anterior. Arraste o dedo no gráfico
-      para ver o preço de cada horário. Londres fecha por volta das 13h30; depois disso o Conilon só
-      varia com o dólar.<br><br>
-      <b>Nova York:</b> cotação do café arábica em centavos de dólar por libra-peso.<br><br>
-      <b>Contratos:</b> o app troca sozinho para o próximo vencimento a partir do dia 15 do mês
-      anterior, sem salto no preço do Conilon.
-    </p>
-    <p id="alertaInfo" style="display:none">
-      <b>Alertas:</b> o app avisa com uma notificação quando o Conilon tem FORTE ALTA ou FORTE BAIXA
-      no dia, mesmo com o app fechado.
-    </p>
-    <p><b>Privacidade:</b> o app registra estatísticas de uso anônimas (quantos acessos, região
-      aproximada e tipo de aparelho), sem cookies e sem dados pessoais.</p>
-    <div class="actions">
-      <button class="btn-cancel" id="testarAlerta" style="display:none">Testar alerta</button>
-      <button class="btn-ok" id="helpClose">Fechar</button>
     </div>
   </div>
 </div>
@@ -709,17 +669,6 @@
     }).then(function () { loading = false; });
   }
 
-  $("help").onclick = function () { $("helpModal").classList.add("open"); };
-  $("helpClose").onclick = function () { $("helpModal").classList.remove("open"); };
-  // Alertas existem só no app Android (versão 3.0+), que expõe Native.testarAlerta.
-  if (window.Native && Native.testarAlerta) {
-    $("alertaInfo").style.display = "block";
-    $("testarAlerta").style.display = "block";
-    $("testarAlerta").onclick = function () {
-      Native.testarAlerta();
-      this.textContent = "Alerta enviado ✓";
-    };
-  }
   $("refresh").onclick = function () { refresh(true); refreshWeather(true); refreshIntra(true); rastrear("atualizar"); };
 
   // ---------- previsão de chuva (padrão Itamaraju-BA; cada usuário pode escolher outra cidade) ----------
