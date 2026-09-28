@@ -395,6 +395,8 @@
       Uma saca tem 60 kg = 0,06 t.<br>
       Conilon = (Londres + diferencial) × 0,06 × Dólar, onde o diferencial é recalculado todo dia
       a partir do Cepea.<br><br>
+      <b>Dólar:</b> acompanha o mercado das 9h até o fechamento do dia (18h). Fora desse horário,
+      e nos fins de semana, fica o valor do último fechamento.<br><br>
       <b>AO VIVO · ESTIMATIVA:</b> durante o pregão o preço é estimado pela bolsa.<br>
       <b>FECHAMENTO CEPEA:</b> quando o Cepea do dia é publicado (fim da tarde), o preço passa a ser
       o do Cepea. É também o preço da abertura do dia seguinte.<br><br>
@@ -563,6 +565,23 @@
 
   function isoUTC(ts) { return ts ? new Date(ts * 1000).toISOString().slice(0, 10) : ""; }
 
+  // Dólar só "ao vivo" no horário do mercado brasileiro: das 9h até o fechamento do pregão de
+  // câmbio (17h de Nova York = 18h de Brasília; 19h no horário de inverno dos EUA). Fora disso, e
+  // nos fins de semana, vale o último fechamento. A barra diária do câmbio começa na noite
+  // anterior: +12 h leva ao dia do pregão (como em scripts/historico.py).
+  function dolarVigente(q) {
+    var br = new Date(Date.now() - 3 * 3600 * 1000), hoje = br.toISOString().slice(0, 10);
+    var dia = isoUTC(q.time + 12 * 3600);
+    if (dia === hoje && br.getUTCHours() >= 9) return { valor: q.close, change: q.change, dia: dia };
+    if (dia < hoje) return { valor: q.close, change: q.change, dia: dia };  // pregão já encerrado
+    // Pregão atual começou (noite anterior ou antes das 9h): vale o fechamento do pregão anterior.
+    var d = new Date(dia + "T12:00:00Z");
+    do { d.setUTCDate(d.getUTCDate() - 1); } while (d.getUTCDay() === 0 || d.getUTCDay() === 6);
+    var diaAnt = d.toISOString().slice(0, 10), valor = q.prev != null ? q.prev : q.close;
+    var ref = (hist && hist.dias || []).filter(function (x) { return x.usd != null && x.data < diaAnt; }).pop();
+    return { valor: valor, change: ref ? (valor / ref.usd - 1) * 100 : null, dia: diaAnt };
+  }
+
   // "fechamento": o preço é o próprio Cepea + ajuste (Londres ainda não negociou depois da
   // calibração). "estimativa": Londres já negociou em um pregão posterior ao Cepea, então o preço
   // é estimado pela bolsa até o Cepea do dia sair e o GitHub recalibrar.
@@ -623,9 +642,9 @@
     }
 
 
-    // O pregão do dólar (câmbio) começa na véspera, às 17h de Nova York (21h/22h UTC): somar 4 h
-    // leva a data para o dia de negociação correto (ex.: pregão de segunda começa domingo à noite).
-    paintMkt($("mUsd"), last.qUsd, fmt(usd, 2), ddmm(last.qUsd.time && last.qUsd.time + 4 * 3600) + "/" + new Date().getFullYear());
+    // Data do dólar: dia do pregão cujo valor está valendo (ver dolarVigente).
+    var diaUsd = last.diaUsd || isoUTC(last.qUsd.time + 12 * 3600);
+    paintMkt($("mUsd"), last.qUsd, fmt(usd, 2), diaUsd.slice(8, 10) + "/" + diaUsd.slice(5, 7) + "/" + diaUsd.slice(0, 4));
     paintMkt($("mLdn"), last.qLdn, fmt(ldn, 0), ctrLabel(last.ctrLdn) + " - " + ddmm(last.qLdn.time));
     paintMkt($("mNy"), last.qNy, fmt(ny, 2), ctrLabel(last.ctrNy) + " - " + ddmm(last.qNy.time));
     renderChart();
@@ -656,8 +675,9 @@
       if (!fx[tUsd]) throw new Error("Cotação do dólar indisponível");
       var qLdn = f["ICEEUR:" + ctrLdn], qNy = f["ICEUS:" + ctrNy];
       var refLdn = String(calib().contrato || ctrLdn).toUpperCase();
-      last = { usd: fx[tUsd].close, ldn: qLdn.close, ny: qNy.close,
-               qUsd: fx[tUsd], qLdn: qLdn, qNy: qNy, ctrLdn: ctrLdn, ctrNy: ctrNy,
+      var dv = dolarVigente(fx[tUsd]);
+      last = { usd: dv.valor, ldn: qLdn.close, ny: qNy.close, diaUsd: dv.dia,
+               qUsd: Object.assign({}, fx[tUsd], { change: dv.change }), qLdn: qLdn, qNy: qNy, ctrLdn: ctrLdn, ctrNy: ctrNy,
                ajLdn: refLdn === ctrLdn ? 0 : ajusteTroca(f["ICEEUR:" + refLdn], qLdn) };
       save("last", JSON.stringify(last));
       $("err").style.display = "none";
