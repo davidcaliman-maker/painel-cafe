@@ -558,6 +558,8 @@
   function calib() { return (hist && hist.calibracao) || CALIB_RESERVA; }
   function difConilon() { return Number(calib().diferencialConilon) + (last && last.ajLdn || 0); }
   function fisicoConilon(ldn, usd) { return (ldn + difConilon()) * T_PER_SACA * usd; }
+  // Preço da saca mostrado de 10 em 10 centavos (ex.: 1.234,57 → 1.234,60).
+  function arred10(v) { return Math.round(v * 10) / 10; }
 
   function isoUTC(ts) { return ts ? new Date(ts * 1000).toISOString().slice(0, 10) : ""; }
 
@@ -600,7 +602,7 @@
     // Dólar arredondado a 2 casas, tanto na tela quanto no cálculo da saca.
     var usd = Math.round(last.usd * 100) / 100, ldn = last.ldn, ny = last.ny;
     var c = calib(), estado = estadoConilon(), diaCepea = c.data.slice(8, 10) + "/" + c.data.slice(5, 7);
-    var fisCon = estado === "fechamento" && c.precoConilon != null ? c.precoConilon : fisicoConilon(ldn, usd);
+    var fisCon = arred10(estado === "fechamento" && c.precoConilon != null ? c.precoConilon : fisicoConilon(ldn, usd));
 
     $("fisConilon").textContent = fmt(fisCon, 2);
     var badge = $("conEstado");
@@ -612,7 +614,7 @@
     var ant = fechamentoAnterior(estado);
     var boxVar = $("conVar");
     if (ant) {
-      var dv = fisCon - ant.preco, dp = dv / ant.preco * 100;
+      var pAnt = arred10(ant.preco), dv = fisCon - pAnt, dp = dv / pAnt * 100;
       boxVar.className = "hero-var" + (dv < 0 ? " down" : "");
       boxVar.innerHTML = '<span class="pill">' + (dv < 0 ? "▼ " : "▲ ") + fmt(Math.abs(dp), 2) + '%</span>' +
         '<small>' + signed(dv, 2).replace(/^([+−]?)/, "$1R$ ") + " · vs " + ant.dia + '</small>';
@@ -818,8 +820,8 @@
     var usd = Math.round(d.usd * 100) / 100;
     if (nome === "conilon") {
       // Dias fechados: o próprio Cepea + ajuste (mercado físico real); hoje: cálculo ao vivo.
-      if (d.cepeaConilon != null) return d.cepeaConilon + Number(calib().ajusteConilonCepea);
-      return fisicoConilon(d.londres, usd);
+      if (d.cepeaConilon != null) return arred10(d.cepeaConilon + Number(calib().ajusteConilonCepea));
+      return arred10(fisicoConilon(d.londres, usd));
     }
     if (nome === "usd") return usd;
     return d[nome];
