@@ -621,7 +621,9 @@
     }
 
 
-    paintMkt($("mUsd"), last.qUsd, fmt(usd, 2), ddmm(last.qUsd.time) + "/" + new Date().getFullYear());
+    // O pregão do dólar (câmbio) começa na véspera, às 17h de Nova York (21h/22h UTC): somar 4 h
+    // leva a data para o dia de negociação correto (ex.: pregão de segunda começa domingo à noite).
+    paintMkt($("mUsd"), last.qUsd, fmt(usd, 2), ddmm(last.qUsd.time && last.qUsd.time + 4 * 3600) + "/" + new Date().getFullYear());
     paintMkt($("mLdn"), last.qLdn, fmt(ldn, 0), ctrLabel(last.ctrLdn) + " - " + ddmm(last.qLdn.time));
     paintMkt($("mNy"), last.qNy, fmt(ny, 2), ctrLabel(last.ctrNy) + " - " + ddmm(last.qNy.time));
     renderChart();
