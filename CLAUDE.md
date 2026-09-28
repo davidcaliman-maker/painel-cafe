@@ -19,7 +19,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v16).
+  (`painel-agro-vN` → `vN+1`; hoje v20).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial).
 
@@ -36,6 +36,11 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   inline). Cores em variáveis CSS; `html[data-tema="rosa"]`. Verde/vermelho de alta e baixa não mudam.
 - **Ajuda (?):** explica cálculo, selos, contratos, alertas e aviso de privacidade; no Android 3.0+
   mostra o botão "Testar alerta".
+- Preço do Conilon mostrado arredondado de 10 em 10 centavos (`arred10`: card, variação e gráfico).
+  O fechamento do app (ex. 952,70) pode diferir em centavos do Cepea/cotacaodocafe (952,72) — intencional.
+- Dólar (`dolarVigente`): ao vivo só das 9h até o fechamento do pregão de câmbio (~18h Brasília);
+  fora disso e no fim de semana vale o último fechamento, com a data desse pregão no card.
+  (O `AlertaService.java` ainda usa o dólar ao vivo e o preço sem arredondar — diferença mínima.)
 - Card do Conilon NÃO deve mostrar ajuste, arroba nem faixa de indicadores (pedido do usuário).
   Não há preço físico do Arábica (só cotação de NY).
 
@@ -64,6 +69,10 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   o Gmail do usuário no histórico.
 - Ação de terceiros (`liskin/gh-workflow-keepalive`) fixada por SHA; as demais são oficiais do GitHub.
 - Maior risco: invasão da conta GitHub (controla o app de todos). Recomendar 2FA.
+
+## Trabalho em mais de um lugar
+- O usuário também edita pelo Claude Code na web (branches `claude/...` + pull request na `main`).
+  Antes de mexer, rode `git pull` para pegar essas mudanças.
 
 ## Regras combinadas com o usuário
 - **Nunca altere `config.json` (preço/ajuste) sem aprovação explícita.**
