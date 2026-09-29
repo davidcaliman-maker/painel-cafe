@@ -19,7 +19,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v23).
+  (`painel-agro-vN` → `vN+1`; hoje v24).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial).
 
@@ -50,6 +50,8 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   O fechamento do app (ex. 952,70) pode diferir em centavos do Cepea/cotacaodocafe (952,72) — intencional.
 - Dólar (`dolarVigente`): ao vivo só das 9h até o fechamento do pregão de câmbio (~18h Brasília);
   fora disso e no fim de semana vale o último fechamento, com a data desse pregão no card.
+  Enquanto o dólar de HOJE não saiu (antes das 9h, fim de semana) o card fica cinza e sem
+  percentual "(–)"; à noite mantém a cor e a variação do dia (pedido do usuário 29/09).
   (O `AlertaService.java` ainda usa o dólar ao vivo e o preço sem arredondar — diferença mínima.)
 - Card do Conilon NÃO deve mostrar ajuste, arroba nem faixa de indicadores (pedido do usuário).
   Não há preço físico do Arábica (só cotação de NY).
