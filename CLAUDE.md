@@ -19,7 +19,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v24).
+  (`painel-agro-vN` → `vN+1`; hoje v25).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial).
 
@@ -54,6 +54,9 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   percentual "(–)"; à noite mantém a cor e a variação do dia (pedido do usuário 29/09).
   (O `AlertaService.java` ainda usa o dólar ao vivo e o preço sem arredondar — diferença mínima.)
 - Card do Conilon NÃO deve mostrar ajuste, arroba nem faixa de indicadores (pedido do usuário).
+- Variação do dia >= 3% (`VARIACAO_FORTE` no index.html, não é o `alertaVariacaoPct`): card brilha,
+  selo FORTE ALTA/BAIXA, fogos + 💵💰 subindo (alta) ou 💸 voando (baixa) em `#efeito`. O preço NÃO
+  aumenta de tamanho (usuário preferiu os fogos). Respeita "reduzir animações".
   Não há preço físico do Arábica (só cotação de NY).
 
 ## Dados e automações (GitHub Actions)
