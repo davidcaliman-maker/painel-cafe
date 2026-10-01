@@ -25,9 +25,12 @@ def main():
     print(f"Site cotacaodocafe.com: fechamento {site['data']} = R$ {site['preco']:.2f}")
 
     problemas = []
-    if site["data"] != dia_app:
+    if not site["data"]:
+        # O site mudou o jeito de mostrar a data: compara só o valor (não é motivo de alarme).
+        print("aviso: data do fechamento não encontrada no site; comparando só o valor")
+    elif site["data"] != dia_app:
         problemas.append(f"datas diferentes: app usa o Cepea de {dia_app}, site mostra {site['data']}")
-    elif abs(cal["cepeaConilon"] - site["preco"]) > TOLERANCIA:
+    if not problemas and abs(cal["cepeaConilon"] - site["preco"]) > TOLERANCIA:
         problemas.append(f"valores diferentes: app R$ {cal['cepeaConilon']:.2f} × site R$ {site['preco']:.2f}")
 
     if problemas:

@@ -61,10 +61,20 @@ def preco_site():
     t = re.sub(r"<script.*?</script>|<style.*?</style>", "", t, flags=re.S)
     t = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", t)))
     preco = re.search(r"Indicador nacional conilon R\$ ([\d.]+,\d{2})", t)
-    data = re.search(r"Fechamento de [^,]+, (\d{2}/\d{2})", t)
     if not preco:
         raise RuntimeError("preço principal do Conilon não encontrado no site")
-    return {"preco": float(preco.group(1).replace(".", "").replace(",", ".")), "data": data.group(1) if data else ""}
+    # O site já mostrou "Fechamento de terça, 29/09" e hoje mostra "Fechamento de hoje".
+    data = re.search(r"Fechamento de [^,]+, (\d{2}/\d{2})", t)
+    hoje = dt.datetime.now(BRT).date()
+    if data:
+        data = data.group(1)
+    elif re.search(r"Fechamento de hoje", t):
+        data = hoje.strftime("%d/%m")
+    elif re.search(r"Fechamento de ontem", t):
+        data = (hoje - dt.timedelta(days=1)).strftime("%d/%m")
+    else:
+        data = ""
+    return {"preco": float(preco.group(1).replace(".", "").replace(",", ".")), "data": data}
 
 
 def main():
