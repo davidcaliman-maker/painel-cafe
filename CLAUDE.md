@@ -73,6 +73,10 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   sáb/dom 09h, 15h, 20h. Agendadas só republicam se histórico ou notícias mudaram. Keepalive incluso.
 - `conferencia.yml` + `scripts/conferencia.py`: dias úteis 22h30 confere o Cepea do app × preço
   principal do cotacaodocafe.com; se divergir (data ou > R$ 0,50) falha e o GitHub avisa por e-mail.
+- `scripts/acerto.py` (no conferencia.yml, 22h30): anota em `dados/acerto.csv` a estimativa AO VIVO das
+  10h/13h/16h/fim × Cepea do dia (+ base anterior, para testar outras fórmulas). Pedido do usuário em 01/10:
+  juntar 3–4 semanas e então avaliar "amortecer" o movimento de Londres/dólar (físico anda ~metade).
+  O robô do GitHub faz commit desse arquivo → sempre `git pull` antes de mexer.
 - `scripts/monitor.py`: comparação manual app × cotacaodocafe.com (grava `monitoramento/conilon.csv`, local).
 - cotacaodocafe.com NÃO calcula: copia o Cepea (preço principal, atualiza 1x/dia ~21h), CCCV/Cooabriel
   via Notícias Agrícolas (regionais ES; "Sul da Bahia" = mesmo valor de Vitória 7/8), PTAX (dólar).
