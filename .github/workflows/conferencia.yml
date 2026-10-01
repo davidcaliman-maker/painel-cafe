@@ -1,7 +1,11 @@
-# Acerto da estimativa do Conilon: anota em dados/acerto.csv a estimativa AO VIVO do app
-# (10h, 13h, 16h e fim do dia) contra o Cepea do dia, para avaliar a fórmula depois de algumas
-# semanas. (Até 01/10/2026 também comparava com o cotacaodocafe.com; o usuário pediu para retirar.)
-name: Acerto da estimativa do Conilon
+# Rotina da noite (22h30, dias úteis):
+# 1. Cepea do dia: confere se o app já tem o Cepea de hoje (é com ele que o preço de amanhã começa).
+#    Se o Cepea publicou e o app não pegou, publica o site de novo e confere outra vez. Se ainda
+#    faltar, a execução falha e o GitHub avisa o usuário por e-mail (motivo no resumo da execução).
+# 2. Acerto da estimativa: anota em dados/acerto.csv a estimativa AO VIVO do app (10h, 13h, 16h e
+#    fim do dia) contra o Cepea do dia, para avaliar a fórmula depois de algumas semanas.
+# (Até 01/10/2026 também comparava com o cotacaodocafe.com; o usuário pediu para retirar.)
+name: Cepea do dia e acerto da estimativa
 
 on:
   schedule:
@@ -10,19 +14,28 @@ on:
 
 permissions:
   contents: write  # gravar dados/acerto.csv no repositório
-  actions: write   # manter o agendamento ativo (keepalive)
+  actions: write   # publicar o site de novo e manter o agendamento ativo (keepalive)
 
 jobs:
-  anotar:
+  noite:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - run: pip install --quiet websockets
+
+      - name: Conferir se o app tem o Cepea de hoje
+        id: cepea
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: cd scripts && python cepea_do_dia.py --corrigir
 
       # Commits feitos com o token do próprio GitHub Actions não disparam o "Publicar no GitHub Pages".
       - name: Anotar acerto da estimativa do dia
+        continue-on-error: true
         run: |
           python scripts/acerto.py dados/acerto.csv
           if [ -n "$(git status --porcelain dados)" ]; then
@@ -35,3 +48,8 @@ jobs:
 
       - uses: liskin/gh-workflow-keepalive@f72ff1a1336129f29bf0166c0fd0ca6cf1bcb38c # v1
         if: ${{ !cancelled() }}
+
+      # Falha no fim = e-mail do GitHub para o usuário. O motivo está no resumo da execução.
+      - name: Avisar se o app ficou sem o Cepea de hoje
+        if: steps.cepea.outcome == 'failure'
+        run: exit 1

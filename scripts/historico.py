@@ -240,12 +240,10 @@ async def main(caminho_config, caminho_saida):
         dias.append({"data": data, "usd": usd[max(anteriores)], "londres": ldn[data], "novaYork": ny[data]})
 
     anterior = publicado_anterior()
-    cepea_falhou = False
     try:
         cepea = cepea_conilon()
     except Exception as e:  # CEPEA fora do ar: mantém os valores já publicados
         print(f"aviso: CEPEA indisponível ({e}); usando o último publicado")
-        cepea_falhou = True
         cepea = {d["data"]: d["cepeaConilon"] for d in anterior.get("dias", []) if d.get("cepeaConilon")}
     for d in dias:
         if d["data"] in cepea:
@@ -313,8 +311,8 @@ async def main(caminho_config, caminho_saida):
     if os.environ.get("GITHUB_OUTPUT"):
         with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
             f.write("mudou=" + ("true" if mudou else "false") + "\n")
-    if cepea_falhou:
-        sys.exit(2)  # arquivo gravado, mas a execução fica marcada como falha (aviso por e-mail)
+    # Falha do Cepea numa rodada não marca erro (as rodadas são de 15 em 15 min e a próxima costuma
+    # conseguir). Quem avisa o usuário é scripts/cepea_do_dia.py, às 22h30, se o dia ficou sem Cepea.
 
 
 if __name__ == "__main__":

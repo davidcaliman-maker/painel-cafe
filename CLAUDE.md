@@ -71,7 +71,11 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
 - `historico.py` também gera `intradia.json` (barras de 5 min do TradingView; `gerar_intradia`).
 - `pages.yml` roda: dias úteis a cada 15 min das 05h às 22h (Brasília);
   sáb/dom 09h, 15h, 20h. Agendadas só republicam se histórico ou notícias mudaram. Keepalive incluso.
-- `conferencia.yml` (nome "Acerto da estimativa do Conilon"): dias úteis 22h30, só roda o `acerto.py`.
+- `conferencia.yml` (nome "Cepea do dia e acerto da estimativa"): dias úteis 22h30.
+  1) `scripts/cepea_do_dia.py --corrigir`: se o app não tem o Cepea de hoje e o Cepea já publicou, roda o
+     pages.yml de novo e reconfere; se ainda faltar (ou Cepea não publicou/fora do ar/Londres sem pregão),
+     a execução FALHA → e-mail do GitHub ao usuário (pedido 01/10). Motivo no resumo da execução.
+  2) `acerto.py`. Falha passageira do Cepea numa rodada do pages.yml NÃO marca erro (evita e-mail a cada 15 min).
   A comparação com o cotacaodocafe.com foi RETIRADA em 01/10 a pedido do usuário (o site só copia o
   Cepea); `conferencia.py` e `monitor.py` foram apagados. Não recriar.
 - `scripts/acerto.py` (no conferencia.yml, 22h30): anota em `dados/acerto.csv` a estimativa AO VIVO das
