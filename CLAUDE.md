@@ -21,7 +21,11 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
   (`painel-agro-vN` → `vN+1`; hoje v27).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
-  `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial).
+  `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
+  `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
+  (historico/intradia/cotacoes/noticias) não existem na cópia local: para simular, gere com
+  `python scripts/historico.py ...` em `build/teste/` e copie para assets — e APAGUE antes do commit.
+- Antes de publicar uma mudança visual, mostrar ao usuário (preview) e pedir o "pode publicar".
 
 ## Telas (barra de abas no rodapé: PAINEL · CHUVA · NOTÍCIAS; roteamento por `#chuva`/`#noticias`)
 - **Painel:** card destaque do Conilon (preço grande, selo AO VIVO/FECHAMENTO dd/mm, variação do
@@ -34,6 +38,8 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
     da cotação que o app já busca (`pontosDia`). Fim de semana mostra o último pregão.
     Conilon do dia usa a calibração do Cepea ANTERIOR ao dia (a linha não muda quando o Cepea sai);
     depois do Cepea o topo mostra "fechamento Cepea".
+    Depois do fechamento de Londres/NY o gráfico mostra o último negócio (ex. 3.376) e o card o ajuste
+    oficial (3.375): diferença de poucos pontos, explicada ao usuário, que NÃO quis igualar (29/09).
 - **Chuva:** previsão de 10 dias (Open-Meteo). Padrão Itamaraju-BA; usuário escolhe qualquer
   cidade do Brasil (busca no geocoding do Open-Meteo), salvo no aparelho. O ícone da aba mostra
   o total de mm dos 10 dias.
@@ -67,6 +73,11 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   Londres × dólar a partir do último Cepea; quando o Cepea do dia sai (~21h), vira FECHAMENTO.
 - Contratos trocam sozinhos (dia 15 do mês anterior ao vencimento; Londres 2ª posição, NY 1ª),
   sem salto no preço (ajuste pela diferença entre contratos).
+- Rede: `pedir()` no index.html tenta Native → fetch do WebView → Native de novo após 3 s (no 5G o
+  celular às vezes dá "Unable to resolve host"). Faixa vermelha só após 3 falhas seguidas (~3 min).
+  Se ainda falhar, `scan()` usa a RESERVA `cotacoes.json` (gerada por `historico.py`/`cotacoes_scanner`
+  a cada rodada do pages.yml, ~15 min; 4 vencimentos de cada bolsa + dólar) e mostra "atualizado às HH:MM".
+  Solução mista escolhida pelo usuário (01/10): direto primeiro, GitHub só como reserva.
 - `scripts/noticias.py`: Google Notícias RSS (últimos 7 dias), filtra fora do assunto e repetidas.
 - `historico.py` também gera `intradia.json` (barras de 5 min do TradingView; `gerar_intradia`).
 - `pages.yml` roda: dias úteis a cada 15 min das 05h às 22h (Brasília);
@@ -96,7 +107,10 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
 
 ## Trabalho em mais de um lugar
 - O usuário também edita pelo Claude Code na web (branches `claude/...` + pull request na `main`).
-  Antes de mexer, rode `git pull` para pegar essas mudanças.
+  Antes de mexer, rode `git pull` para pegar essas mudanças (o robô do GitHub também faz commits
+  em `dados/acerto.csv` toda noite).
+- Orientação dada: abrir sessão nova no Claude Code escolhendo a pasta `D:\PROJETOS_CLAUDE\painel-cafe`
+  (este arquivo é lido sozinho). A única coisa fora do GitHub é `~/.android/debug.keystore`.
 
 ## Regras combinadas com o usuário
 - **Nunca altere `config.json` (preço/ajuste) sem aprovação explícita.**
@@ -115,11 +129,6 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   Depois rode `gh workflow run pages.yml`: o deploy copia o APK da última release para o site
   (`/painel-cafe/PainelAgro.apk`), que é o link do botão "Baixar para Android" em `instalar.html`
   (link direto, sem redirecionamentos — o link do GitHub Releases falhava em alguns celulares).
-- Rede: `pedir()` no index.html tenta Native → fetch do WebView → Native de novo após 3 s (no 5G o
-  celular às vezes dá "Unable to resolve host"). Faixa vermelha só após 3 falhas seguidas (~3 min).
-  Se ainda falhar, `scan()` usa a RESERVA `cotacoes.json` (gerada por `historico.py`/`cotacoes_scanner`
-  a cada rodada do pages.yml, ~15 min; 4 vencimentos de cada bolsa + dólar) e mostra "atualizado às HH:MM".
-  Solução mista escolhida pelo usuário (01/10): direto primeiro, GitHub só como reserva.
 - `MainActivity.java`: WebView que carrega o site (fallback offline para a cópia nos assets),
   ponte `Native` (post/get HTTP sem CORS, load/save, openUrl, testarAlerta).
 - `AlertaService.java`: JobScheduler a cada ~15 min (5h–22h), app fechado; notifica FORTE ALTA /
@@ -152,10 +161,35 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
 - Google anunciou verificação obrigatória de desenvolvedores Android no Brasil a partir de set/2026
   (pode afetar APK por link) — conferir situação atual.
 
+## Análises já feitas (para não refazer do zero)
+- Fechamento do app = Cepea arredondado (diferença máx. 4 centavos). As diferenças estão na
+  ESTIMATIVA AO VIVO: em 14 pregões (14/09–01/10) erro médio ~R$ 10/saca (1,1%), sem vício para um
+  lado (média +R$ 0,5); maior erro R$ 24 (23/09). O físico anda menos que Londres × dólar no dia.
+- Simulações nos mesmos 14 dias (erro médio / maior erro):
+  movimento inteiro (atual) 10,04 / 24,14 · regra do usuário "abrir pela média (fechamento do app +
+  Cepea)/2" 10,24 / 19,95 (empatou, não adotar) · 75% do movimento 7,49 · **50% do movimento 5,74 /
+  14,81** · 35% 5,85. Fórmula NÃO foi mudada: esperar `dados/acerto.csv` ter 3–4 semanas (fim de
+  out/2026), refazer a análise e só então propor (precisa aprovação do usuário).
+- Atraso das bolsas: ICE (Londres/NY) só tem tempo real pago e com licença de redistribuição (cara);
+  grátis = 10–15 min. Dólar (FX_IDC) já vem com ~1–2 min. Explicado ao usuário (01/10).
+- Dólar: app mostra 2 casas arredondando (5,2271 → 5,23); Google às vezes mostra 5,22. Explicado.
+
 ## Pendências / ideias oferecidas e ainda não feitas
 - Nome do card "CONILON 7/8" × dado do Cepea (Robusta tipo 6 peneira 13): renomear para
   "Conilon · Indicador Cepea" ou usar o Tipo 7/8 do CCCV (Notícias Agrícolas) — usuário não decidiu.
-- Medir acerto da estimativa ao vivo (snapshots 10h/13h/16h × fechamento) — oferecido, não feito.
+- **~22–29/10/2026: analisar `dados/acerto.csv`** (o usuário vai pedir "analisa o acerto da estimativa
+  do Conilon"): comparar fórmula atual × amortecida (50% etc.) por horário (10h/13h/16h/fim).
+- Bloqueio só para convidados — opções explicadas (28/09): 1) código único no app (simples, burlável;
+  "Jeito A" = todos, inclusive quem já usa, digitam uma vez — recomendado), 2) código por pessoa com
+  lista/cancelamento (Cloudflare Worker), 3) Cloudflare Access por e-mail (grátis até 50 pessoas; muda
+  hospedagem). Usuário não decidiu nem escolheu o código.
+- Cloudflare Worker como intermediário das cotações (ao vivo, esconde a fonte, menos risco de
+  bloqueio; precisa conta do usuário). Recomendado só se a reserva do GitHub não bastar no 5G ou junto
+  com o bloqueio por convite (opção 2).
+- App conferir o historico.json a cada 5 min das 17h às 22h (troca para FECHAMENTO logo que o Cepea
+  sai; hoje confere a cada 30 min) — oferecido, sem resposta.
+- Dólar com 3–4 casas no card — oferecido, sem resposta. Aviso "10 min atraso" nos cards de Londres/NY
+  — oferecido, sem resposta.
 - Trocas gratuitas: chuva → MET Norway; dólar → fonte oficial — oferecido, não feito.
 - Alertas no iPhone (OneSignal) — oferecido, não feito.
 - Ícone da tela inicial ainda é "A + grão" (o logo dentro do app é só o grão).
