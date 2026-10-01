@@ -1,9 +1,7 @@
-# Conferência diária do Conilon: app × preço principal do cotacaodocafe.com (Cepea).
-# Se houver diferença, a execução falha e o GitHub avisa por e-mail. Se estiver tudo certo,
-# não acontece nada.
-# Também anota em dados/acerto.csv o acerto da estimativa AO VIVO (10h, 13h, 16h e fim do dia)
-# contra o Cepea do dia, para avaliar a fórmula depois de algumas semanas.
-name: Conferência do Conilon
+# Acerto da estimativa do Conilon: anota em dados/acerto.csv a estimativa AO VIVO do app
+# (10h, 13h, 16h e fim do dia) contra o Cepea do dia, para avaliar a fórmula depois de algumas
+# semanas. (Até 01/10/2026 também comparava com o cotacaodocafe.com; o usuário pediu para retirar.)
+name: Acerto da estimativa do Conilon
 
 on:
   schedule:
@@ -15,7 +13,7 @@ permissions:
   actions: write   # manter o agendamento ativo (keepalive)
 
 jobs:
-  conferir:
+  anotar:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,7 +23,6 @@ jobs:
 
       # Commits feitos com o token do próprio GitHub Actions não disparam o "Publicar no GitHub Pages".
       - name: Anotar acerto da estimativa do dia
-        continue-on-error: true
         run: |
           python scripts/acerto.py dados/acerto.csv
           if [ -n "$(git status --porcelain dados)" ]; then
@@ -36,7 +33,5 @@ jobs:
             git push
           fi
 
-      - name: Comparar app e cotacaodocafe.com
-        run: cd scripts && python conferencia.py
       - uses: liskin/gh-workflow-keepalive@f72ff1a1336129f29bf0166c0fd0ca6cf1bcb38c # v1
         if: ${{ !cancelled() }}
