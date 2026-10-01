@@ -495,36 +495,35 @@
     var cb = cbs[id]; delete cbs[id];
     if (cb) cb(ok, text);
   };
-  function postJson(url, body) {
+  function viaAndroid(metodo, url, payload) {
     return new Promise(function (resolve, reject) {
-      var payload = JSON.stringify(body);
-      if (window.Native) {
-        var id = "c" + (++seq);
-        cbs[id] = function (ok, text) {
-          if (!ok) return reject(new Error(text));
-          try { resolve(JSON.parse(text)); } catch (e) { reject(e); }
-        };
-        Native.post(url, payload, id);
-      } else {
-        fetch(url, { method: "POST", body: payload }).then(function (r) { return r.json(); }).then(resolve, reject);
-      }
+      var id = "c" + (++seq);
+      cbs[id] = function (ok, text) {
+        if (!ok) return reject(new Error(text));
+        try { resolve(JSON.parse(text)); } catch (e) { reject(e); }
+      };
+      if (metodo === "POST") Native.post(url, payload, id); else Native.get(url, id);
     });
   }
-
-  function getJson(url) {
-    return new Promise(function (resolve, reject) {
-      if (window.Native) {
-        var id = "c" + (++seq);
-        cbs[id] = function (ok, text) {
-          if (!ok) return reject(new Error(text));
-          try { resolve(JSON.parse(text)); } catch (e) { reject(e); }
-        };
-        Native.get(url, id);
-      } else {
-        fetch(url).then(function (r) { return r.json(); }).then(resolve, reject);
-      }
+  function viaNavegador(metodo, url, payload) {
+    return fetch(url, metodo === "POST" ? { method: "POST", body: payload } : {}).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
     });
   }
+  function espera(ms) { return new Promise(function (ok) { setTimeout(ok, ms); }); }
+  // Na rede móvel (5G/4G) o celular às vezes não acha o servidor por alguns segundos
+  // ("Unable to resolve host"). Então: tenta pelo Android, depois pela conexão do navegador
+  // do app e, se ainda falhar, mais uma vez depois de 3 s.
+  function pedir(metodo, url, body) {
+    var payload = body == null ? null : JSON.stringify(body);
+    var primeira = window.Native ? viaAndroid : viaNavegador;
+    return primeira(metodo, url, payload)
+      .catch(function () { return viaNavegador(metodo, url, payload); })
+      .catch(function () { return espera(3000).then(function () { return primeira(metodo, url, payload); }); });
+  }
+  function postJson(url, body) { return pedir("POST", url, body); }
+  function getJson(url) { return pedir("GET", url); }
 
   function scan(market, tickers) {
     return postJson("https://scanner.tradingview.com/" + market + "/scan", {
@@ -693,7 +692,7 @@
     $("efeito").innerHTML = html;
   }
 
-  var loading = false;
+  var loading = false, falhas = 0, horaOk = "";
   function refresh(forcarHist) {
     if (loading) return;
     loading = true;
@@ -724,13 +723,22 @@
                ajLdn: refLdn === ctrLdn ? 0 : ajusteTroca(f["ICEEUR:" + refLdn], qLdn) };
       save("last", JSON.stringify(last));
       $("err").style.display = "none";
+      falhas = 0;
       var now = new Date();
-      $("upd").textContent = String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
+      horaOk = String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
+      $("upd").textContent = horaOk;
       render();
     }).catch(function (e) {
-      $("err").textContent = "Falha ao atualizar: " + e.message + (last ? " (mostrando últimos valores)" : "");
-      $("err").style.display = "block";
-      $("upd").textContent = "offline";
+      // Falha passageira da rede não assusta: a faixa só aparece depois de ~3 min sem conseguir
+      // (o app tenta de novo a cada minuto) ou se ainda não há nenhum valor para mostrar.
+      falhas++;
+      $("upd").textContent = "sem conexão";
+      if (falhas >= 3 || !last) {
+        $("err").textContent = "Sem conexão para atualizar as cotações." +
+          (last ? " Mostrando os últimos valores" + (horaOk ? " (das " + horaOk + ")" : "") + "." : " Tente de novo em instantes.");
+        $("err").style.display = "block";
+      }
+      if (window.console) console.warn("Falha ao atualizar:", e && e.message);
     }).then(function () { loading = false; });
   }
 
