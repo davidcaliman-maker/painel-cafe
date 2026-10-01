@@ -37,15 +37,44 @@ SITE = "https://davidcaliman-maker.github.io/painel-cafe/"
 CEPEA_URL = "https://www.cepea.org.br/br/indicador/cafe.aspx"
 
 
-def contrato_auto(mercado, posicao, hoje):
-    """Lista os vencimentos ainda ativos e devolve o da posição pedida (1 = primeiro)."""
+def contratos_ativos(mercado, hoje):
+    """Vencimentos ainda ativos, do mais próximo ao mais distante."""
     ativos = []
     for ano in range(hoje.year, hoje.year + 3):
         for mes in mercado["meses"]:
             ano_troca, mes_troca = (ano - 1, 12) if mes == 1 else (ano, mes - 1)
             if hoje < dt.date(ano_troca, mes_troca, 15):
                 ativos.append(f'{mercado["raiz"]}{CODIGOS[mes]}{ano}')
-    return ativos[max(0, posicao - 1)]
+    return ativos
+
+
+def contrato_auto(mercado, posicao, hoje):
+    """Devolve o vencimento da posição pedida (1 = primeiro)."""
+    return contratos_ativos(mercado, hoje)[max(0, posicao - 1)]
+
+
+def cotacoes_scanner(hoje):
+    """Cotações atuais (mesma consulta que o app faz) para a reserva do app: cotacoes.json.
+
+    Se o celular não conseguir buscar direto (ex.: falha de rede no 5G), o app usa este arquivo,
+    publicado no próprio site. Inclui os 4 primeiros vencimentos de cada bolsa e o dólar.
+    """
+    def scan(mercado, tickers):
+        corpo = json.dumps({"symbols": {"tickers": tickers},
+                            "columns": ["close", "change", "time", "close[1]"]}).encode()
+        req = urllib.request.Request(f"https://scanner.tradingview.com/{mercado}/scan", data=corpo,
+                                     headers={"User-Agent": "Mozilla/5.0", "Content-Type": "text/plain"})
+        with urllib.request.urlopen(req, timeout=30) as r:
+            dados = json.load(r)
+        return {x["s"]: {"close": x["d"][0], "change": x["d"][1], "time": x["d"][2], "prev": x["d"][3]}
+                for x in dados.get("data", [])}
+
+    futuros = [f'{MERCADOS[n]["bolsa"]}:{c}' for n in MERCADOS for c in contratos_ativos(MERCADOS[n], hoje)[:4]]
+    cot = scan("futures", futuros)
+    cot.update(scan("forex", ["FX_IDC:USDBRL"]))
+    if "FX_IDC:USDBRL" not in cot or len(cot) < 3:
+        raise RuntimeError(f"scanner incompleto: {sorted(cot)}")
+    return cot
 
 
 def escolher_contrato(cfg, nome, hoje):
@@ -250,6 +279,17 @@ async def main(caminho_config, caminho_saida):
     with open(caminho_saida, "w", encoding="utf-8") as f:
         json.dump(saida, f, ensure_ascii=False, indent=1)
     print(f'{len(saida["dias"])} dias, contratos {contratos}, calibração {calibracao}')
+
+    # Cotações prontas (reserva do app). Se falhar, o arquivo não é gerado e o workflow mantém
+    # o publicado. Não entra no "mudou": republica junto com o histórico/gráfico do dia.
+    try:
+        cot = {"geradoEm": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+               "cotacoes": cotacoes_scanner(hoje)}
+        with open(os.path.join(os.path.dirname(caminho_saida), "cotacoes.json"), "w", encoding="utf-8") as f:
+            json.dump(cot, f, separators=(",", ":"))
+        print(f'cotações de reserva: {len(cot["cotacoes"])} símbolos')
+    except Exception as e:
+        print(f"aviso: cotações de reserva indisponíveis ({e})")
 
     # Gráfico do dia. Se falhar, mantém o publicado (o app mostra o que tiver).
     caminho_intra = os.path.join(os.path.dirname(caminho_saida), "intradia.json")

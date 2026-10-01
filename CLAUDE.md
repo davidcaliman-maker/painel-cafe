@@ -19,7 +19,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v26).
+  (`painel-agro-vN` → `vN+1`; hoje v27).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial).
 
@@ -109,6 +109,9 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   (link direto, sem redirecionamentos — o link do GitHub Releases falhava em alguns celulares).
 - Rede: `pedir()` no index.html tenta Native → fetch do WebView → Native de novo após 3 s (no 5G o
   celular às vezes dá "Unable to resolve host"). Faixa vermelha só após 3 falhas seguidas (~3 min).
+  Se ainda falhar, `scan()` usa a RESERVA `cotacoes.json` (gerada por `historico.py`/`cotacoes_scanner`
+  a cada rodada do pages.yml, ~15 min; 4 vencimentos de cada bolsa + dólar) e mostra "atualizado às HH:MM".
+  Solução mista escolhida pelo usuário (01/10): direto primeiro, GitHub só como reserva.
 - `MainActivity.java`: WebView que carrega o site (fallback offline para a cópia nos assets),
   ponte `Native` (post/get HTTP sem CORS, load/save, openUrl, testarAlerta).
 - `AlertaService.java`: JobScheduler a cada ~15 min (5h–22h), app fechado; notifica FORTE ALTA /

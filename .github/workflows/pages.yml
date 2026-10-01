@@ -62,6 +62,10 @@ jobs:
         if: hashFiles('app/src/main/assets/intradia.json') == ''
         run: curl -sf https://davidcaliman-maker.github.io/painel-cafe/intradia.json -o app/src/main/assets/intradia.json || true
 
+      - name: Manter as cotações de reserva publicadas se não foi possível buscar novas
+        if: hashFiles('app/src/main/assets/cotacoes.json') == ''
+        run: curl -sf https://davidcaliman-maker.github.io/painel-cafe/cotacoes.json -o app/src/main/assets/cotacoes.json || true
+
       # O APK mais recente também fica no próprio site: link direto, sem os redirecionamentos do
       # GitHub (alguns celulares/navegadores falham neles).
       - name: Copiar APK mais recente para o site

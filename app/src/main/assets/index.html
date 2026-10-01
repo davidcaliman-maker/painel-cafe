@@ -525,6 +525,13 @@
   function postJson(url, body) { return pedir("POST", url, body); }
   function getJson(url) { return pedir("GET", url); }
 
+  // Reserva: se a busca direta falhar (ex.: rede do 5G), usa as cotações que o GitHub publica
+  // no próprio site a cada ~15 min (cotacoes.json, gerado por scripts/historico.py).
+  var reserva = null, reservaUsada = null;
+  function cotacoesReserva() {
+    if (reserva && Date.now() - reserva.lida < 60000) return Promise.resolve(reserva.dados);
+    return siteJson("cotacoes.json").then(function (d) { reserva = { lida: Date.now(), dados: d }; return d; });
+  }
   function scan(market, tickers) {
     return postJson("https://scanner.tradingview.com/" + market + "/scan", {
       symbols: { tickers: tickers },
@@ -533,6 +540,14 @@
       var out = {};
       (res.data || []).forEach(function (r) { out[r.s] = { close: r.d[0], change: r.d[1], time: r.d[2], prev: r.d[3] }; });
       return out;
+    }).catch(function (erro) {
+      return cotacoesReserva().then(function (d) {
+        var out = {};
+        tickers.forEach(function (t) { if (d.cotacoes && d.cotacoes[t]) out[t] = d.cotacoes[t]; });
+        if (!Object.keys(out).length) throw erro;
+        reservaUsada = d.geradoEm;
+        return out;
+      }, function () { throw erro; });
     });
   }
 
@@ -697,6 +712,7 @@
     if (loading) return;
     loading = true;
     $("upd").textContent = "atualizando…";
+    reservaUsada = null;
     var tUsd = "FX_IDC:USDBRL", cLdn, cNy;
     var cfgPronta = siteJson("config.json").then(function (c) {
       cfg = Object.assign(cfg, c);
@@ -724,9 +740,10 @@
       save("last", JSON.stringify(last));
       $("err").style.display = "none";
       falhas = 0;
-      var now = new Date();
+      // Pela reserva, vale a hora em que o GitHub buscou as cotações.
+      var now = reservaUsada ? new Date(reservaUsada) : new Date();
       horaOk = String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
-      $("upd").textContent = horaOk;
+      $("upd").textContent = reservaUsada ? "atualizado às " + horaOk : horaOk;
       render();
     }).catch(function (e) {
       // Falha passageira da rede não assusta: a faixa só aparece depois de ~3 min sem conseguir
