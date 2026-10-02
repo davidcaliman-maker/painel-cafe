@@ -20,6 +20,30 @@ import urllib.request
 from historico import BRT, SITE, cepea_conilon
 
 
+# Feriados nacionais em que o Cepea não publica (mesma lista do index.html): fixos + Carnaval (seg e
+# ter), Sexta-feira Santa e Corpus Christi, calculados pela Páscoa. Nesses dias não há aviso.
+FERIADOS_FIXOS = {"01-01", "04-21", "05-01", "09-07", "10-12", "11-02", "11-15", "11-20", "12-25"}
+
+
+def pascoa(ano):
+    a, b, c = ano % 19, ano // 100, ano % 100
+    d, e, f = b // 4, b % 4, (b + 8) // 25
+    g = (b - f + 1) // 3
+    h = (19 * a + b - d - g + 15) % 30
+    i, k = c // 4, c % 4
+    l = (32 + 2 * e + 2 * i - h - k) % 7
+    m = (a + 11 * h + 22 * l) // 451
+    n = h + l - 7 * m + 114
+    return dt.date(ano, n // 31, n % 31 + 1)
+
+
+def feriado(iso):
+    if iso[5:] in FERIADOS_FIXOS:
+        return True
+    p = pascoa(int(iso[:4]))
+    return any((p + dt.timedelta(days=n)).isoformat() == iso for n in (-48, -47, -2, 60))
+
+
 def publicado():
     with urllib.request.urlopen(f"{SITE}historico.json?t={int(time.time())}", timeout=30) as r:
         return json.load(r)
@@ -47,6 +71,10 @@ def main(corrigir):
     h = publicado()
     if h["calibracao"]["data"] == hoje:
         print(f'OK: o app já tem o Cepea de {ddmm(hoje)} ({brl(h["calibracao"]["cepeaConilon"])}).')
+        return
+
+    if feriado(hoje):
+        print(f"Feriado nacional ({ddmm(hoje)}): o Cepea não publica hoje; nada a avisar.")
         return
 
     cal = h["calibracao"]
