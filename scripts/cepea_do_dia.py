@@ -90,7 +90,7 @@ def main(corrigir):
                f"atraso; o último publicado é {ddmm(ultimo)}, {brl(cepea[ultimo])}). {amanha}")
 
     if not any(d["data"] == hoje for d in h.get("dias", [])):
-        avisar(f"O Cepea publicou {brl(cepea[hoje])} em {ddmm(hoje)}, mas a bolsa de Londres não teve pregão "
+        avisar(f"O Cepea publicou {brl(cepea[hoje])} em {ddmm(hoje)}, mas não houve pregão nas bolsas "
                f"hoje, então o app não usa esse dia para calibrar. {amanha}")
 
     if corrigir:

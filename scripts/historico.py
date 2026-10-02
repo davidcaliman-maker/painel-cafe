@@ -191,6 +191,27 @@ async def gerar_intradia(dias, usd_diario, simbolos, ajuste):
     }
 
 
+def montar_dias(ldn, ny, usd, cepea):
+    """Um dia para cada data em que Londres ou Nova York negociou ou o Cepea publicou.
+
+    Bolsa fechada no dia (feriado no Reino Unido ou nos EUA) repete o último fechamento dela e
+    fica listada em "fechadas"; assim o Cepea desses dias também é usado (o app mostra o
+    FECHAMENTO e o dia seguinte começa por ele). O dólar usa o último fechamento até o dia.
+    """
+    inicio = max(min(ldn), min(ny), min(usd))
+    ultimo = lambda serie, data: serie[max(k for k in serie if k <= data)]
+    dias = []
+    for data in sorted(d for d in set(ldn) | set(ny) | set(cepea) if d >= inicio):
+        dia = {"data": data, "usd": ultimo(usd, data), "londres": ultimo(ldn, data), "novaYork": ultimo(ny, data)}
+        fechadas = [nome for nome, serie in (("londres", ldn), ("novaYork", ny)) if data not in serie]
+        if fechadas:
+            dia["fechadas"] = fechadas
+        if data in cepea:
+            dia["cepeaConilon"] = cepea[data]
+        dias.append(dia)
+    return dias
+
+
 def cepea_conilon():
     """Indicador CEPEA/Esalq do café Robusta (Conilon), R$/saca: {data ISO: valor}."""
     req = urllib.request.Request(CEPEA_URL, headers={
@@ -231,23 +252,14 @@ async def main(caminho_config, caminho_saida):
     ny = await historico_diario(f'{MERCADOS["novaYork"]["bolsa"]}:{contratos["novaYork"]}')
     usd = await historico_diario("FX_IDC:USDBRL")
 
-    # Dias com pregão nas duas bolsas; o dólar usa o último fechamento disponível até o dia.
-    dias = []
-    for data in sorted(set(ldn) & set(ny)):
-        anteriores = [d for d in usd if d <= data]
-        if not anteriores:
-            continue
-        dias.append({"data": data, "usd": usd[max(anteriores)], "londres": ldn[data], "novaYork": ny[data]})
-
     anterior = publicado_anterior()
     try:
         cepea = cepea_conilon()
     except Exception as e:  # CEPEA fora do ar: mantém os valores já publicados
         print(f"aviso: CEPEA indisponível ({e}); usando o último publicado")
         cepea = {d["data"]: d["cepeaConilon"] for d in anterior.get("dias", []) if d.get("cepeaConilon")}
-    for d in dias:
-        if d["data"] in cepea:
-            d["cepeaConilon"] = cepea[d["data"]]
+
+    dias = montar_dias(ldn, ny, usd, cepea)
 
     # Calibra pelo dia mais recente que tem CEPEA e fechamento de Londres.
     ajuste = float(cfg.get("ajusteConilonCepea", 0))

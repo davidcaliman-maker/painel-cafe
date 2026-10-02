@@ -74,6 +74,9 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   Cepea/Esalq do Conilon (Robusta) e a calibração → `historico.json` (gerado, não versionado).
   Preço do Conilon = Cepea + `ajusteConilonCepea` (hoje 0). Durante o pregão o app estima por
   Londres × dólar a partir do último Cepea; quando o Cepea do dia sai (~21h), vira FECHAMENTO.
+- Dias do histórico (`montar_dias`): toda data em que Londres OU NY negociou OU o Cepea publicou. Bolsa
+  fechada (feriado UK/EUA, ex. 26/11 Ação de Graças, 28/12 Boxing Day, 29/03/2027 Páscoa UK) repete o
+  último fechamento e vai em "fechadas" → o Cepea desses dias é usado normalmente (corrigido 01/10).
 - Contratos trocam sozinhos (dia 15 do mês anterior ao vencimento; Londres 2ª posição, NY 1ª),
   sem salto no preço (ajuste pela diferença entre contratos).
 - Rede: `pedir()` no index.html tenta Native → fetch do WebView → Native de novo após 3 s (no 5G o
