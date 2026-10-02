@@ -19,7 +19,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v28).
+  (`painel-agro-vN` → `vN+1`; hoje v30).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
@@ -58,6 +58,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   fora disso e no fim de semana vale o último fechamento, com a data desse pregão no card.
   Enquanto o dólar de HOJE não saiu (antes das 9h, fim de semana) o card fica cinza e sem
   percentual "(–)"; à noite mantém a cor e a variação do dia (pedido do usuário 29/09).
+  A variação % do dólar é calculada com o valor de 2 casas (5,23 × 5,23 = 0,00%, card cinza), pedido 02/10.
   (O `AlertaService.java` ainda usa o dólar ao vivo e o preço sem arredondar — diferença mínima.)
 - Card do Conilon NÃO deve mostrar ajuste, arroba nem faixa de indicadores (pedido do usuário).
 - Feriados nacionais (`feriado()` no index.html = `cepea_do_dia.py`; fixos + Carnaval seg/ter, Sexta Santa,
