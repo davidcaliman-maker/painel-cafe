@@ -180,6 +180,17 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   grátis = 10–15 min. Dólar (FX_IDC) já vem com ~1–2 min. Explicado ao usuário (01/10).
 - Dólar: app mostra 2 casas arredondando (5,2271 → 5,23); Google às vezes mostra 5,22. Explicado.
 
+## Perguntas já respondidas ao usuário
+- Feriado nacional (ex. 12/10): o app NÃO para — Londres/NY abrem, selo FERIADO, estimativa pela bolsa a
+  partir do último Cepea; sem FECHAMENTO no dia; volta ao normal no dia seguinte.
+- Londres fecha nos feriados bancários do Reino Unido em dia de semana: 25 e 28/12/2026; em 2027:
+  01/01, 26/03 (Sexta Santa), 29/03 (Páscoa UK), 03/05, 31/05, 30/08, 27 e 28/12. 24/12 e 31/12 fecham
+  mais cedo. NY fecha nos feriados dos EUA (ex. 26/11/2026 Ação de Graças). Tratado em `montar_dias`.
+- Se o Cepea da noite não for buscado: o dia seguinte começa do ÚLTIMO Cepea que o app tem (a estimativa
+  aplica o movimento de Londres/dólar desde então; card mostra "vs dd/mm" daquele Cepea). Corrige sozinho:
+  22h30 manda publicar de novo; rodadas de 15 em 15 min a partir das 05h pegam o dia que faltou (a página
+  do Cepea lista os últimos dias). Se continuar faltando, e-mail das 22h30 diz com qual preço o dia começa.
+
 ## Pendências / ideias oferecidas e ainda não feitas
 - Nome do card "CONILON 7/8" × dado do Cepea (Robusta tipo 6 peneira 13): renomear para
   "Conilon · Indicador Cepea" ou usar o Tipo 7/8 do CCCV (Notícias Agrícolas) — usuário não decidiu.
