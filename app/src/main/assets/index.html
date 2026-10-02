@@ -1052,7 +1052,7 @@
     if (p.length < 2) {
       $("chNow").textContent = "—"; $("chVar").innerHTML = "";
       body.innerHTML = '<div class="empty">' + (serie === "novaYork" ? "Nova York ainda não abriu" :
-        serie === "usd" ? "O dólar começa a valer às 9h" : "Sem negociação ainda") + '</div>';
+        serie === "usd" ? "O dólar abre às 9h.<br>O gráfico aparece por volta das 9h30." : "Sem negociação ainda") + '</div>';
       return;
     }
     // Conilon: depois que o Cepea do dia sai, o topo mostra o fechamento oficial.
