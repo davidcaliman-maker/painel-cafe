@@ -575,7 +575,7 @@
 
   function paintMkt(el, q, value, bottom) {
     el.classList.remove("up", "down");
-    if (q && q.change != null) el.classList.add(q.change < 0 ? "down" : "up");
+    if (q && q.change) el.classList.add(q.change < 0 ? "down" : "up");  // 0% ou sem variação: cinza
     el.querySelector(".p").textContent = pct(q && q.change);
     el.querySelector(".v").textContent = value;
     el.querySelector(".d").textContent = bottom;
@@ -613,7 +613,10 @@
   function dolarVigente(q) {
     var br = new Date(Date.now() - 3 * 3600 * 1000), hoje = br.toISOString().slice(0, 10);
     var dia = isoUTC(q.time + 12 * 3600);
-    if (dia === hoje && br.getUTCHours() >= 9) return { valor: q.close, change: q.change, dia: dia };
+    // Variação calculada com o dólar de 2 casas, o mesmo do card e da saca (5,23 × 5,23 = 0,00%).
+    var var2 = function (v, ref) { var r = Math.round(ref * 100) / 100; return (Math.round(v * 100) / 100 / r - 1) * 100; };
+    if (dia === hoje && br.getUTCHours() >= 9)
+      return { valor: q.close, change: q.prev != null ? var2(q.close, q.prev) : q.change, dia: dia };
     // Dólar de hoje ainda não saiu (antes das 9h ou fim de semana): mostra o último fechamento sem
     // variação, e o card fica cinza (pedido do usuário).
     if (dia < hoje) return { valor: q.close, change: null, dia: dia };  // pregão já encerrado
@@ -624,7 +627,7 @@
     if (diaAnt < hoje) return { valor: valor, change: null, dia: diaAnt };
     // Noite: o fechamento de hoje já existe e mantém a variação do dia.
     var ref = (hist && hist.dias || []).filter(function (x) { return x.usd != null && x.data < diaAnt; }).pop();
-    return { valor: valor, change: ref ? (valor / ref.usd - 1) * 100 : null, dia: diaAnt };
+    return { valor: valor, change: ref ? var2(valor, ref.usd) : null, dia: diaAnt };
   }
 
   // "fechamento": o preço é o próprio Cepea + ajuste (Londres ainda não negociou depois da
