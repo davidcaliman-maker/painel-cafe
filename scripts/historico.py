@@ -179,9 +179,12 @@ async def gerar_intradia(dias, usd_diario, simbolos, ajuste):
     hoje = next((d for d in dias if d["data"] == dia), {})
     return {
         "data": dia,
-        "anterior": {"data": ant["data"], "dataCepea": cal["data"], "conilon": arred(preco_cal),
+        # "conilon" = fechamento do app no dia anterior (linha pontilhada); "base" = Cepea anterior ao
+        # dia, contra o qual a variação do dia é medida (não aparece no app).
+        "anterior": {"data": ant["data"], "dataCepea": cal["data"], "base": arred(preco_cal),
+                     "conilon": ant.get("fechamentoApp", arred(preco_cal)),
                      "londres": ant["londres"], "novaYork": ant["novaYork"], "usd": round(usd_ant, 4)},
-        "fechamentoCepea": arred(hoje["cepeaConilon"] + ajuste) if "cepeaConilon" in hoje else None,
+        "fechamentoApp": hoje.get("fechamentoApp"),
         "series": {
             "conilon": conilon,
             "londres": [[m, v] for m, v in sorted(ldn.items())],
@@ -210,6 +213,38 @@ def montar_dias(ldn, ny, usd, cepea):
             dia["cepeaConilon"] = cepea[data]
         dias.append(dia)
     return dias
+
+
+def minuto_fechado(dia):
+    """Minuto do dia (Brasília) em que o app considera o dia fechado: 30 min depois do fechamento do
+    câmbio, às 17h de Nova York = 18h de Brasília no horário de verão dos EUA (2º domingo de março ao
+    1º domingo de novembro) e 19h fora dele. Mesma regra do index.html (minutoFechado)."""
+    def domingo(mes, n):
+        d = dt.date(dia.year, mes, 1)
+        return d + dt.timedelta(days=(6 - d.weekday()) % 7 + 7 * (n - 1))
+    verao = domingo(3, 2) <= dia < domingo(11, 1)
+    return (18 if verao else 19) * 60 + 30
+
+
+def marcar_fechamentos(dias, usd, ajuste, agora):
+    """Fechamento do app de cada dia ("fechamentoApp"), que é o preço mostrado depois do pregão.
+
+    Opção B escolhida pelo usuário (03/10/2026): o app mostra o PRÓPRIO fechamento (Londres e dólar de
+    fechamento sobre a base do dia) e não o Cepea; no dia seguinte recomeça do Cepea (sem mostrá-lo).
+    Base do dia = último Cepea ANTERIOR ao dia ("baseConilon"); a variação mostrada é contra ela.
+    Hoje só tem fechamento depois que o dólar fechou (ver minuto_fechado).
+    """
+    hoje = agora.date().isoformat()
+    dolar_fechou = agora.hour * 60 + agora.minute >= minuto_fechado(agora.date())
+    base = None
+    for d in dias:
+        if base is not None and (d["data"] < hoje or (d["data"] == hoje and dolar_fechou)):
+            preco_base = base["cepeaConilon"] + ajuste
+            dif = preco_base / (0.06 * round(base["usd"], 2)) - base["londres"]
+            d["baseConilon"] = round(preco_base * 10) / 10
+            d["fechamentoApp"] = round((d["londres"] + dif) * 0.06 * round(d["usd"], 2) * 10) / 10
+        if "cepeaConilon" in d:
+            base = d
 
 
 def cepea_conilon():
@@ -260,9 +295,10 @@ async def main(caminho_config, caminho_saida):
         cepea = {d["data"]: d["cepeaConilon"] for d in anterior.get("dias", []) if d.get("cepeaConilon")}
 
     dias = montar_dias(ldn, ny, usd, cepea)
+    ajuste = float(cfg.get("ajusteConilonCepea", 0))
+    marcar_fechamentos(dias, usd, ajuste, dt.datetime.now(BRT))
 
     # Calibra pelo dia mais recente que tem CEPEA e fechamento de Londres.
-    ajuste = float(cfg.get("ajusteConilonCepea", 0))
     calibracao = anterior.get("calibracao")
     com_cepea = [d for d in dias if "cepeaConilon" in d]
     if com_cepea:

@@ -28,8 +28,8 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
 - Antes de publicar uma mudança visual, mostrar ao usuário (preview) e pedir o "pode publicar".
 
 ## Telas (barra de abas no rodapé: PAINEL · CHUVA · NOTÍCIAS; roteamento por `#chuva`/`#noticias`)
-- **Painel:** card destaque do Conilon (preço grande, selo AO VIVO/FECHAMENTO dd/mm, variação do
-  dia vs fechamento anterior), cards Dólar/Londres/N.York (vermelho/verde), botão ATUALIZAR,
+- **Painel:** card destaque do Conilon (preço grande, selo AO VIVO/FECHADO dd/mm/FERIADO, variação =
+  movimento do mercado no dia "+R$ x no dia"), cards Dólar/Londres/N.York (vermelho/verde), botão ATUALIZAR,
   gráfico com seletor HOJE/SEMANA (escolha salva no aparelho; abas Conilon/Londres/N.York/Dólar).
   - SEMANA: 7 pregões (`historico.json`).
   - HOJE: pontos de 5 em 5 min, eixo 05h–18h, linha pontilhada = fechamento anterior, máx/mín,
@@ -53,7 +53,6 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
 - Rodapés NÃO mostram de onde vêm as cotações (pedido do usuário). Única exceção, pequena no
   Painel: "Fontes: Cepea/Esalq · Open-Meteo" (crédito exigido por essas duas; não retirar).
 - Preço do Conilon mostrado arredondado de 10 em 10 centavos (`arred10`: card, variação e gráfico).
-  O fechamento do app (ex. 952,70) pode diferir em centavos do Cepea/cotacaodocafe (952,72) — intencional.
 - Dólar (`dolarVigente`): ao vivo só das 9h até o fechamento do pregão de câmbio (~18h Brasília);
   fora disso e no fim de semana vale o último fechamento, com a data desse pregão no card.
   Enquanto o dólar de HOJE não saiu (antes das 9h, fim de semana) o card fica cinza e sem
@@ -73,8 +72,21 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
 - Cotações ao vivo: `scanner.tradingview.com` (não oficial, grátis, ~10 min de atraso; pode parar).
 - `scripts/historico.py`: fechamentos diários (canal de gráficos do TradingView), indicador
   Cepea/Esalq do Conilon (Robusta) e a calibração → `historico.json` (gerado, não versionado).
-  Preço do Conilon = Cepea + `ajusteConilonCepea` (hoje 0). Durante o pregão o app estima por
-  Londres × dólar a partir do último Cepea; quando o Cepea do dia sai (~21h), vira FECHAMENTO.
+  **PREÇO DO CONILON — OPÇÃO B (decisão do usuário em 03/10/2026; substitui "Conilon = Cepea"):**
+  - Base do dia = último Cepea ANTERIOR ao dia (+ `ajusteConilonCepea`, hoje 0). Estimativa =
+    (Londres + diferencial da base) × 0,06 × dólar (`baseDe`/`difConilon` no app).
+  - Depois que o câmbio fecha (17h NY → app fecha às 18h30 no horário de verão dos EUA, 19h30 fora;
+    `minutoFechado` no app = `minuto_fechado` no historico.py) o card mostra FECHADO dd/mm com o
+    PRÓPRIO cálculo do app (`fechamentoApp` em historico.json, + `baseConilon`). Madrugada/fim de semana/
+    Londres fechada: mostra o último FECHADO.
+  - O Cepea NÃO aparece em lugar nenhum do app (card, SEMANA, HOJE). Ele só serve de base do dia
+    seguinte → o preço "pula" de um dia para o outro (ex. 01/10 fechou 989,00; 02/10 recomeçou de 972,44).
+    O usuário sabia e escolheu assim (opções A/B/C apresentadas; A acumula erro, C = média).
+  - Variação mostrada (escolha "2"): movimento do mercado no dia = preço − base ("no dia"), não contra o
+    fechamento de ontem do app. FORTE ALTA/BAIXA usa essa variação. Gráfico SEMANA = fechamentos do app;
+    HOJE: linha pontilhada = fechamento de ontem do app (`intradia.anterior.conilon`), cor/% contra `base`.
+  - Crédito "Fontes: Cepea/Esalq" continua (Cepea ainda é usado na base).
+  - `AlertaService.java` (APK) não mudou: compara com a calibração do Cepea (= base durante o dia).
 - Dias do histórico (`montar_dias`): toda data em que Londres OU NY negociou OU o Cepea publicou. Bolsa
   fechada (feriado UK/EUA, ex. 26/11 Ação de Graças, 28/12 Boxing Day, 29/03/2027 Páscoa UK) repete o
   último fechamento e vai em "fechadas" → o Cepea desses dias é usado normalmente (corrigido 01/10).
@@ -121,7 +133,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
 
 ## Regras combinadas com o usuário
 - **Nunca altere `config.json` (preço/ajuste) sem aprovação explícita.**
-- Conilon = indicador Cepea (= preço principal do cotacaodocafe.com).
+- Conilon: ver "PREÇO DO CONILON — OPÇÃO B" (o app mostra o próprio fechamento; Cepea só como base).
 - Confirmar com o usuário antes de publicar/instalar coisas que custem ou que baixem ferramentas grandes
   (ele recusou baixar Gradle/SDK novo; APK é feito sem Gradle).
 

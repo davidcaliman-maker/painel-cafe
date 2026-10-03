@@ -583,7 +583,22 @@
 
   // Calibração diária pelo Cepea (gerada no GitHub, em historico.json → calibracao).
   function calib() { return (hist && hist.calibracao) || CALIB_RESERVA; }
-  function difConilon() { return Number(calib().diferencialConilon) + (last && last.ajLdn || 0); }
+  // Preço do Conilon (opção B, escolhida pelo usuário em 03/10/2026): durante o pregão, estimativa
+  // pela bolsa sobre a BASE do dia = último Cepea anterior a hoje; depois que o dólar fecha (~18h30)
+  // o card mostra FECHADO com o cálculo do próprio app ("fechamentoApp", publicado pelo GitHub).
+  // O Cepea não aparece no app; a variação mostrada é o movimento do mercado no dia (contra a base).
+  function hojeBRT() { return new Date(Date.now() - 3 * 3600 * 1000).toISOString().slice(0, 10); }
+  function baseDe(dia) {
+    var aj = Number(calib().ajusteConilonCepea) || 0;
+    var b = (hist && hist.dias || []).filter(function (d) { return d.cepeaConilon != null && d.data < dia; }).pop();
+    if (b) {
+      var preco = b.cepeaConilon + aj;
+      return { data: b.data, preco: preco, dif: preco / (T_PER_SACA * (Math.round(b.usd * 100) / 100)) - b.londres };
+    }
+    var c = calib();  // sem histórico: a calibração publicada (ou a de reserva)
+    return { data: c.data, preco: c.cepeaConilon + aj, dif: Number(c.diferencialConilon) };
+  }
+  function difConilon() { return baseDe(hojeBRT()).dif + (last && last.ajLdn || 0); }
   function fisicoConilon(ldn, usd) { return (ldn + difConilon()) * T_PER_SACA * usd; }
   // Preço da saca mostrado de 10 em 10 centavos (ex.: 1.234,57 → 1.234,60).
   function arred10(v) { return Math.round(v * 10) / 10; }
@@ -630,25 +645,37 @@
     return { valor: valor, change: ref ? var2(valor, ref.usd) : null, dia: diaAnt };
   }
 
-  // "fechamento": o preço é o próprio Cepea + ajuste (Londres ainda não negociou depois da
-  // calibração). "estimativa": Londres já negociou em um pregão posterior ao Cepea, então o preço
-  // é estimado pela bolsa até o Cepea do dia sair e o GitHub recalibrar.
+  // "estimativa": Londres negociou hoje e ainda não são 18h30 com o dólar fechado.
+  // "fechado": depois disso, ou quando Londres não negociou hoje (madrugada, fim de semana, feriado em
+  // Londres) — aí vale o último fechamento do app.
   function estadoConilon() {
-    var c = calib();
-    if (!last || !last.qLdn) return "fechamento";
-    if (last.ajLdn) return "estimativa";
-    return isoUTC(last.qLdn.time) > c.data ? "estimativa" : "fechamento";
+    if (!last || !last.qLdn || isoUTC(last.qLdn.time) !== hojeBRT()) return "fechado";
+    return agoraBRT().min >= minutoFechado(hojeBRT()) ? "fechado" : "estimativa";
   }
 
-  // Fechamento anterior do Conilon (Cepea + ajuste) para a variação do dia:
-  // em estimativa, é o último Cepea; em fechamento, o Cepea do pregão anterior a ele.
-  function fechamentoAnterior(estado) {
-    var c = calib(), aj = Number(c.ajusteConilonCepea);
-    var dd = function (iso) { return iso.slice(8, 10) + "/" + iso.slice(5, 7); };
-    if (estado === "estimativa") return { preco: c.cepeaConilon + aj, dia: dd(c.data) };
-    var dias = (hist && hist.dias || []).filter(function (d) { return d.cepeaConilon != null && d.data < c.data; });
-    var d = dias[dias.length - 1];
-    return d ? { preco: d.cepeaConilon + aj, dia: dd(d.data) } : null;
+  // O câmbio fecha às 17h de Nova York: 18h de Brasília no horário de verão dos EUA (do 2º domingo de
+  // março ao 1º domingo de novembro) e 19h fora dele. O app fecha o dia 30 min depois (18h30 / 19h30).
+  // Mesma regra de scripts/historico.py (minuto_fechado).
+  function minutoFechado(iso) {
+    var ano = +iso.slice(0, 4), domingo = function (mes, n) {  // n-ésimo domingo do mês (UTC)
+      var d = new Date(Date.UTC(ano, mes, 1)); d.setUTCDate(1 + (7 - d.getUTCDay()) % 7 + 7 * (n - 1));
+      return d.toISOString().slice(0, 10);
+    };
+    var verao = iso >= domingo(2, 2) && iso < domingo(10, 1);
+    return (verao ? 18 : 19) * 60 + 30;
+  }
+
+  // Preço mostrado, dia a que se refere e a base (para a variação do mercado no dia).
+  function precoConilon(estado) {
+    var hoje = hojeBRT(), usd = Math.round(last.usd * 100) / 100;
+    var aoVivo = function () { return { valor: arred10(fisicoConilon(last.ldn, usd)), dia: hoje, base: arred10(baseDe(hoje).preco) }; };
+    if (estado === "estimativa") return aoVivo();
+    var com = (hist && hist.dias || []).filter(function (d) { return d.fechamentoApp != null; }), ult = com[com.length - 1];
+    // Fechou hoje, mas o GitHub ainda não publicou: o próprio app calcula (Londres e dólar de fechamento).
+    if (isoUTC(last.qLdn.time) === hoje && (!ult || ult.data < hoje)) return aoVivo();
+    if (ult) return { valor: ult.fechamentoApp, dia: ult.data, base: ult.baseConilon };
+    var c = calib();
+    return { valor: arred10(c.cepeaConilon + Number(c.ajusteConilonCepea || 0)), dia: c.data, base: null };
   }
 
   // Troca de vencimento: a calibração foi feita sobre um contrato. Se o app já usa outro, soma
@@ -668,29 +695,27 @@
     if (!last) return;
     // Dólar arredondado a 2 casas, tanto na tela quanto no cálculo da saca.
     var usd = Math.round(last.usd * 100) / 100, ldn = last.ldn, ny = last.ny;
-    var c = calib(), estado = estadoConilon(), diaCepea = c.data.slice(8, 10) + "/" + c.data.slice(5, 7);
-    var fisCon = arred10(estado === "fechamento" && c.precoConilon != null ? c.precoConilon : fisicoConilon(ldn, usd));
+    var estado = estadoConilon(), pc = precoConilon(estado), fisCon = pc.valor, diaFech = ddmmIso(pc.dia);
 
     $("fisConilon").textContent = fmt(fisCon, 2);
     var badge = $("conEstado");
     // Feriado nacional: a bolsa lá fora negocia, mas o Cepea não publica fechamento hoje.
     var ehFeriado = estado === "estimativa" && feriado(new Date(Date.now() - 3 * 3600 * 1000).toISOString().slice(0, 10));
-    badge.className = "badge " + (estado === "fechamento" ? "close" : ehFeriado ? "feriado" : "live");
-    badge.textContent = estado === "fechamento" ? "FECHAMENTO " + diaCepea : ehFeriado ? "FERIADO" : "AO VIVO";
-    badge.title = estado === "fechamento" ? "Preço de fechamento do Cepea" : ehFeriado ?
-      "Feriado nacional: o Cepea não publica hoje; preço estimado pela bolsa" : "Estimativa pela bolsa até o Cepea do dia sair";
+    badge.className = "badge " + (estado === "fechado" ? "close" : ehFeriado ? "feriado" : "live");
+    badge.textContent = estado === "fechado" ? "FECHADO " + diaFech : ehFeriado ? "FERIADO" : "AO VIVO";
+    badge.title = estado === "fechado" ? "Preço de fechamento do dia (Londres e dólar de fechamento)" : ehFeriado ?
+      "Feriado nacional: preço estimado pela bolsa" : "Preço pela bolsa, atualizado durante o dia";
 
-    // Variação do dia: contra o fechamento anterior (Cepea + ajuste).
-    var ant = fechamentoAnterior(estado);
+    // Variação: movimento do mercado no dia (contra a base do dia; escolha "2" do usuário).
     var boxVar = $("conVar"), forte = "";
-    if (ant) {
-      var pAnt = arred10(ant.preco), dv = fisCon - pAnt, dp = dv / pAnt * 100;
+    if (pc.base) {
+      var dv = fisCon - pc.base, dp = dv / pc.base * 100;
       // Variação forte no dia: card brilha e o preço pulsa (verde na alta, vermelho na baixa).
       if (Math.abs(dp) >= VARIACAO_FORTE) forte = dv < 0 ? "forte-baixa" : "forte-alta";
       boxVar.className = "hero-var" + (dv < 0 ? " down" : "");
       boxVar.innerHTML = (forte ? '<b class="forte-tag">' + (dv < 0 ? "▼▼ FORTE BAIXA" : "▲▲ FORTE ALTA") + '</b>' : "") +
         '<span class="pill">' + (dv < 0 ? "▼ " : "▲ ") + fmt(Math.abs(dp), 2) + '%</span>' +
-        '<small>' + signed(dv, 2).replace(/^([+−]?)/, "$1R$ ") + " · vs " + ant.dia + '</small>';
+        '<small>' + signed(dv, 2).replace(/^([+−]?)/, "$1R$ ") + (estado === "fechado" ? " no dia " + diaFech : " no dia") + '</small>';
     } else {
       boxVar.innerHTML = "";
     }
@@ -919,9 +944,9 @@
   function valor(nome, d) {
     var usd = Math.round(d.usd * 100) / 100;
     if (nome === "conilon") {
-      // Dias fechados: o próprio Cepea + ajuste (mercado físico real); hoje: cálculo ao vivo.
-      if (d.cepeaConilon != null) return arred10(d.cepeaConilon + Number(calib().ajusteConilonCepea));
-      return arred10(fisicoConilon(d.londres, usd));
+      // Fechamento do app de cada dia (o de hoje vem do card); sem ele, estima sobre a base do dia.
+      if (d.fechamentoApp != null) return d.fechamentoApp;
+      return arred10((d.londres + baseDe(d.data).dif) * T_PER_SACA * usd);
     }
     if (nome === "usd") return usd;
     return d[nome];
@@ -939,8 +964,8 @@
     if (last && last.ctrLdn && isoUTC(last.qLdn.time) === hojeISO()) {
       var hoje = hojeISO(), vivo = { data: hoje, usd: last.usd, londres: last.ldn, novaYork: last.ny };
       var ultimo = dias[dias.length - 1];
+      vivo.fechamentoApp = precoConilon(estadoConilon()).valor;  // o mesmo preço do card
       if (ultimo && ultimo.data === hoje) {
-        if (ultimo.cepeaConilon != null) vivo.cepeaConilon = ultimo.cepeaConilon;  // Cepea do dia já saiu
         dias[dias.length - 1] = vivo;
       } else {
         dias.push(vivo);
@@ -1030,11 +1055,11 @@
     return { p: p, vivo: v != null };
   }
 
-  function cabecalhoDia(v, ref, dataRef, quando) {
+  function cabecalhoDia(v, ref, quando, contra) {
     $("chNow").textContent = SERIES[serie](v);
     var dv = v - ref, dp = dv / ref * 100, up = dv >= 0;
     $("chVar").innerHTML = '<span class="' + (up ? "up-t" : "down-t") + '">' + (up ? "▲ +" : "▼ −") +
-      fmt(Math.abs(dp), 2) + '%</span><small>' + quando + " · vs " + ddmmIso(dataRef) + '</small>';
+      fmt(Math.abs(dp), 2) + '%</span><small>' + quando + " · " + contra + '</small>';
   }
 
   function renderDia() {
@@ -1051,20 +1076,24 @@
     $("chSub").textContent = ehHoje ? "De 5 em 5 minutos, das 5h às 18h" : "Último pregão: " + dSem + " " + ddmmIso(intra.data);
 
     var r = pontosDia(serie), p = r.p, ant = intra.anterior;
-    var ref = ant[serie], dataRef = serie === "conilon" ? ant.dataCepea : ant.data;
+    // Linha pontilhada = fechamento anterior (no Conilon, o do app). A variação do Conilon é o
+    // movimento do mercado no dia (contra a base, que não aparece).
+    var ref = ant[serie], dataRef = ant.data;
+    var refVar = serie === "conilon" && ant.base != null ? ant.base : ref;
+    var contra = serie === "conilon" ? "no dia" : "vs " + ddmmIso(dataRef);
     if (p.length < 2) {
       $("chNow").textContent = "—"; $("chVar").innerHTML = "";
       body.innerHTML = '<div class="empty">' + (serie === "novaYork" ? "Nova York ainda não abriu" :
         serie === "usd" ? "O dólar abre às 9h.<br>O gráfico aparece por volta das 9h30." : "Sem negociação ainda") + '</div>';
       return;
     }
-    // Conilon: depois que o Cepea do dia sai, o topo mostra o fechamento oficial.
-    var c = calib(), fechCepea = intra.fechamentoCepea != null ? intra.fechamentoCepea :
-      (c.data === intra.data && c.precoConilon != null ? arred10(c.precoConilon) : null);
+    // Conilon: depois das 18h30 (dólar fechado) o topo mostra o fechamento do app.
+    var fechApp = intra.fechamentoApp != null ? intra.fechamentoApp :
+      (ehHoje && last && estadoConilon() === "fechado" && isoUTC(last.qLdn.time) === a.dia ? precoConilon("fechado").valor : null);
     var lastP = p[p.length - 1];
     function cabecalhoPadrao() {
-      if (serie === "conilon" && fechCepea != null) cabecalhoDia(fechCepea, ref, dataRef, "fechamento Cepea");
-      else cabecalhoDia(lastP.v, ref, dataRef, r.vivo ? '<span class="vivo"></span>agora' : "às " + hhmm(lastP.m));
+      if (serie === "conilon" && fechApp != null) cabecalhoDia(fechApp, refVar, "fechado", contra);
+      else cabecalhoDia(lastP.v, refVar, r.vivo ? '<span class="vivo"></span>agora' : "às " + hhmm(lastP.m), contra);
     }
     cabecalhoPadrao();
 
@@ -1075,7 +1104,7 @@
     var pad = (hi - lo) * 0.12 || Math.abs(hi) * 0.005 || 1, min = lo - pad, max = hi + pad;
     var X = function (m) { return L + (Math.min(Math.max(m, DIA_INI), DIA_FIM) - DIA_INI) / (DIA_FIM - DIA_INI) * (W - L - R); };
     var Y = function (v) { return T + (max - v) / (max - min) * (H - T - B); };
-    var up = lastP.v >= ref, color = up ? "#4cd964" : "#ff5a5f", dec = serie === "londres" ? 0 : 2;
+    var up = lastP.v >= refVar, color = up ? "#4cd964" : "#ff5a5f", dec = serie === "londres" ? 0 : 2;
     var line = p.map(function (x, i) { return (i ? "L" : "M") + X(x.m).toFixed(1) + "," + Y(x.v).toFixed(1); }).join(" ");
     var area = line + " L" + X(lastP.m).toFixed(1) + "," + (H - B) + " L" + X(p[0].m).toFixed(1) + "," + (H - B) + " Z";
     var yRef = Y(ref).toFixed(1);
@@ -1117,7 +1146,7 @@
       $("curL").setAttribute("x1", cx); $("curL").setAttribute("x2", cx);
       $("curC").setAttribute("cx", cx); $("curC").setAttribute("cy", cy);
       $("cur").style.display = "";
-      cabecalhoDia(best.v, ref, dataRef, "às " + hhmm(best.m));
+      cabecalhoDia(best.v, refVar, "às " + hhmm(best.m), contra);
     }
     function soltar() {
       if (!arrastando) return;
