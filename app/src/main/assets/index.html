@@ -528,7 +528,7 @@
 
   // Reserva: se a busca direta falhar (ex.: rede do 5G), usa as cotações que o GitHub publica
   // no próprio site a cada ~15 min (cotacoes.json, gerado por scripts/historico.py).
-  var reserva = null, reservaUsada = null;
+  var reserva = null, reservaUsada = null, ultimoDireto = 0, fxVisto = null;
   function cotacoesReserva() {
     if (reserva && Date.now() - reserva.lida < 60000) return Promise.resolve(reserva.dados);
     return siteJson("cotacoes.json").then(function (d) { reserva = { lida: Date.now(), dados: d }; return d; });
@@ -543,6 +543,9 @@
       return out;
     }).catch(function (erro) {
       return cotacoesReserva().then(function (d) {
+        // Reserva mais velha que a última busca direta bem-sucedida não serve: manteria na tela um
+        // preço antigo (bug de 05/10: o dólar voltava de 4,99 para o 5,22 de sexta). Fica o último valor.
+        if (ultimoDireto && ultimoDireto > Date.parse(d.geradoEm)) throw erro;
         var out = {};
         tickers.forEach(function (t) { if (d.cotacoes && d.cotacoes[t]) out[t] = d.cotacoes[t]; });
         if (!Object.keys(out).length) throw erro;
@@ -779,6 +782,9 @@
       if (!ctrLdn) throw new Error("Contrato de Londres sem cotação: " + cLdn.join(", "));
       if (!ctrNy) throw new Error("Contrato de NY sem cotação: " + cNy.join(", "));
       if (!fx[tUsd]) throw new Error("Cotação do dólar indisponível");
+      // O dólar nunca volta para um pregão mais antigo do que o já mostrado (fonte atrasada/reserva).
+      if (fxVisto && fx[tUsd].time < fxVisto.time) fx[tUsd] = fxVisto;
+      fxVisto = fx[tUsd];
       var qLdn = f["ICEEUR:" + ctrLdn], qNy = f["ICEUS:" + ctrNy];
       var refLdn = String(calib().contrato || ctrLdn).toUpperCase();
       var dv = dolarVigente(fx[tUsd]);
@@ -788,6 +794,7 @@
       save("last", JSON.stringify(last));
       $("err").style.display = "none";
       falhas = 0;
+      if (!reservaUsada) ultimoDireto = Date.now();
       // Pela reserva, vale a hora em que o GitHub buscou as cotações.
       var now = reservaUsada ? new Date(reservaUsada) : new Date();
       horaOk = String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");

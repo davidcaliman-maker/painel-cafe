@@ -97,6 +97,8 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   Se ainda falhar, `scan()` usa a RESERVA `cotacoes.json` (gerada por `historico.py`/`cotacoes_scanner`
   a cada rodada do pages.yml, ~15 min; 4 vencimentos de cada bolsa + dólar) e mostra "atualizado às HH:MM".
   Solução mista escolhida pelo usuário (01/10): direto primeiro, GitHub só como reserva.
+  A reserva NÃO é usada se for mais velha que a última busca direta (`ultimoDireto`), e o dólar nunca
+  volta para um pregão mais antigo (`fxVisto`) — bug de 05/10: no 5G o dólar pulava de 4,99 para o 5,22 de sexta.
 - `scripts/noticias.py`: Google Notícias RSS (últimos 7 dias), filtra fora do assunto e repetidas.
 - `historico.py` também gera `intradia.json` (barras de 5 min do TradingView; `gerar_intradia`).
 - `pages.yml` roda: dias úteis a cada 15 min das 05h às 22h (Brasília);
