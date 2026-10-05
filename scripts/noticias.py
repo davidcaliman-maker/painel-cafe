@@ -1,7 +1,9 @@
 """Gera noticias.json com notícias de café que podem mexer no preço.
 
-Busca no Google Notícias (RSS, sem chave) por temas de mercado (clima, safra, consumo,
-logística, geopolítica, concorrentes) e dá destaque ao Sul da Bahia e ao Espírito Santo.
+Busca no Google Notícias (RSS, sem chave) por temas de mercado (clima, safra, consumo, dólar)
+e dá destaque ao Sul da Bahia e ao Espírito Santo. Notícias com palavras de movimento forte
+(dispara, despenca, geada, quebra…) recebem "impacto" e vão para o topo. Logística, geopolítica e
+concorrentes foram retirados a pedido do usuário (05/10/2026).
 Guarda só título, fonte, data e link (o app abre a matéria no site original).
 
 Uso: python scripts/noticias.py <saida.json>
@@ -21,6 +23,7 @@ SITE = "https://davidcaliman-maker.github.io/painel-cafe/"
 DIAS = 7
 MAX_REGIONAL = 12
 MAX_MERCADO = 30
+MAX_DOLAR = 8  # notícias de câmbio são muitas: só as mais recentes
 
 BUSCAS = [
     # Sul da Bahia e Espírito Santo
@@ -40,26 +43,33 @@ BUSCAS = [
     "café consumo mundial demanda",
     "café estoques certificados ICE",
     "café exportação Cecafé",
-    "café frete navios contêiner porto",
-    "café guerra OR tarifa OR sanções",
-    "café Vietnã robusta safra",
-    "café Colômbia OR Indonésia OR Uganda OR Honduras safra",
+    "café preço dispara OR despenca OR recorde",
+    "café Vietnã robusta safra",  # maior produtor de robusta: mexe com Londres (mantido a pedido)
+]
+# Dólar: entram mesmo sem "café" no título (o dólar mexe direto no preço do Conilon).
+BUSCAS_DOLAR = [
+    "dólar fecha real câmbio",
+    "dólar hoje Copom OR Fed OR juros",
+    '"Banco Central" câmbio dólar',
 ]
 
 # Categoria pelo título (a primeira que casar).
 CATEGORIAS = [
+    ("Dólar", r"d[oó]lar|c[aâ]mbio|copom|\bfed\b|selic"),
     ("Clima", r"gead|el ni[nñ]o|la ni[nñ]a|chuv|seca|estiagem|clima|calor|frio|temperatura|florada"),
-    ("Safra", r"safra|colheita|conab|produ[cç][aã]o|estimativa|lavoura|produtividade"),
-    ("Logística", r"frete|navio|porto|cont[eê]iner|embarque|log[ií]stica|exporta"),
-    ("Geopolítica", r"guerra|tarifa|san[cç]|trump|eua|estados unidos|china|europ|eudr"),
-    ("Concorrentes", r"vietn|col[oô]mbia|indon[eé]sia|uganda|eti[oó]pia|honduras|peru|[ií]ndia"),
+    ("Safra", r"safra|colheita|conab|produ[cç][aã]o|estimativa|lavoura|produtividade|vietn"),
     ("Consumo", r"consumo|demanda|estoque|consumidor"),
 ]
+DOLAR = re.compile(r"\bd[oó]lar", re.I)
+# Palavras de movimento forte: a notícia ganha o selo IMPACTO e vai para o topo.
+IMPACTO = re.compile(r"dispar|despen|desab|tomb[ao]|salt[ao]|explod|derret|gead|quebra de safra|"
+                     r"forte (alta|queda)|maior (alta|queda)|interv[eé]n", re.I)
 CAFE = re.compile(r"caf[eé]|conilon|robusta|ar[aá]bica|cafeic|coffee", re.I)
 # Assuntos sem efeito no preço (lazer, gastronomia, concursos) ou "café" em outro sentido.
 FORA = re.compile(r"cafeteria|brunch|barista|receita|restaurante|cafezinho|caf[eé] da manh[aã]|carro|"
                   r"concurso|premia|campeonato|copa do caf|partida|torneio|achadinho|melhores da|"
-                  r"lingui[cç]a|licor|queijo|frozen|conquista ouro", re.I)
+                  r"lingui[cç]a|licor|queijo|frozen|conquista ouro|dia internacional do caf|\| caf[eé] com|"
+                  r"x[ií]caras", re.I)
 REGIAO = re.compile(r"esp[ií]rito santo|capixaba|\bes\b|bahia|baian|itamaraju|eun[aá]polis|"
                     r"teixeira de freitas|porto seguro|itabela|prado|alcoba[cç]a|mucuri|linhares|colatina|"
                     r"s[aã]o mateus|nova ven[eé]cia|jaguar[eé]|aracruz|sooretama|rio bananal|pinheiros|"
@@ -117,30 +127,39 @@ def publicado_anterior():
 def main(caminho):
     limite = dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=DIAS)
     todas, falhas = [], 0
-    for consulta in BUSCAS:
+    for consulta in BUSCAS + BUSCAS_DOLAR:
         try:
-            todas.extend(buscar(consulta))
+            todas.extend(dict(n, dolar=consulta in BUSCAS_DOLAR) for n in buscar(consulta))
         except Exception as e:
             print(f"aviso: busca falhou ({consulta}): {e}")
             falhas += 1
-    if falhas == len(BUSCAS):
+    if falhas == len(BUSCAS) + len(BUSCAS_DOLAR):
         raise SystemExit("todas as buscas falharam")
 
     # Mais recentes primeiro, para a deduplicação manter a versão mais nova de cada notícia.
     todas.sort(key=lambda x: x["data"], reverse=True)
-    vistos, regional, mercado = [], [], []
+    vistos, regional, mercado, n_dolar = [], [], [], 0
     for n in todas:
-        if n["data"] < limite or not CAFE.search(n["titulo"]) or FORA.search(n["titulo"]):
+        so_dolar = n["dolar"] and DOLAR.search(n["titulo"]) and not CAFE.search(n["titulo"])
+        if n["data"] < limite or not (CAFE.search(n["titulo"]) or so_dolar) or FORA.search(n["titulo"]):
+            continue
+        if so_dolar and n_dolar >= MAX_DOLAR:
             continue
         p = palavras(n["titulo"])
         if repetida(p, vistos):
             continue
         vistos.append(p)
-        eh_regional = bool(REGIAO.search(n["titulo"]))
+        n_dolar += bool(so_dolar)
+        eh_regional = not so_dolar and bool(REGIAO.search(n["titulo"]))
         item = {"titulo": n["titulo"], "fonte": n["fonte"], "link": n["link"],
                 "data": n["data"].astimezone(dt.timezone.utc).isoformat(timespec="minutes"),
-                "categoria": categoria(n["titulo"], eh_regional)}
+                "categoria": "Dólar" if so_dolar else categoria(n["titulo"], eh_regional)}
+        if IMPACTO.search(n["titulo"]):
+            item["impacto"] = True
         (regional if eh_regional else mercado).append(item)
+    # Impacto primeiro (mantendo a ordem por data dentro de cada grupo).
+    regional.sort(key=lambda x: not x.get("impacto"))
+    mercado.sort(key=lambda x: not x.get("impacto"))
 
     saida = {"geradoEm": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
              "regional": regional[:MAX_REGIONAL], "mercado": mercado[:MAX_MERCADO]}

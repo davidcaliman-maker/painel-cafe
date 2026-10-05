@@ -220,8 +220,8 @@
   .news small { color: var(--muted); font-size: 12px; }
   .tag { display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: 1px; padding: 2px 7px;
     border-radius: 4px; text-transform: uppercase; background: var(--line-2); color: #fff; }
-  .tag.Clima { background: #0a84ff; } .tag.Safra { background: #1f8f3a; } .tag.Logística { background: #8e44ad; }
-  .tag.Geopolítica { background: #c4161c; } .tag.Concorrentes { background: #b8860b; }
+  .tag.Clima { background: #0a84ff; } .tag.Safra { background: #1f8f3a; } .tag.Dólar { background: #0f6e56; }
+  .tag.impacto { background: #ffcc00; color: #3d2e00; margin-right: 5px; }
   .tag.Consumo { background: #d35400; } .tag.Regional { background: var(--orange); color: var(--on-accent); }
   .chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin: 0 -2px; scrollbar-width: none; }
   .chips::-webkit-scrollbar { display: none; }
@@ -384,11 +384,10 @@
   <div class="news-h">MERCADO, CLIMA E SAFRA</div>
   <div class="chips" id="nChips">
     <button data-c="" class="on">Todas</button>
+    <button data-c="impacto">⚡ Impacto</button>
+    <button data-c="Dólar">Dólar</button>
     <button data-c="Clima">Clima</button>
     <button data-c="Safra">Safra</button>
-    <button data-c="Logística">Logística</button>
-    <button data-c="Geopolítica">Geopolítica</button>
-    <button data-c="Concorrentes">Concorrentes</button>
     <button data-c="Consumo">Consumo</button>
     <button data-c="Mercado">Mercado</button>
   </div>
@@ -1271,13 +1270,14 @@
   function cartao(n, reg) {
     var link = /^https:\/\//.test(n.link) ? n.link : "#";
     return '<a class="news' + (reg ? " reg" : "") + '" href="' + esc(link) + '" target="_blank" rel="noopener">' +
+      (n.impacto ? '<span class="tag impacto">⚡ Impacto</span>' : "") +
       '<span class="tag ' + esc(n.categoria) + '">' + esc(n.categoria) + '</span>' +
       '<b>' + esc(n.titulo) + '</b><small>' + esc(n.fonte) + " · " + haQuanto(n.data) + '</small></a>';
   }
   function renderNoticias() {
     if (!noticias) return;
     var reg = noticias.regional || [], merc = (noticias.mercado || []).filter(function (n) {
-      return !filtro || n.categoria === filtro;
+      return !filtro || (filtro === "impacto" ? n.impacto : n.categoria === filtro);
     });
     $("nRegional").innerHTML = reg.length ? reg.map(function (n) { return cartao(n, true); }).join("")
       : '<div class="news-empty">Nenhuma notícia regional nos últimos dias.</div>';
@@ -1298,7 +1298,7 @@
   $("vNoticias").addEventListener("click", function (e) {
     var a = e.target.closest("a.news");
     if (!a) return;
-    rastrear("noticia", { tema: a.querySelector(".tag").textContent, regional: a.classList.contains("reg") ? "sim" : "não" });
+    rastrear("noticia", { tema: a.querySelector(".tag:last-of-type").textContent, impacto: a.querySelector(".tag.impacto") ? "sim" : "não", regional: a.classList.contains("reg") ? "sim" : "não" });
   });
   document.querySelectorAll("#nChips button").forEach(function (b) {
     b.addEventListener("click", function () {
