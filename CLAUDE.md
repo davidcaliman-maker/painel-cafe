@@ -191,6 +191,17 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   Cepea)/2" 10,24 / 19,95 (empatou, não adotar) · 75% do movimento 7,49 · **50% do movimento 5,74 /
   14,81** · 35% 5,85. Fórmula NÃO foi mudada: esperar `dados/acerto.csv` ter 3–4 semanas (fim de
   out/2026), refazer a análise e só então propor (precisa aprovação do usuário).
+- Refeito em 03–05/10 com 15/09–02/10 (fechamento do app = opção B; base = Cepea anterior, 1º dia
+  base 14/09 = 992,35). Fórmula: preço = base + fator × (estimativa cheia − base). Erro médio (R$/saca):
+  fator 0% 9,90 · 20% 7,91 · 30% 7,05 · 40% 6,67 · **50% 6,46** · 60% 6,75 · **70% 7,46** · 80% 8,32 ·
+  90% 9,18 · 100% (atual) 10,11 (maior erro 24,10 em 23/09). Faixa 40–60% quase igual; 70% pedido pelo
+  usuário para comparar (gráfico mostrado). App fechou acima do Cepea 5/14 dias, abaixo 9/14, média −0,50.
+  Outras ideias testadas e REJEITADAS: abrir pela média (app+Cepea)/2 (10,24); abrir R$ 10 abaixo do
+  Cepea (~13,6, pior — desconto fixo corrige um lado e piora o outro).
+  Se aplicar o fator: mudar `fisicoConilon`/estimativa no index.html, `gerar_intradia` e
+  `marcar_fechamentos` no historico.py (mesmo fator nos três); considerar baixar `VARIACAO_FORTE` (3%)
+  e o `alertaVariacaoPct`; `AlertaService.java` só muda com APK novo.
+- 05/10/2026: dólar abriu −4,4% (5,22 → 4,99; confirmado no Yahoo). Bom dia de teste para o acerto.
 - Atraso das bolsas: ICE (Londres/NY) só tem tempo real pago e com licença de redistribuição (cara);
   grátis = 10–15 min. Dólar (FX_IDC) já vem com ~1–2 min. Explicado ao usuário (01/10).
 - Dólar: app mostra 2 casas arredondando (5,2271 → 5,23); Google às vezes mostra 5,22. Explicado.
@@ -210,7 +221,8 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
 - Nome do card "CONILON 7/8" × dado do Cepea (Robusta tipo 6 peneira 13): renomear para
   "Conilon · Indicador Cepea" ou usar o Tipo 7/8 do CCCV (Notícias Agrícolas) — usuário não decidiu.
 - **~22–29/10/2026: analisar `dados/acerto.csv`** (o usuário vai pedir "analisa o acerto da estimativa
-  do Conilon"): comparar fórmula atual × amortecida (50% etc.) por horário (10h/13h/16h/fim).
+  do Conilon"): comparar fórmula atual × amortecida (50%, 70% etc.) por horário (10h/13h/16h/fim),
+  com gráfico (linhas Cepea × app × fatores + colunas de erro médio por fator), como o mostrado em 05/10.
 - Bloqueio só para convidados — opções explicadas (28/09): 1) código único no app (simples, burlável;
   "Jeito A" = todos, inclusive quem já usa, digitam uma vez — recomendado), 2) código por pessoa com
   lista/cancelamento (Cloudflare Worker), 3) Cloudflare Access por e-mail (grátis até 50 pessoas; muda
