@@ -19,7 +19,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v32).
+  (`painel-agro-vN` → `vN+1`; hoje v33).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
@@ -39,7 +39,9 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
     Conilon do dia usa a calibração do Cepea ANTERIOR ao dia (a linha não muda quando o Cepea sai);
     depois do Cepea o topo mostra "fechamento Cepea".
     Depois do fechamento de Londres/NY o gráfico mostra o último negócio (ex. 3.376) e o card o ajuste
-    oficial (3.375): diferença de poucos pontos, explicada ao usuário, que NÃO quis igualar (29/09).
+    oficial (3.375). Em 06/10 o usuário PEDIU para igualar: depois do fechamento da bolsa (`fechouBolsa`:
+    Londres 17h30 de Londres, NY 13h30 de NY, com horário de verão UK/EUA) o gráfico de Londres/NY ganha um
+    último ponto com o ajuste oficial (= quadrado) e o topo diz "fechamento".
 - **Chuva:** previsão de 10 dias (Open-Meteo). Padrão Itamaraju-BA; usuário escolhe qualquer
   cidade do Brasil (busca no geocoding do Open-Meteo), salvo no aparelho. O ícone da aba mostra
   o total de mm dos 10 dias.

@@ -1045,9 +1045,36 @@
   function ddmmIso(iso) { return iso.slice(8, 10) + "/" + iso.slice(5, 7); }
 
   // Pontos da série no dia + o valor ao vivo que o app já tem (se for hoje e o mercado estiver ativo).
+  // Fechamento das bolsas, em minutos UTC: Londres 17h30 de Londres (16h30 UTC no horário de verão
+  // britânico, do último domingo de março ao último domingo de outubro; 17h30 UTC fora dele) e
+  // Nova York 13h30 de NY (17h30 UTC no horário de verão dos EUA; 18h30 UTC fora dele).
+  function fechouBolsa(nome, iso) {
+    var ano = +iso.slice(0, 4);
+    var domingo = function (mes, n) {  // n-ésimo domingo do mês (n = -1: o último)
+      var d = new Date(Date.UTC(ano, n < 0 ? mes + 1 : mes, n < 0 ? 0 : 1));
+      if (n < 0) d.setUTCDate(d.getUTCDate() - d.getUTCDay());
+      else d.setUTCDate(1 + (7 - d.getUTCDay()) % 7 + 7 * (n - 1));
+      return d.toISOString().slice(0, 10);
+    };
+    var verao = nome === "londres" ? iso >= domingo(2, -1) && iso < domingo(9, -1)
+                                   : iso >= domingo(2, 2) && iso < domingo(10, 1);
+    var fecha = (verao ? 16 : 17) * 60 + 30 + (nome === "londres" ? 0 : 60);
+    var agora = new Date(), minUTC = agora.getUTCHours() * 60 + agora.getUTCMinutes();
+    return agora.toISOString().slice(0, 10) > iso || minUTC >= fecha + 10;
+  }
+
   function pontosDia(nome) {
     var p = (intra.series[nome] || []).map(function (x) { return { m: x[0], v: x[1] }; });
     var a = agoraBRT(), ult = p.length ? p[p.length - 1].m : null, v = null;
+    // Londres e NY depois do fechamento: o gráfico termina no preço de ajuste oficial (o mesmo do
+    // quadrado), e não no último negócio (pedido do usuário em 06/10/2026).
+    if (last && ult != null && (nome === "londres" || nome === "novaYork")) {
+      var q = nome === "londres" ? last.qLdn : last.qNy;
+      if (q && isoUTC(q.time) === intra.data && (intra.data !== a.dia || fechouBolsa(nome, intra.data))) {
+        p.push({ m: ult + 5, v: nome === "londres" ? last.ldn : last.ny });
+        return { p: p, vivo: false, fechamento: true };
+      }
+    }
     if (!last || intra.data !== a.dia || a.min > DIA_FIM || (ult != null && a.min <= ult)) return { p: p, vivo: false };
     var recente = ult != null && a.min - ult < 45;  // bolsa ainda negociando (senão já fechou)
     if (nome === "conilon") {
@@ -1100,7 +1127,7 @@
     var lastP = p[p.length - 1];
     function cabecalhoPadrao() {
       if (serie === "conilon" && fechApp != null) cabecalhoDia(fechApp, refVar, "fechado", contra);
-      else cabecalhoDia(lastP.v, refVar, r.vivo ? '<span class="vivo"></span>agora' : "às " + hhmm(lastP.m), contra);
+      else cabecalhoDia(lastP.v, refVar, r.vivo ? '<span class="vivo"></span>agora' : r.fechamento ? "fechamento" : "às " + hhmm(lastP.m), contra);
     }
     cabecalhoPadrao();
 
