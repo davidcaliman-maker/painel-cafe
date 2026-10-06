@@ -591,7 +591,8 @@
   // O Cepea não aparece no app; a variação mostrada é o movimento do mercado no dia (contra a base).
   function hojeBRT() { return new Date(Date.now() - 3 * 3600 * 1000).toISOString().slice(0, 10); }
   function baseDe(dia) {
-    var aj = Number(calib().ajusteConilonCepea) || 0;
+    // Ajuste sobre o Cepea (06/10/2026: −10) só vale para os dias a partir de "ajusteDesde".
+    var c0 = calib(), aj = c0.ajusteDesde && dia < c0.ajusteDesde ? 0 : Number(c0.ajusteConilonCepea) || 0;
     var b = (hist && hist.dias || []).filter(function (d) { return d.cepeaConilon != null && d.data < dia; }).pop();
     if (b) {
       var preco = b.cepeaConilon + aj;

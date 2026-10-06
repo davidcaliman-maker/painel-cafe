@@ -145,7 +145,7 @@ def ultimo_ate(pontos, m):
     return pontos[max(antes)] if antes else None
 
 
-async def gerar_intradia(dias, usd_diario, simbolos, ajuste):
+async def gerar_intradia(dias, usd_diario, simbolos, ajuste_de):
     """Gráfico do dia (intradia.json): pontos de 5 em 5 min do último pregão de Londres.
 
     O Conilon do dia é a mesma estimativa do app (Londres × dólar) com a calibração do Cepea
@@ -163,7 +163,7 @@ async def gerar_intradia(dias, usd_diario, simbolos, ajuste):
     if not ldn or not anteriores or not com_cepea:
         raise RuntimeError(f"intradia sem dados suficientes para {dia}")
     ant, cal = anteriores[-1], com_cepea[-1]
-    preco_cal = cal["cepeaConilon"] + ajuste
+    preco_cal = cal["cepeaConilon"] + ajuste_de(dia)
     dif = preco_cal / (0.06 * round(cal["usd"], 2)) - cal["londres"]
     usd_ant = usd_diario[max(d for d in usd_diario if d < dia)]
 
@@ -226,7 +226,7 @@ def minuto_fechado(dia):
     return (18 if verao else 19) * 60 + 30
 
 
-def marcar_fechamentos(dias, usd, ajuste, agora):
+def marcar_fechamentos(dias, usd, ajuste_de, agora):
     """Fechamento do app de cada dia ("fechamentoApp"), que é o preço mostrado depois do pregão.
 
     Opção B escolhida pelo usuário (03/10/2026): o app mostra o PRÓPRIO fechamento (Londres e dólar de
@@ -239,7 +239,7 @@ def marcar_fechamentos(dias, usd, ajuste, agora):
     base = None
     for d in dias:
         if base is not None and (d["data"] < hoje or (d["data"] == hoje and dolar_fechou)):
-            preco_base = base["cepeaConilon"] + ajuste
+            preco_base = base["cepeaConilon"] + ajuste_de(d["data"])
             dif = preco_base / (0.06 * round(base["usd"], 2)) - base["londres"]
             d["baseConilon"] = round(preco_base * 10) / 10
             d["fechamentoApp"] = round((d["londres"] + dif) * 0.06 * round(d["usd"], 2) * 10) / 10
@@ -295,8 +295,12 @@ async def main(caminho_config, caminho_saida):
         cepea = {d["data"]: d["cepeaConilon"] for d in anterior.get("dias", []) if d.get("cepeaConilon")}
 
     dias = montar_dias(ldn, ny, usd, cepea)
-    ajuste = float(cfg.get("ajusteConilonCepea", 0))
-    marcar_fechamentos(dias, usd, ajuste, dt.datetime.now(BRT))
+    # Ajuste sobre o Cepea na BASE do dia (06/10/2026: −10, pedido do usuário), só para os dias a partir
+    # de "ajusteDesde" — os fechamentos anteriores não mudam.
+    ajuste_cfg, desde = float(cfg.get("ajusteConilonCepea", 0)), str(cfg.get("ajusteDesde", ""))
+    ajuste_de = lambda dia: ajuste_cfg if not desde or dia >= desde else 0.0
+    ajuste = ajuste_de(hoje.isoformat())  # a calibração é a base dos próximos dias
+    marcar_fechamentos(dias, usd, ajuste_de, dt.datetime.now(BRT))
 
     # Calibra pelo dia mais recente que tem CEPEA e fechamento de Londres.
     calibracao = anterior.get("calibracao")
@@ -309,6 +313,7 @@ async def main(caminho_config, caminho_saida):
             "data": d["data"],
             "cepeaConilon": d["cepeaConilon"],
             "ajusteConilonCepea": ajuste,
+            "ajusteDesde": desde,
             "precoConilon": round(alvo, 2),
             "londres": d["londres"],
             "usd": usd_dia,
@@ -342,7 +347,7 @@ async def main(caminho_config, caminho_saida):
     intra_anterior = publicado_anterior("intradia.json")
     try:
         simbolos = {nome: f'{MERCADOS[nome]["bolsa"]}:{contratos[nome]}' for nome in MERCADOS}
-        intra = await gerar_intradia(dias, usd, simbolos, ajuste)
+        intra = await gerar_intradia(dias, usd, simbolos, ajuste_de)
         print(f'intradia {intra["data"]}: ' + ", ".join(f"{k} {len(v)}" for k, v in intra["series"].items()))
     except Exception as e:
         print(f"aviso: gráfico do dia indisponível ({e}); mantendo o publicado")

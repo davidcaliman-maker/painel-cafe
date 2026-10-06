@@ -1,5 +1,6 @@
 {
-  "ajusteConilonCepea": 0,
+  "ajusteConilonCepea": -10,
+  "ajusteDesde": "2026-10-06",
   "alertaVariacaoPct": 2.0,
   "contratoLondres": "auto",
   "contratoNovaYork": "auto",

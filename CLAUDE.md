@@ -19,7 +19,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v31).
+  (`painel-agro-vN` → `vN+1`; hoje v32).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
@@ -89,6 +89,11 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
     fechamento de ontem do app. FORTE ALTA/BAIXA usa essa variação. Gráfico SEMANA = fechamentos do app;
     HOJE: linha pontilhada = fechamento de ontem do app (`intradia.anterior.conilon`), cor/% contra `base`.
   - Crédito "Fontes: Cepea/Esalq" continua (Cepea ainda é usado na base).
+  - **06/10/2026: base = Cepea − R$ 10,00** (pedido explícito do usuário; `config.json`: `ajusteConilonCepea`
+    −10 e `ajusteDesde` 2026-10-06 → dias anteriores NÃO mudam). Usado em `marcar_fechamentos`, `gerar_intradia`,
+    calibração (`ajuste_de`) e `baseDe` no app. Simulação de 15/09–02/10 indicava erro maior (~13,6 × 10,1);
+    o usuário foi avisado antes e decidiu assim. `dados/acerto.csv` a partir de 06/10 já inclui o −10 na
+    estimativa (descontar ao comparar fatores).
   - `AlertaService.java` (APK) não mudou: compara com a calibração do Cepea (= base durante o dia).
 - Dias do histórico (`montar_dias`): toda data em que Londres OU NY negociou OU o Cepea publicou. Bolsa
   fechada (feriado UK/EUA, ex. 26/11 Ação de Graças, 28/12 Boxing Day, 29/03/2027 Páscoa UK) repete o
