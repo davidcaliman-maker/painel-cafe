@@ -211,8 +211,6 @@
   .tab-mm:empty { display: none; }
 
   /* Notícias */
-  .news-h { font-size: 13px; font-weight: 800; letter-spacing: 1.5px; color: var(--muted); margin: 14px 2px 8px; }
-  .news-h.reg { color: var(--orange); }
   .news { display: block; background: var(--card-2); border-radius: 8px; padding: 10px 12px 9px; margin-bottom: 7px;
     color: var(--text); text-decoration: none; border-left: 4px solid transparent; }
   .news.reg { background: var(--reg-bg); border-left-color: var(--orange); }
@@ -378,20 +376,17 @@
   <h2>NOTÍCIAS</h2>
   <div class="sec-sub">O que pode mexer no preço do café <small id="nUpd"></small></div>
 
-  <div class="news-h reg">SUL DA BAHIA E ESPÍRITO SANTO</div>
-  <div id="nRegional"><div class="news-empty">carregando notícias…</div></div>
-
-  <div class="news-h">MERCADO, CLIMA E SAFRA</div>
   <div class="chips" id="nChips">
     <button data-c="" class="on">Todas</button>
     <button data-c="impacto">⚡ Impacto</button>
+    <button data-c="regional">Sul da BA e ES</button>
     <button data-c="Dólar">Dólar</button>
     <button data-c="Clima">Clima</button>
     <button data-c="Safra">Safra</button>
     <button data-c="Consumo">Consumo</button>
     <button data-c="Mercado">Mercado</button>
   </div>
-  <div id="nMercado"></div>
+  <div id="nMercado"><div class="news-empty">carregando notícias…</div></div>
 
   <div class="foot">Toque numa notícia para abrir a matéria no site original.</div>
 </div>
@@ -1304,12 +1299,13 @@
   }
   function renderNoticias() {
     if (!noticias) return;
-    var reg = noticias.regional || [], merc = (noticias.mercado || []).filter(function (n) {
-      return !filtro || (filtro === "impacto" ? n.impacto : n.categoria === filtro);
-    });
-    $("nRegional").innerHTML = reg.length ? reg.map(function (n) { return cartao(n, true); }).join("")
-      : '<div class="news-empty">Nenhuma notícia regional nos últimos dias.</div>';
-    $("nMercado").innerHTML = merc.length ? merc.map(function (n) { return cartao(n, false); }).join("")
+    // Uma lista só (pedido do usuário em 06/10/2026): Sul da BA e ES junto das outras, com borda
+    // laranja e um filtro próprio. Impacto primeiro; depois as mais recentes.
+    var todas = (noticias.regional || []).map(function (n) { return Object.assign({ reg: true }, n); })
+      .concat(noticias.mercado || []).filter(function (n) {
+        return !filtro || (filtro === "impacto" ? n.impacto : filtro === "regional" ? n.reg : n.categoria === filtro);
+      }).sort(function (x, y) { return (y.impacto ? 1 : 0) - (x.impacto ? 1 : 0) || (y.data > x.data ? 1 : y.data < x.data ? -1 : 0); });
+    $("nMercado").innerHTML = todas.length ? todas.map(function (n) { return cartao(n, n.reg); }).join("")
       : '<div class="news-empty">Nenhuma notícia deste tema nos últimos dias.</div>';
   }
   function refreshNoticias(force) {

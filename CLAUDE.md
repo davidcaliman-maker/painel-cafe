@@ -19,7 +19,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v33).
+  (`painel-agro-vN` → `vN+1`; hoje v34).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
@@ -45,9 +45,9 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
 - **Chuva:** previsão de 10 dias (Open-Meteo). Padrão Itamaraju-BA; usuário escolhe qualquer
   cidade do Brasil (busca no geocoding do Open-Meteo), salvo no aparelho. O ícone da aba mostra
   o total de mm dos 10 dias.
-- **Notícias:** `noticias.json` — seção "Sul da Bahia e Espírito Santo" em destaque + "Mercado,
-  clima e safra" com filtro por tema. Só título/fonte/link (abre a matéria original).
-  Temas (05/10): Todas · ⚡ Impacto · Dólar · Clima · Safra · Consumo · Mercado. Logística, Geopolítica e
+- **Notícias:** `noticias.json` (listas `regional` e `mercado`, juntas na tela) com filtro por tema. Só título/fonte/link (abre a matéria original).
+  Desde 06/10: UMA lista só (regionais com borda laranja, sem seção separada), ordem impacto → data.
+  Temas: Todas · ⚡ Impacto · Sul da BA e ES (filtro `regional`) · Dólar · Clima · Safra · Consumo · Mercado. Logística, Geopolítica e
   Concorrentes RETIRADOS a pedido (exceto Vietnã/robusta, mantido em Safra). Dólar entra sem "café" no título (`BUSCAS_DOLAR`, máx. 8). Selo IMPACTO
   (`IMPACTO` em noticias.py: dispara/despenca/desaba/geada/quebra de safra/forte alta…) vai para o topo.
 - **Tema rosa:** botão no canto superior direito (ícone de mulher de chapéu com óculos, SVG
