@@ -13,7 +13,15 @@ on:
     - cron: "*/15 0 * * 2-6"      # 21:00 às 21:45
     - cron: "0 1 * * 2-6"         # 22:00
     - cron: "0 12,18,23 * * 0,6"  # sáb e dom: 09h, 15h e 20h (notícias)
+  # Chamado de fora pelo cron-job.org (o agendamento do GitHub atrasa/pula muitas rodadas: em 22/10/2026
+  # rodou 6 vezes no dia em vez de ~70). Com agendado=sim, se comporta como rodada agendada: só republica
+  # se histórico, gráfico do dia ou notícias mudaram.
   workflow_dispatch:
+    inputs:
+      agendado:
+        description: "sim = chamada automática (cron-job.org)"
+        required: false
+        default: "nao"
 
 permissions:
   contents: write   # gravar dados/acerto.csv (acerto da estimativa do dia)
@@ -98,13 +106,13 @@ jobs:
 
       # Push ou execução manual: publica sempre. Agendada: só se o histórico ou as notícias mudaram.
       - uses: actions/configure-pages@v5
-        if: github.event_name != 'schedule' || steps.historico.outputs.mudou != 'false' || steps.noticias.outputs.mudou == 'true'
+        if: (github.event_name != 'schedule' && inputs.agendado != 'sim') || steps.historico.outputs.mudou != 'false' || steps.noticias.outputs.mudou == 'true'
       - uses: actions/upload-pages-artifact@v3
-        if: github.event_name != 'schedule' || steps.historico.outputs.mudou != 'false' || steps.noticias.outputs.mudou == 'true'
+        if: (github.event_name != 'schedule' && inputs.agendado != 'sim') || steps.historico.outputs.mudou != 'false' || steps.noticias.outputs.mudou == 'true'
         with:
           path: app/src/main/assets
       - id: deployment
-        if: github.event_name != 'schedule' || steps.historico.outputs.mudou != 'false' || steps.noticias.outputs.mudou == 'true'
+        if: (github.event_name != 'schedule' && inputs.agendado != 'sim') || steps.historico.outputs.mudou != 'false' || steps.noticias.outputs.mudou == 'true'
         uses: actions/deploy-pages@v4
 
       # O GitHub desliga agendamentos após 60 dias sem atividade no repositório; isto evita.
