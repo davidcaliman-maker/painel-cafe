@@ -49,6 +49,15 @@ def publicado():
         return json.load(r)
 
 
+def config():
+    caminho = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "app", "src", "main", "assets", "config.json")
+    try:
+        with open(caminho, encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
 def ddmm(iso):
     return f"{iso[8:10]}/{iso[5:7]}"
 
@@ -81,6 +90,10 @@ def main(corrigir):
     aj = cal.get("ajusteConilonCepea") or 0
     amanha = (f'Amanhã o app começa pelo último Cepea que tem: {ddmm(cal["data"])}, {brl(cal["cepeaConilon"])}'
               + (f' {"−" if aj < 0 else "+"} {brl(abs(aj))} = {brl(cal["precoConilon"])}.' if aj else "."))
+    res = config().get("cepeaReserva") or {}
+    if res.get("data") == hoje and res.get("precoInicio") is not None:
+        amanha = (f'Se o Cepea não sair até a madrugada, amanhã o app começa em {brl(float(res["precoInicio"]))} '
+                  "(preço de reserva combinado).")
     try:
         cepea = cepea_conilon()
     except Exception as e:

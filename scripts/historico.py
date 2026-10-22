@@ -259,6 +259,34 @@ def marcar_fechamentos(dias, usd, ajuste_de, agora):
             base = d
 
 
+def proximo_dia_util(iso):
+    dia = dt.date.fromisoformat(iso) + dt.timedelta(days=1)
+    while dia.weekday() >= 5:
+        dia += dt.timedelta(days=1)
+    return dia.isoformat()
+
+
+def cepea_reserva(cfg, cepea, ajuste_de, agora):
+    """Preço combinado com o usuário para quando o Cepea de um dia não sair (config "cepeaReserva",
+    pedido de 22/10/2026: sem o Cepea de 22/10, o dia 23/10 começa em R$ 920,00).
+
+    Só vale a partir das 04h30 do dia útil seguinte (antes disso ainda espera o Cepea de verdade) e
+    só se o Cepea daquele dia não existir; se ele sair depois, mesmo atrasado, o real substitui.
+    Entra no lugar do Cepea do dia já descontado o ajuste, para o dia seguinte começar exatamente
+    no preço combinado. O dia fica marcado "cepeaReserva" (o acerto da estimativa o ignora).
+    """
+    res = cfg.get("cepeaReserva") or {}
+    dia, preco = res.get("data"), res.get("precoInicio")
+    if not dia or preco is None or dia in cepea:
+        return None
+    seguinte = proximo_dia_util(dia)
+    if (agora.date().isoformat(), agora.hour * 60 + agora.minute) < (seguinte, 4 * 60 + 30):
+        return None
+    cepea[dia] = round(float(preco) - ajuste_de(seguinte), 2)
+    print(f"aviso: sem o Cepea de {dia}; usando a reserva combinada (o dia {seguinte} começa em {preco})")
+    return dia
+
+
 def cepea_conilon():
     """Indicador CEPEA/Esalq do café Robusta (Conilon), R$/saca: {data ISO: valor}."""
     req = urllib.request.Request(CEPEA_URL, headers={
@@ -304,9 +332,9 @@ async def main(caminho_config, caminho_saida):
         cepea = cepea_conilon()
     except Exception as e:  # CEPEA fora do ar: mantém os valores já publicados
         print(f"aviso: CEPEA indisponível ({e}); usando o último publicado")
-        cepea = {d["data"]: d["cepeaConilon"] for d in anterior.get("dias", []) if d.get("cepeaConilon")}
+        cepea = {d["data"]: d["cepeaConilon"] for d in anterior.get("dias", [])
+                 if d.get("cepeaConilon") and not d.get("cepeaReserva")}
 
-    dias = montar_dias(ldn, ny, usd, cepea)
     # Ajuste sobre o Cepea na BASE do dia, por período (pedidos do usuário: −10 desde 06/10/2026,
     # −20 desde 23/10/2026). Cada dia usa o ajuste vigente nele; dias passados não mudam.
     ajustes = sorted(cfg.get("ajustes") or [{"desde": cfg.get("ajusteDesde", ""),
@@ -318,6 +346,12 @@ async def main(caminho_config, caminho_saida):
             if not a["desde"] or dia >= a["desde"]:
                 valor = float(a["valor"])
         return valor
+
+    reserva = cepea_reserva(cfg, cepea, ajuste_de, dt.datetime.now(BRT))
+    dias = montar_dias(ldn, ny, usd, cepea)
+    for d in dias:
+        if d["data"] == reserva:
+            d["cepeaReserva"] = True
     marcar_fechamentos(dias, usd, ajuste_de, dt.datetime.now(BRT))
 
     # Calibra pelo dia mais recente que tem CEPEA e fechamento de Londres.
