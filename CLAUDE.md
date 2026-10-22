@@ -120,7 +120,10 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   headers Accept `application/vnd.github+json`, Authorization `Bearer <token>`, X-GitHub-Api-Version
   `2022-11-28`; corpo `{"ref":"main","inputs":{"agendado":"sim"}}`; a cada 10 min, 5h–21h, seg–sex (fuso
   America/Sao_Paulo); resposta 204. Token = fine-grained PAT só do repo painel-cafe, permissão Actions
-  read/write, validade 1 ano (RENOVAR ~out/2027; se vencer, as rodadas voltam a depender do GitHub).
+  read/write, criado SEM vencimento (22/10/2026; job cron-job.org nº 8703655, teste 204 OK). Se um dia
+  for apagado/regenerado, as rodadas voltam a depender do GitHub.
+  A API avisou: versão `2022-11-28` obsoleta desde 10/03/2026 e DESLIGADA em 10/03/2028 → antes disso trocar
+  o header X-GitHub-Api-Version no cron-job.org pela versão atual (docs.github.com/rest/about-the-rest-api/api-versions).
   `agendado=sim` faz a rodada se comportar como agendada (só republica se mudou). Agendas do GitHub ficam
   como reserva. Nunca pedir/ver o token: o usuário cola direto no cron-job.org.
 - `pages.yml` roda: dias úteis a cada 15 min das 05h às 22h (Brasília);
