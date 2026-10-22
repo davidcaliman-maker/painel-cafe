@@ -4,6 +4,7 @@
     { "desde": "2026-10-23", "valor": -20 }
   ],
   "alertaVariacaoPct": 2.0,
+  "cepeaReserva": { "data": "2026-10-22", "precoInicio": 920.00 },
   "contratoLondres": "auto",
   "contratoNovaYork": "auto",
   "posicaoLondres": 2,

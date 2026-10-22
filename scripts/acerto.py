@@ -69,6 +69,9 @@ def main(caminho, pasta=None):
     if not base or "cepeaConilon" not in base:
         print("sem o Cepea anterior no histórico; nada a anotar")
         return
+    if dias[dia].get("cepeaReserva") or base.get("cepeaReserva"):  # preço combinado, não é o Cepea
+        print(f"{dia}: usa o preço de reserva no lugar do Cepea; nada a anotar")
+        return
 
     ser = intra["series"]
     linhas = []

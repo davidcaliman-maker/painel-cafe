@@ -148,6 +148,10 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   O robô do GitHub faz commit desse arquivo → sempre `git pull` antes de mexer.
 - cotacaodocafe.com NÃO calcula: copia o Cepea (preço principal, atualiza 1x/dia ~21h), CCCV/Cooabriel
   via Notícias Agrícolas (regionais ES; "Sul da Bahia" = mesmo valor de Vitória 7/8), PTAX (dólar).
+- Preço de reserva (`cepeaReserva` no config.json, `cepea_reserva()` no historico.py), pedido 22/10/2026:
+  se o Cepea de `data` não existir a partir das 04h30 do dia útil seguinte, esse dia começa em
+  `precoInicio` (entra como Cepea = preço − ajuste do dia seguinte, marcado `cepeaReserva`; o acerto
+  ignora). Se o Cepea real sair depois, substitui. Hoje: 22/10/2026 → 23/10 começa em R$ 920,00.
 - `app/src/main/assets/config.json`: `ajusteConilonCepea` (0), contratos/posições, `alertaVariacaoPct` (2.0).
 
 ## Segurança
