@@ -1,11 +1,9 @@
-# Rotina da noite (22h30, dias úteis):
-# 1. Cepea do dia: confere se o app já tem o Cepea de hoje (é com ele que o preço de amanhã começa).
+# Rotina da noite (22h30, dias úteis). (O acerto da estimativa passou para o pages.yml em 22/10/2026.)
+# Cepea do dia: confere se o app já tem o Cepea de hoje (é com ele que o preço de amanhã começa).
 #    Se o Cepea publicou e o app não pegou, publica o site de novo e confere outra vez. Se ainda
 #    faltar, a execução falha e o GitHub avisa o usuário por e-mail (motivo no resumo da execução).
-# 2. Acerto da estimativa: anota em dados/acerto.csv a estimativa AO VIVO do app (10h, 13h, 16h e
-#    fim do dia) contra o Cepea do dia, para avaliar a fórmula depois de algumas semanas.
 # (Até 01/10/2026 também comparava com o cotacaodocafe.com; o usuário pediu para retirar.)
-name: Cepea do dia e acerto da estimativa
+name: Cepea do dia
 
 on:
   schedule:
@@ -13,7 +11,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write  # gravar dados/acerto.csv no repositório
+  contents: read
   actions: write   # publicar o site de novo e manter o agendamento ativo (keepalive)
 
 jobs:
@@ -32,19 +30,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: cd scripts && python cepea_do_dia.py --corrigir
-
-      # Commits feitos com o token do próprio GitHub Actions não disparam o "Publicar no GitHub Pages".
-      - name: Anotar acerto da estimativa do dia
-        continue-on-error: true
-        run: |
-          python scripts/acerto.py dados/acerto.csv
-          if [ -n "$(git status --porcelain dados)" ]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add dados/acerto.csv
-            git commit -m "Acerto da estimativa do Conilon: $(TZ=America/Sao_Paulo date +%d/%m/%Y)"
-            git push
-          fi
 
       - uses: liskin/gh-workflow-keepalive@f72ff1a1336129f29bf0166c0fd0ca6cf1bcb38c # v1
         if: ${{ !cancelled() }}

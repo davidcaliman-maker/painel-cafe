@@ -6,10 +6,12 @@ dados/acerto.csv, para cada pregão, a estimativa do app às 10h, 13h, 16h e no 
 Também guarda a base da estimativa (Cepea, Londres e dólar do fechamento anterior), para testar
 depois outras fórmulas com os mesmos dados.
 
-Roda no GitHub Actions (conferencia.yml, 22h30), depois que o Cepea do dia sai. Se o Cepea do dia
-ainda não saiu ou não houve pregão, não grava nada.
+Roda no GitHub Actions a cada publicação do site (pages.yml, de 15 em 15 min), com os arquivos que
+acabaram de ser gerados: o dia do gráfico é anotado assim que o Cepea dele sai, e as rodadas
+seguintes só regravam o mesmo dia (sem mudança). Antes rodava uma vez só, às 22h30, e o dia se perdia
+quando o GitHub atrasava essa execução (20 e 21/10/2026). Se o Cepea do dia ainda não saiu, não grava.
 
-Uso: python scripts/acerto.py dados/acerto.csv
+Uso: python scripts/acerto.py dados/acerto.csv [pasta com intradia.json e historico.json]
 """
 import csv
 import datetime as dt
@@ -43,13 +45,21 @@ def hhmm(m):
     return f"{m // 60:02d}:{m % 60:02d}"
 
 
-def main(caminho):
-    intra, hist = baixar("intradia.json"), baixar("historico.json")
-    hoje = dia_da_rotina()  # o dia conferido (mesmo se o GitHub atrasar a rotina para a madrugada)
-    dia = intra["data"]
-    if dia != hoje:
-        print(f"sem pregão hoje (gráfico do dia é de {dia}); nada a anotar")
-        return
+def ler(pasta, nome):
+    with open(os.path.join(pasta, nome), encoding="utf-8") as f:
+        return json.load(f)
+
+
+def main(caminho, pasta=None):
+    if pasta:  # arquivos recém-gerados (pages.yml): anota o dia do gráfico, seja ele qual for
+        intra, hist = ler(pasta, "intradia.json"), ler(pasta, "historico.json")
+        dia = intra["data"]
+    else:      # site publicado: só o dia útil da rotina
+        intra, hist = baixar("intradia.json"), baixar("historico.json")
+        dia = intra["data"]
+        if dia != dia_da_rotina():
+            print(f"o gráfico do dia é de {dia}; nada a anotar")
+            return
     dias = {d["data"]: d for d in hist["dias"]}
     cepea = dias.get(dia, {}).get("cepeaConilon")
     if cepea is None:
@@ -93,4 +103,4 @@ def main(caminho):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    main(sys.argv[1], sys.argv[2] if len(sys.argv) > 2 else None)

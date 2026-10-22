@@ -116,7 +116,11 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
 - `historico.py` também gera `intradia.json` (barras de 5 min do TradingView; `gerar_intradia`).
 - `pages.yml` roda: dias úteis a cada 15 min das 05h às 22h (Brasília);
   sáb/dom 09h, 15h, 20h. Agendadas só republicam se histórico ou notícias mudaram. Keepalive incluso.
-- `conferencia.yml` (nome "Cepea do dia e acerto da estimativa"): dias úteis 22h30.
+- **Desde 22/10/2026 o acerto (`acerto.py`) roda no pages.yml** (toda publicação, 15 em 15 min), com os
+  arquivos recém-gerados (`acerto.py dados/acerto.csv app/src/main/assets`): anota o dia do gráfico assim que o
+  Cepea dele sai; pages.yml tem `contents: write` e faz commit + `git pull --rebase` + push. Motivo: a rotina
+  única das 22h30 perdia o dia quando o GitHub atrasava. O conferencia.yml ("Cepea do dia") ficou só com o aviso.
+- `conferencia.yml` (nome "Cepea do dia"; antes "Cepea do dia e acerto da estimativa"): dias úteis 22h30.
   1) `scripts/cepea_do_dia.py --corrigir`: se o app não tem o Cepea de hoje e o Cepea já publicou, roda o
      pages.yml de novo e reconfere; se ainda faltar (ou Cepea não publicou/fora do ar/Londres sem pregão),
      a execução FALHA → e-mail do GitHub ao usuário (pedido 01/10). Motivo no resumo da execução.

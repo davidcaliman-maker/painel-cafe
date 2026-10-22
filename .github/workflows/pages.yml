@@ -16,7 +16,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write   # gravar dados/acerto.csv (acerto da estimativa do dia)
   pages: write
   id-token: write
   actions: write    # manter o agendamento ativo (keepalive)
@@ -71,6 +71,21 @@ jobs:
       - name: Copiar APK mais recente para o site
         continue-on-error: true
         run: curl -sfL https://github.com/davidcaliman-maker/painel-cafe/releases/latest/download/PainelAgro.apk -o app/src/main/assets/PainelAgro.apk
+
+      # Acerto da estimativa do Conilon (dados/acerto.csv): anotado assim que o Cepea do dia sai.
+      # Roda em toda publicação, então um atraso ou falha do GitHub numa rodada não perde o dia.
+      # Commits feitos com o token do próprio Actions não disparam este workflow de novo.
+      - name: Anotar acerto da estimativa do dia
+        continue-on-error: true
+        run: |
+          python scripts/acerto.py dados/acerto.csv app/src/main/assets
+          if [ -n "$(git status --porcelain dados)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add dados/acerto.csv
+            git commit -m "Acerto da estimativa do Conilon: $(python -c 'import json;d=json.load(open("app/src/main/assets/intradia.json"))["data"];print(d[8:]+"/"+d[5:7]+"/"+d[:4])')"
+            git pull --rebase -q && git push
+          fi
 
       # Marca a publicação com o código do commit: o app compara com versao.json e se
       # recarrega sozinho quando há tela nova.
