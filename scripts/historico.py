@@ -194,6 +194,18 @@ async def gerar_intradia(dias, usd_diario, simbolos, ajuste_de):
     }
 
 
+def dia_da_rotina():
+    """Dia útil que a rotina da noite (22h30) confere. O GitHub às vezes atrasa o agendamento por
+    horas (20 e 21/10/2026 rodou às 3h20): se rodar antes do meio-dia, confere o dia útil anterior."""
+    agora = dt.datetime.now(BRT)
+    dia = agora.date()
+    if agora.hour < 12:
+        dia -= dt.timedelta(days=1)
+        while dia.weekday() >= 5:
+            dia -= dt.timedelta(days=1)
+    return dia.isoformat()
+
+
 def montar_dias(ldn, ny, usd, cepea):
     """Um dia para cada data em que Londres ou Nova York negociou ou o Cepea publicou.
 

@@ -120,6 +120,9 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   1) `scripts/cepea_do_dia.py --corrigir`: se o app não tem o Cepea de hoje e o Cepea já publicou, roda o
      pages.yml de novo e reconfere; se ainda faltar (ou Cepea não publicou/fora do ar/Londres sem pregão),
      a execução FALHA → e-mail do GitHub ao usuário (pedido 01/10). Motivo no resumo da execução.
+  O GitHub chegou a atrasar essa rotina até 3h20 (20 e 21/10: alarme falso e acerto não anotado, dados
+  intradiários desses dois dias perdidos). Corrigido com `dia_da_rotina()` (historico.py): antes do meio-dia
+  confere o dia útil anterior.
   2) `acerto.py`. Falha passageira do Cepea numa rodada do pages.yml NÃO marca erro (evita e-mail a cada 15 min).
   A comparação com o cotacaodocafe.com foi RETIRADA em 01/10 a pedido do usuário (o site só copia o
   Cepea); `conferencia.py` e `monitor.py` foram apagados. Não recriar.

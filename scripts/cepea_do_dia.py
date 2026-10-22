@@ -17,7 +17,7 @@ import sys
 import time
 import urllib.request
 
-from historico import BRT, SITE, cepea_conilon
+from historico import BRT, SITE, cepea_conilon, dia_da_rotina
 
 
 # Feriados nacionais em que o Cepea não publica (mesma lista do index.html): fixos + Carnaval (seg e
@@ -67,7 +67,7 @@ def avisar(msg):
 
 
 def main(corrigir):
-    hoje = dt.datetime.now(BRT).date().isoformat()
+    hoje = dia_da_rotina()  # o dia conferido (mesmo se o GitHub atrasar a rotina para a madrugada)
     h = publicado()
     if h["calibracao"]["data"] == hoje:
         print(f'OK: o app já tem o Cepea de {ddmm(hoje)} ({brl(h["calibracao"]["cepeaConilon"])}).')

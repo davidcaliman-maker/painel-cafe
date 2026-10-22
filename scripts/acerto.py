@@ -19,6 +19,8 @@ import sys
 import time
 import urllib.request
 
+from historico import dia_da_rotina
+
 SITE = "https://davidcaliman-maker.github.io/painel-cafe/"
 BRT = dt.timezone(dt.timedelta(hours=-3))
 MOMENTOS = [("10h", 10 * 60), ("13h", 13 * 60), ("16h", 16 * 60)]
@@ -43,7 +45,7 @@ def hhmm(m):
 
 def main(caminho):
     intra, hist = baixar("intradia.json"), baixar("historico.json")
-    hoje = dt.datetime.now(BRT).date().isoformat()
+    hoje = dia_da_rotina()  # o dia conferido (mesmo se o GitHub atrasar a rotina para a madrugada)
     dia = intra["data"]
     if dia != hoje:
         print(f"sem pregão hoje (gráfico do dia é de {dia}); nada a anotar")
