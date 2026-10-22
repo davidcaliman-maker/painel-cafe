@@ -114,6 +114,15 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   volta para um pregão mais antigo (`fxVisto`) — bug de 05/10: no 5G o dólar pulava de 4,99 para o 5,22 de sexta.
 - `scripts/noticias.py`: Google Notícias RSS (últimos 7 dias), filtra fora do assunto e repetidas.
 - `historico.py` também gera `intradia.json` (barras de 5 min do TradingView; `gerar_intradia`).
+- **cron-job.org (desde 22/10/2026):** o agendamento do GitHub passou a pular a maioria das rodadas (22/10:
+  6 rodadas em vez de ~70; gráfico HOJE 4 h parado). O usuário cria no cron-job.org (conta dele) uma tarefa
+  POST `https://api.github.com/repos/davidcaliman-maker/painel-cafe/actions/workflows/pages.yml/dispatches`,
+  headers Accept `application/vnd.github+json`, Authorization `Bearer <token>`, X-GitHub-Api-Version
+  `2022-11-28`; corpo `{"ref":"main","inputs":{"agendado":"sim"}}`; a cada 10 min, 5h–21h, seg–sex (fuso
+  America/Sao_Paulo); resposta 204. Token = fine-grained PAT só do repo painel-cafe, permissão Actions
+  read/write, validade 1 ano (RENOVAR ~out/2027; se vencer, as rodadas voltam a depender do GitHub).
+  `agendado=sim` faz a rodada se comportar como agendada (só republica se mudou). Agendas do GitHub ficam
+  como reserva. Nunca pedir/ver o token: o usuário cola direto no cron-job.org.
 - `pages.yml` roda: dias úteis a cada 15 min das 05h às 22h (Brasília);
   sáb/dom 09h, 15h, 20h. Agendadas só republicam se histórico ou notícias mudaram. Keepalive incluso.
 - **Desde 22/10/2026 o acerto (`acerto.py`) roda no pages.yml** (toda publicação, 15 em 15 min), com os
