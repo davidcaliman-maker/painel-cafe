@@ -295,11 +295,17 @@ async def main(caminho_config, caminho_saida):
         cepea = {d["data"]: d["cepeaConilon"] for d in anterior.get("dias", []) if d.get("cepeaConilon")}
 
     dias = montar_dias(ldn, ny, usd, cepea)
-    # Ajuste sobre o Cepea na BASE do dia (06/10/2026: −10, pedido do usuário), só para os dias a partir
-    # de "ajusteDesde" — os fechamentos anteriores não mudam.
-    ajuste_cfg, desde = float(cfg.get("ajusteConilonCepea", 0)), str(cfg.get("ajusteDesde", ""))
-    ajuste_de = lambda dia: ajuste_cfg if not desde or dia >= desde else 0.0
-    ajuste = ajuste_de(hoje.isoformat())  # a calibração é a base dos próximos dias
+    # Ajuste sobre o Cepea na BASE do dia, por período (pedidos do usuário: −10 desde 06/10/2026,
+    # −20 desde 23/10/2026). Cada dia usa o ajuste vigente nele; dias passados não mudam.
+    ajustes = sorted(cfg.get("ajustes") or [{"desde": cfg.get("ajusteDesde", ""),
+                                             "valor": cfg.get("ajusteConilonCepea", 0)}], key=lambda a: a["desde"])
+
+    def ajuste_de(dia):
+        valor = 0.0
+        for a in ajustes:
+            if not a["desde"] or dia >= a["desde"]:
+                valor = float(a["valor"])
+        return valor
     marcar_fechamentos(dias, usd, ajuste_de, dt.datetime.now(BRT))
 
     # Calibra pelo dia mais recente que tem CEPEA e fechamento de Londres.
@@ -308,12 +314,15 @@ async def main(caminho_config, caminho_saida):
     if com_cepea:
         d = com_cepea[-1]
         usd_dia = round(d["usd"], 2)  # o app também usa o dólar com 2 casas
+        # A calibração é a base do PRÓXIMO dia: usa o ajuste que vale nele.
+        proximo = (dt.date.fromisoformat(d["data"]) + dt.timedelta(days=1)).isoformat()
+        ajuste = ajuste_de(max(hoje.isoformat(), proximo))
         alvo = d["cepeaConilon"] + ajuste
         calibracao = {
             "data": d["data"],
             "cepeaConilon": d["cepeaConilon"],
             "ajusteConilonCepea": ajuste,
-            "ajusteDesde": desde,
+            "ajustes": ajustes,
             "precoConilon": round(alvo, 2),
             "londres": d["londres"],
             "usd": usd_dia,

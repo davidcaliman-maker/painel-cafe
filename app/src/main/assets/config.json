@@ -1,6 +1,8 @@
 {
-  "ajusteConilonCepea": -10,
-  "ajusteDesde": "2026-10-06",
+  "ajustes": [
+    { "desde": "2026-10-06", "valor": -10 },
+    { "desde": "2026-10-23", "valor": -20 }
+  ],
   "alertaVariacaoPct": 2.0,
   "contratoLondres": "auto",
   "contratoNovaYork": "auto",
