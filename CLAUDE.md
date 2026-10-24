@@ -129,6 +129,14 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   `dados/acerto.csv` ficou como registro (07/10–23/10). Não recriar sem o usuário pedir.
 - `app/src/main/assets/config.json`: `inicios` (preços combinados), contratos/posições, `alertaVariacaoPct` (2.0).
 
+## Monitoramento local (fora do repositório)
+- `monitoramento/` é ignorada pelo git (NÃO vai para o repo público). Leia
+  `monitoramento/captura-app-painel-do-cafe/LEIA-ME.md` antes de mexer: captura diária de preços de
+  referência no PC do usuário (emulador Android + OCR), tarefa do Agendador do Windows (seg–sex, a partir
+  das 17h, de 30 em 30 min, ao sair da suspensão e ao entrar no Windows) e planilha em
+  `Documentos\Painel do Café - preços.csv`. Rodar na nuvem foi tentado e descartado em 24/10/2026.
+- Esses números são só referência do usuário para recalibrar (`inicios`); NÃO exibir no app público.
+
 ## Segurança
 - Repo público: nada secreto nele (sem senhas, tokens nem a chave do APK). `config.json`, IDs do
   Umami e scripts são públicos por natureza.
