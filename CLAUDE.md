@@ -127,6 +127,10 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   das 22h30), `scripts/cepea_do_dia.py`, `scripts/acerto.py` e o passo do acerto no pages.yml (que voltou a
   `contents: read`); `cepea_conilon`, `cepea_reserva`, `dia_da_rotina` e os `ajustes` saíram do historico.py.
   `dados/acerto.csv` ficou como registro (07/10–23/10). Não recriar sem o usuário pedir.
+- **`dados/fechamentos.csv`** (pedido 24/10/2026): registro PERMANENTE do Conilon do app, uma linha por
+  pregão (data, abertura, fechamento, variacao, londres, dolar, nova_york). `scripts/fechamentos.py` roda
+  em toda rodada do pages.yml (de novo `contents: write`) e o robô faz commit → `git pull` antes de mexer.
+  Começa em 12/10/2026 (o que ainda estava no historico.json); dias antigos não foram reconstruídos.
 - `app/src/main/assets/config.json`: `inicios` (preços combinados), contratos/posições, `alertaVariacaoPct` (2.0).
 
 ## Monitoramento local (fora do repositório)
@@ -147,7 +151,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
 
 ## Trabalho em mais de um lugar
 - O usuário também edita pelo Claude Code na web (branches `claude/...` + pull request na `main`).
-  Antes de mexer, rode `git pull` para pegar essas mudanças.
+  Antes de mexer, rode `git pull` para pegar essas mudanças (o robô também faz commit de `dados/fechamentos.csv`).
 - Orientação dada: abrir sessão nova no Claude Code escolhendo a pasta `D:\PROJETOS_CLAUDE\painel-cafe`
   (este arquivo é lido sozinho). A única coisa fora do GitHub é `~/.android/debug.keystore`.
 

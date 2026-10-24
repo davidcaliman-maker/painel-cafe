@@ -24,7 +24,7 @@ on:
         default: "nao"
 
 permissions:
-  contents: read
+  contents: write   # gravar dados/fechamentos.csv (fechamentos do app, para sempre)
   pages: write
   id-token: write
   actions: write    # manter o agendamento ativo (keepalive)
@@ -79,6 +79,20 @@ jobs:
       - name: Copiar APK mais recente para o site
         continue-on-error: true
         run: curl -sfL https://github.com/davidcaliman-maker/painel-cafe/releases/latest/download/PainelAgro.apk -o app/src/main/assets/PainelAgro.apk
+
+      # Guarda para sempre o fechamento do Conilon de cada dia (o historico.json só tem os últimos pregões).
+      # Commits feitos com o token do próprio Actions não disparam este workflow de novo.
+      - name: Guardar fechamentos do app
+        continue-on-error: true
+        run: |
+          python scripts/fechamentos.py app/src/main/assets/historico.json dados/fechamentos.csv
+          if [ -n "$(git status --porcelain dados)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add dados/fechamentos.csv
+            git commit -m "Fechamentos do Conilon do app"
+            git pull --rebase -q && git push
+          fi
 
       # Marca a publicação com o código do commit: o app compara com versao.json e se
       # recarrega sozinho quando há tela nova.
