@@ -432,11 +432,10 @@
 
   // Configuração central: config.json publicado no GitHub (o app não permite alterar).
   // Estes valores só são usados se o config.json ainda não pôde ser lido.
-  var cfg = { ajusteConilonCepea: 0, contratoLondres: "auto", contratoNovaYork: "auto",
+  var cfg = { contratoLondres: "auto", contratoNovaYork: "auto",
               posicaoLondres: 2, posicaoNovaYork: 1 };
-  // Calibração de reserva (25/09/2026), usada só se o historico.json nunca pôde ser lido.
-  var CALIB_RESERVA = { data: "2026-09-25", cepeaConilon: 952.72, ajusteConilonCepea: 0,
-                        contrato: "RCF2027", diferencialConilon: -282.53 };
+  // Calibração de reserva (fechamento do app em 23/10/2026), usada só se o historico.json nunca pôde ser lido.
+  var CALIB_RESERVA = { data: "2026-10-23", precoConilon: 894.1, contrato: "RCH2027", diferencialConilon: -230.68 };
 
   // ---------- armazenamento local (cache para abrir sem internet) ----------
   function load(k) {
@@ -578,39 +577,32 @@
     el.querySelector(".d").textContent = bottom;
   }
 
-  // Calibração diária pelo Cepea (gerada no GitHub, em historico.json → calibracao).
+  // Calibração publicada pelo GitHub (historico.json → calibracao): fechamento do app no último dia.
   function calib() { return (hist && hist.calibracao) || CALIB_RESERVA; }
-  // Preço do Conilon (opção B, escolhida pelo usuário em 03/10/2026): durante o pregão, estimativa
-  // pela bolsa sobre a BASE do dia = último Cepea anterior a hoje; depois que o dólar fecha (~18h30)
-  // o card mostra FECHADO com o cálculo do próprio app ("fechamentoApp", publicado pelo GitHub).
-  // O Cepea não aparece no app; a variação mostrada é o movimento do mercado no dia (contra a base).
+  // Preço do Conilon (pedido do usuário em 24/10/2026, valendo desde 26/10/2026; o Cepea não é mais
+  // usado): cada dia começa no FECHAMENTO DO APP no dia anterior, salvo quando o usuário passa um
+  // preço para começar o dia (config.json → "inicios", recalibração). Durante o pregão o preço segue
+  // Londres e o dólar sobre essa base; depois que o dólar fecha (~18h30) o card mostra FECHADO com o
+  // fechamento do app ("fechamentoApp"). A variação mostrada é o movimento do dia (contra a base).
+  // Mesma regra de scripts/historico.py (marcar_fechamentos).
   function hojeBRT() { return new Date(Date.now() - 3 * 3600 * 1000).toISOString().slice(0, 10); }
-  // Ajuste sobre o Cepea na base do dia, por período ("ajustes" na calibração; mesma regra do
-  // historico.py): −10 desde 06/10/2026, −20 desde 23/10/2026.
-  function ajusteDe(dia) {
-    var c0 = calib(), v = 0;
-    if (c0.ajustes) {
-      c0.ajustes.forEach(function (a) { if (!a.desde || dia >= a.desde) v = Number(a.valor) || 0; });
-      return v;
-    }
-    return c0.ajusteDesde && dia < c0.ajusteDesde ? 0 : Number(c0.ajusteConilonCepea) || 0;
-  }
   function baseDe(dia) {
-    var aj = ajusteDe(dia);
-    var b = (hist && hist.dias || []).filter(function (d) { return d.cepeaConilon != null && d.data < dia; }).pop();
-    if (b) {
-      var preco = b.cepeaConilon + aj;
-      return { data: b.data, preco: preco, dif: preco / (T_PER_SACA * (Math.round(b.usd * 100) / 100)) - b.londres };
-    }
-    var c = calib();  // sem histórico: a calibração publicada (ou a de reserva)
-    return { data: c.data, preco: c.cepeaConilon + aj, dif: Number(c.diferencialConilon) };
+    var dias = hist && hist.dias || [], c = calib();
+    var ant = dias.filter(function (d) { return d.data < dia; }).pop();
+    var proprio = dias.filter(function (d) { return d.data === dia; })[0];
+    var combinado = (c.inicios || []).filter(function (i) { return i.data === dia; })[0];
+    var preco = proprio && proprio.baseConilon != null ? proprio.baseConilon :
+      combinado ? Number(combinado.preco) : ant && ant.fechamentoApp;
+    if (ant && preco != null)
+      return { data: ant.data, preco: preco, dif: preco / (T_PER_SACA * (Math.round(ant.usd * 100) / 100)) - ant.londres };
+    return { data: c.data, preco: c.precoConilon, dif: Number(c.diferencialConilon) };  // sem histórico
   }
   function difConilon() { return baseDe(hojeBRT()).dif + (last && last.ajLdn || 0); }
   function fisicoConilon(ldn, usd) { return (ldn + difConilon()) * T_PER_SACA * usd; }
   // Preço da saca mostrado de 10 em 10 centavos (ex.: 1.234,57 → 1.234,60).
   function arred10(v) { return Math.round(v * 10) / 10; }
 
-  // Feriados nacionais em que o Cepea não publica (mesma lista de scripts/cepea_do_dia.py):
+  // Feriados nacionais (selo FERIADO no card):
   // fixos + Carnaval (seg e ter), Sexta-feira Santa e Corpus Christi, calculados pela Páscoa.
   var FERIADOS_FIXOS = ["01-01", "04-21", "05-01", "09-07", "10-12", "11-02", "11-15", "11-20", "12-25"];
   function pascoa(ano) {
@@ -682,7 +674,7 @@
     if (isoUTC(last.qLdn.time) === hoje && (!ult || ult.data < hoje)) return aoVivo();
     if (ult) return { valor: ult.fechamentoApp, dia: ult.data, base: ult.baseConilon };
     var c = calib();
-    return { valor: arred10(c.cepeaConilon + Number(c.ajusteConilonCepea || 0)), dia: c.data, base: null };
+    return { valor: c.precoConilon, dia: c.data, base: null };
   }
 
   // Troca de vencimento: a calibração foi feita sobre um contrato. Se o app já usa outro, soma
@@ -706,7 +698,7 @@
 
     $("fisConilon").textContent = fmt(fisCon, 2);
     var badge = $("conEstado");
-    // Feriado nacional: a bolsa lá fora negocia, mas o Cepea não publica fechamento hoje.
+    // Feriado nacional: a bolsa lá fora negocia; o preço segue estimado pela bolsa.
     var ehFeriado = estado === "estimativa" && feriado(new Date(Date.now() - 3 * 3600 * 1000).toISOString().slice(0, 10));
     badge.className = "badge " + (estado === "fechado" ? "close" : ehFeriado ? "feriado" : "live");
     badge.textContent = estado === "fechado" ? "FECHADO " + diaFech : ehFeriado ? "FERIADO" : "AO VIVO";

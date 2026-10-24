@@ -36,8 +36,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
     arrastar o dedo mostra preço/hora no topo. Dados em `intradia.json` (~5 KB), baixado SÓ com
     HOJE aberto e no máximo a cada 10 min (pedido do usuário: pouco tráfego); o último ponto vem
     da cotação que o app já busca (`pontosDia`). Fim de semana mostra o último pregão.
-    Conilon do dia usa a calibração do Cepea ANTERIOR ao dia (a linha não muda quando o Cepea sai);
-    depois do Cepea o topo mostra "fechamento Cepea".
+    Conilon do dia = mesma conta do app sobre a base do dia (fechamento de ontem ou preço combinado).
     Depois do fechamento de Londres/NY o gráfico mostra o último negócio (ex. 3.376) e o card o ajuste
     oficial (3.375). Em 06/10 o usuário PEDIU para igualar: depois do fechamento da bolsa (`fechouBolsa`:
     Londres 17h30 de Londres, NY 13h30 de NY, com horário de verão UK/EUA) o gráfico de Londres/NY ganha um
@@ -56,7 +55,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   "Testar alerta") — retirados a pedido do usuário em 28/09/2026. O aviso de privacidade (Umami) fica
   numa linha do rodapé do Painel. `Native.testarAlerta` continua no APK, só não é usado.
 - Rodapés NÃO mostram de onde vêm as cotações (pedido do usuário). Única exceção, pequena no
-  Painel: "Fontes: Cepea/Esalq · Open-Meteo" (crédito exigido por essas duas; não retirar).
+  Painel: "Fontes: Cepea/Esalq · Open-Meteo" (crédito; o Cepea não é usado desde 24/10 — ver Pendências).
 - Preço do Conilon mostrado arredondado de 10 em 10 centavos (`arred10`: card, variação e gráfico).
 - Dólar (`dolarVigente`): ao vivo só das 9h até o fechamento do pregão de câmbio (~18h Brasília);
   fora disso e no fim de semana vale o último fechamento, com a data desse pregão no card.
@@ -65,9 +64,8 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   A variação % do dólar é calculada com o valor de 2 casas (5,23 × 5,23 = 0,00%, card cinza), pedido 02/10.
   (O `AlertaService.java` ainda usa o dólar ao vivo e o preço sem arredondar — diferença mínima.)
 - Card do Conilon NÃO deve mostrar ajuste, arroba nem faixa de indicadores (pedido do usuário).
-- Feriados nacionais (`feriado()` no index.html = `cepea_do_dia.py`; fixos + Carnaval seg/ter, Sexta Santa,
-  Corpus Christi pela Páscoa): selo roxo FERIADO no lugar de AO VIVO (estimativa continua) e a rotina das
-  22h30 não manda e-mail. Pedido do usuário em 01/10. Manter as duas listas iguais.
+- Feriados nacionais (`feriado()` no index.html; fixos + Carnaval seg/ter, Sexta Santa, Corpus Christi
+  pela Páscoa): selo roxo FERIADO no lugar de AO VIVO (estimativa continua). Pedido do usuário em 01/10.
 - Variação do dia >= 3% (`VARIACAO_FORTE` no index.html, não é o `alertaVariacaoPct`): card brilha,
   selo FORTE ALTA/BAIXA, fogos + 💵💰 subindo (alta) ou 💸 voando (baixa) em `#efeito`. O preço NÃO
   aumenta de tamanho (usuário preferiu os fogos). Respeita "reduzir animações".
@@ -75,34 +73,31 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
 
 ## Dados e automações (GitHub Actions)
 - Cotações ao vivo: `scanner.tradingview.com` (não oficial, grátis, ~10 min de atraso; pode parar).
-- `scripts/historico.py`: fechamentos diários (canal de gráficos do TradingView), indicador
-  Cepea/Esalq do Conilon (Robusta) e a calibração → `historico.json` (gerado, não versionado).
-  **PREÇO DO CONILON — OPÇÃO B (decisão do usuário em 03/10/2026; substitui "Conilon = Cepea"):**
-  - Base do dia = último Cepea ANTERIOR ao dia (+ `ajusteConilonCepea`, hoje 0). Estimativa =
-    (Londres + diferencial da base) × 0,06 × dólar (`baseDe`/`difConilon` no app).
-  - Depois que o câmbio fecha (17h NY → app fecha às 18h30 no horário de verão dos EUA, 19h30 fora;
-    `minutoFechado` no app = `minuto_fechado` no historico.py) o card mostra FECHADO dd/mm com o
-    PRÓPRIO cálculo do app (`fechamentoApp` em historico.json, + `baseConilon`). Madrugada/fim de semana/
-    Londres fechada: mostra o último FECHADO.
-  - O Cepea NÃO aparece em lugar nenhum do app (card, SEMANA, HOJE). Ele só serve de base do dia
-    seguinte → o preço "pula" de um dia para o outro (ex. 01/10 fechou 989,00; 02/10 recomeçou de 972,44).
-    O usuário sabia e escolheu assim (opções A/B/C apresentadas; A acumula erro, C = média).
-  - Variação mostrada (escolha "2"): movimento do mercado no dia = preço − base ("no dia"), não contra o
-    fechamento de ontem do app. FORTE ALTA/BAIXA usa essa variação. Gráfico SEMANA = fechamentos do app;
-    HOJE: linha pontilhada = fechamento de ontem do app (`intradia.anterior.conilon`), cor/% contra `base`.
-  - Crédito "Fontes: Cepea/Esalq" continua (Cepea ainda é usado na base).
-  - **23/10/2026 em diante: base = Cepea − R$ 20,00** (pedido em 22/10). `config.json` agora tem a lista
-    `ajustes` [{desde, valor}] (06/10 −10, 23/10 −20); cada dia usa o ajuste vigente nele (`ajuste_de` no
-    historico.py, `ajusteDe` no app); a calibração usa o ajuste do dia SEGUINTE a ela. Dias passados não mudam.
-  - **06/10/2026: base = Cepea − R$ 10,00** (pedido explícito do usuário; `config.json`: `ajusteConilonCepea`
-    −10 e `ajusteDesde` 2026-10-06 → dias anteriores NÃO mudam). Usado em `marcar_fechamentos`, `gerar_intradia`,
-    calibração (`ajuste_de`) e `baseDe` no app. Simulação de 15/09–02/10 indicava erro maior (~13,6 × 10,1);
-    o usuário foi avisado antes e decidiu assim. `dados/acerto.csv` a partir de 06/10 já inclui o −10 na
-    estimativa (descontar ao comparar fatores).
-  - `AlertaService.java` (APK) não mudou: compara com a calibração do Cepea (= base durante o dia).
-- Dias do histórico (`montar_dias`): toda data em que Londres OU NY negociou OU o Cepea publicou. Bolsa
-  fechada (feriado UK/EUA, ex. 26/11 Ação de Graças, 28/12 Boxing Day, 29/03/2027 Páscoa UK) repete o
-  último fechamento e vai em "fechadas" → o Cepea desses dias é usado normalmente (corrigido 01/10).
+- `scripts/historico.py`: fechamentos diários (canal de gráficos do TradingView) e o preço do Conilon do
+  app → `historico.json` (gerado, não versionado).
+  **PREÇO DO CONILON (pedido do usuário em 24/10/2026, vale desde 26/10/2026; o Cepea NÃO é mais usado):**
+  - Cada dia começa no FECHAMENTO DO APP no dia anterior (`baseConilon` = `fechamentoApp` de ontem).
+    Preço = (Londres + diferencial) × 0,06 × dólar; diferencial = base / (0,06 × dólar de ontem) − Londres de
+    ontem. Na prática o diferencial fica constante e o preço só segue Londres e o dólar.
+  - Recalibração: de vez em quando o usuário passa um preço para começar um dia → `config.json`
+    `inicios` [{data, preco}]. O 1º é 26/10/2026 = 894,10 (fechamento do app em 23/10).
+  - Depois que o câmbio fecha (17h NY → 18h30 no horário de verão dos EUA, 19h30 fora; `minutoFechado`
+    no app = `minuto_fechado` no historico.py) o card mostra FECHADO dd/mm com `fechamentoApp`.
+    Madrugada/fim de semana/Londres fechada: mostra o último FECHADO.
+  - Dias passados ficam como foram publicados (`marcar_fechamentos` copia `baseConilon`/`fechamentoApp`
+    do historico.json no ar): troca de contrato de Londres não muda preços antigos. Dias até 23/10
+    (época do Cepea) só repetem o publicado. Sem nenhum fechamento → historico.py falha (mantém o publicado).
+  - Mesma regra no app (`baseDe` no index.html: `baseConilon` do dia → `inicios` → fechamento de ontem)
+    e no gráfico HOJE (`gerar_intradia`). `calibracao` = último dia fechado + `inicios`.
+  - Variação mostrada: movimento do dia = preço − base ("no dia"). FORTE ALTA/BAIXA usa essa variação.
+    Gráfico SEMANA = fechamentos do app; HOJE: linha pontilhada = fechamento de ontem (`anterior.conilon`).
+  - `AlertaService.java` (APK) lê os nomes antigos `calibracao.cepeaConilon`/`ajusteConilonCepea`: o
+    historico.py ainda publica esses dois (= último fechamento, 0) para o alerta continuar funcionando
+    durante o dia sem APK novo. Depois do fechamento o alerta não dispara (não acha `cepeaConilon` nos dias).
+  - Histórico: 03/10–23/10/2026 = opção B (base = último Cepea anterior; −10 desde 06/10, −20 desde 23/10;
+    reserva de 920,00 em 23/10 se faltasse o Cepea de 22/10).
+- Dias do histórico (`montar_dias`): toda data em que Londres OU NY negociou. Bolsa fechada (feriado
+  UK/EUA, ex. 26/11 Ação de Graças, 28/12 Boxing Day) repete o último fechamento e vai em "fechadas".
 - Contratos trocam sozinhos (dia 15 do mês anterior ao vencimento; Londres 2ª posição, NY 1ª),
   sem salto no preço (ajuste pela diferença entre contratos).
 - Rede: `pedir()` no index.html tenta Native → fetch do WebView → Native de novo após 3 s (no 5G o
@@ -128,31 +123,11 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   como reserva. Nunca pedir/ver o token: o usuário cola direto no cron-job.org.
 - `pages.yml` roda: dias úteis a cada 15 min das 05h às 22h (Brasília);
   sáb/dom 09h, 15h, 20h. Agendadas só republicam se histórico ou notícias mudaram. Keepalive incluso.
-- **Desde 22/10/2026 o acerto (`acerto.py`) roda no pages.yml** (toda publicação, 15 em 15 min), com os
-  arquivos recém-gerados (`acerto.py dados/acerto.csv app/src/main/assets`): anota o dia do gráfico assim que o
-  Cepea dele sai; pages.yml tem `contents: write` e faz commit + `git pull --rebase` + push. Motivo: a rotina
-  única das 22h30 perdia o dia quando o GitHub atrasava. O conferencia.yml ("Cepea do dia") ficou só com o aviso.
-- `conferencia.yml` (nome "Cepea do dia"; antes "Cepea do dia e acerto da estimativa"): dias úteis 22h30.
-  1) `scripts/cepea_do_dia.py --corrigir`: se o app não tem o Cepea de hoje e o Cepea já publicou, roda o
-     pages.yml de novo e reconfere; se ainda faltar (ou Cepea não publicou/fora do ar/Londres sem pregão),
-     a execução FALHA → e-mail do GitHub ao usuário (pedido 01/10). Motivo no resumo da execução.
-  O GitHub chegou a atrasar essa rotina até 3h20 (20 e 21/10: alarme falso e acerto não anotado, dados
-  intradiários desses dois dias perdidos). Corrigido com `dia_da_rotina()` (historico.py): antes do meio-dia
-  confere o dia útil anterior.
-  2) `acerto.py`. Falha passageira do Cepea numa rodada do pages.yml NÃO marca erro (evita e-mail a cada 15 min).
-  A comparação com o cotacaodocafe.com foi RETIRADA em 01/10 a pedido do usuário (o site só copia o
-  Cepea); `conferencia.py` e `monitor.py` foram apagados. Não recriar.
-- `scripts/acerto.py` (no conferencia.yml, 22h30): anota em `dados/acerto.csv` a estimativa AO VIVO das
-  10h/13h/16h/fim × Cepea do dia (+ base anterior, para testar outras fórmulas). Pedido do usuário em 01/10:
-  juntar 3–4 semanas e então avaliar "amortecer" o movimento de Londres/dólar (físico anda ~metade).
-  O robô do GitHub faz commit desse arquivo → sempre `git pull` antes de mexer.
-- cotacaodocafe.com NÃO calcula: copia o Cepea (preço principal, atualiza 1x/dia ~21h), CCCV/Cooabriel
-  via Notícias Agrícolas (regionais ES; "Sul da Bahia" = mesmo valor de Vitória 7/8), PTAX (dólar).
-- Preço de reserva (`cepeaReserva` no config.json, `cepea_reserva()` no historico.py), pedido 22/10/2026:
-  se o Cepea de `data` não existir a partir das 04h30 do dia útil seguinte, esse dia começa em
-  `precoInicio` (entra como Cepea = preço − ajuste do dia seguinte, marcado `cepeaReserva`; o acerto
-  ignora). Se o Cepea real sair depois, substitui. Hoje: 22/10/2026 → 23/10 começa em R$ 920,00.
-- `app/src/main/assets/config.json`: `ajusteConilonCepea` (0), contratos/posições, `alertaVariacaoPct` (2.0).
+- **Cepea removido em 24/10/2026** (pedido do usuário): apagados `conferencia.yml` ("Cepea do dia", e-mail
+  das 22h30), `scripts/cepea_do_dia.py`, `scripts/acerto.py` e o passo do acerto no pages.yml (que voltou a
+  `contents: read`); `cepea_conilon`, `cepea_reserva`, `dia_da_rotina` e os `ajustes` saíram do historico.py.
+  `dados/acerto.csv` ficou como registro (07/10–23/10). Não recriar sem o usuário pedir.
+- `app/src/main/assets/config.json`: `inicios` (preços combinados), contratos/posições, `alertaVariacaoPct` (2.0).
 
 ## Segurança
 - Repo público: nada secreto nele (sem senhas, tokens nem a chave do APK). `config.json`, IDs do
@@ -164,14 +139,14 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
 
 ## Trabalho em mais de um lugar
 - O usuário também edita pelo Claude Code na web (branches `claude/...` + pull request na `main`).
-  Antes de mexer, rode `git pull` para pegar essas mudanças (o robô do GitHub também faz commits
-  em `dados/acerto.csv` toda noite).
+  Antes de mexer, rode `git pull` para pegar essas mudanças.
 - Orientação dada: abrir sessão nova no Claude Code escolhendo a pasta `D:\PROJETOS_CLAUDE\painel-cafe`
   (este arquivo é lido sozinho). A única coisa fora do GitHub é `~/.android/debug.keystore`.
 
 ## Regras combinadas com o usuário
-- **Nunca altere `config.json` (preço/ajuste) sem aprovação explícita.**
-- Conilon: ver "PREÇO DO CONILON — OPÇÃO B" (o app mostra o próprio fechamento; Cepea só como base).
+- **Nunca altere `config.json` (preço/início do dia) sem aprovação explícita.**
+- Conilon: ver "PREÇO DO CONILON" (desde 26/10/2026: começa no fechamento do app do dia anterior;
+  Cepea não é mais usado).
 - Confirmar com o usuário antes de publicar/instalar coisas que custem ou que baixem ferramentas grandes
   (ele recusou baixar Gradle/SDK novo; APK é feito sem Gradle).
 
@@ -243,22 +218,21 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
 - Dólar: app mostra 2 casas arredondando (5,2271 → 5,23); Google às vezes mostra 5,22. Explicado.
 
 ## Perguntas já respondidas ao usuário
-- Feriado nacional (ex. 12/10): o app NÃO para — Londres/NY abrem, selo FERIADO, estimativa pela bolsa a
-  partir do último Cepea; sem FECHAMENTO no dia; volta ao normal no dia seguinte.
+- Feriado nacional (ex. 12/10): o app NÃO para — Londres/NY abrem, selo FERIADO, estimativa pela bolsa;
+  o dia tem FECHAMENTO normal e o dia seguinte começa nele.
 - Londres fecha nos feriados bancários do Reino Unido em dia de semana: 25 e 28/12/2026; em 2027:
   01/01, 26/03 (Sexta Santa), 29/03 (Páscoa UK), 03/05, 31/05, 30/08, 27 e 28/12. 24/12 e 31/12 fecham
   mais cedo. NY fecha nos feriados dos EUA (ex. 26/11/2026 Ação de Graças). Tratado em `montar_dias`.
-- Se o Cepea da noite não for buscado: o dia seguinte começa do ÚLTIMO Cepea que o app tem (a estimativa
-  aplica o movimento de Londres/dólar desde então; card mostra "vs dd/mm" daquele Cepea). Corrige sozinho:
-  22h30 manda publicar de novo; rodadas de 15 em 15 min a partir das 05h pegam o dia que faltou (a página
-  do Cepea lista os últimos dias). Se continuar faltando, e-mail das 22h30 diz com qual preço o dia começa.
+- Recalibrar: o usuário passa "amanhã começa em R$ X" → acrescentar {"data": dia, "preco": X} em
+  `inicios` no config.json (aprovado por ele ao pedir). Vale também para o dia de hoje (o gráfico e o
+  card recalculam na próxima rodada).
 
 ## Pendências / ideias oferecidas e ainda não feitas
-- Nome do card "CONILON 7/8" × dado do Cepea (Robusta tipo 6 peneira 13): renomear para
-  "Conilon · Indicador Cepea" ou usar o Tipo 7/8 do CCCV (Notícias Agrícolas) — usuário não decidiu.
-- **~22–29/10/2026: analisar `dados/acerto.csv`** (o usuário vai pedir "analisa o acerto da estimativa
-  do Conilon"): comparar fórmula atual × amortecida (50%, 70% etc.) por horário (10h/13h/16h/fim),
-  com gráfico (linhas Cepea × app × fatores + colunas de erro médio por fator), como o mostrado em 05/10.
+- Nome do card "CONILON 7/8" — usuário não decidiu se renomeia.
+- Rodapé do Painel ainda diz "Fontes: Cepea/Esalq · Open-Meteo"; desde 24/10 o Cepea não é usado →
+  oferecido retirar o "Cepea/Esalq" (mudança visual: mostrar e pedir "pode publicar").
+- A análise de fatores (50%/70%) prevista para fim de out/2026 perdeu o sentido: sem Cepea não há com o
+  que comparar. `dados/acerto.csv` (07/10–23/10) fica no repo como registro.
 - Bloqueio só para convidados — opções explicadas (28/09): 1) código único no app (simples, burlável;
   "Jeito A" = todos, inclusive quem já usa, digitam uma vez — recomendado), 2) código por pessoa com
   lista/cancelamento (Cloudflare Worker), 3) Cloudflare Access por e-mail (grátis até 50 pessoas; muda
@@ -266,8 +240,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
 - Cloudflare Worker como intermediário das cotações (ao vivo, esconde a fonte, menos risco de
   bloqueio; precisa conta do usuário). Recomendado só se a reserva do GitHub não bastar no 5G ou junto
   com o bloqueio por convite (opção 2).
-- App conferir o historico.json a cada 5 min das 17h às 22h (troca para FECHAMENTO logo que o Cepea
-  sai; hoje confere a cada 30 min) — oferecido, sem resposta.
+- (Obsoleto desde 24/10: o app não espera mais o Cepea à noite.)
 - Dólar com 3–4 casas no card — oferecido, sem resposta. Aviso "10 min atraso" nos cards de Londres/NY
   — oferecido, sem resposta.
 - Trocas gratuitas: chuva → MET Norway; dólar → fonte oficial — oferecido, não feito.

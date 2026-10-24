@@ -1,6 +1,6 @@
 # Publica a versão web (iPhone / navegador / Android) no GitHub Pages.
 # Roda a cada push na main e, nos dias úteis, a cada 15 min das 05h às 22h, para atualizar o
-# historico.json (fechamentos das bolsas, indicador Cepea e calibração do Conilon) e o
+# historico.json (fechamentos das bolsas e preço do Conilon do app) e o
 # intradia.json (gráfico HOJE). Execuções agendadas só republicam se algo mudou.
 name: Publicar no GitHub Pages
 
@@ -9,7 +9,7 @@ on:
     branches: [main]
   schedule:
     # Horários em UTC (Brasília = UTC−3), seg a sex.
-    - cron: "3-59/15 8-23 * * 1-5"  # 05:03 às 20:48, a cada 15 min (gráfico HOJE e Cepea)
+    - cron: "3-59/15 8-23 * * 1-5"  # 05:03 às 20:48, a cada 15 min (gráfico HOJE)
     - cron: "*/15 0 * * 2-6"      # 21:00 às 21:45
     - cron: "0 1 * * 2-6"         # 22:00
     - cron: "0 12,18,23 * * 0,6"  # sáb e dom: 09h, 15h e 20h (notícias)
@@ -24,7 +24,7 @@ on:
         default: "nao"
 
 permissions:
-  contents: write   # gravar dados/acerto.csv (acerto da estimativa do dia)
+  contents: read
   pages: write
   id-token: write
   actions: write    # manter o agendamento ativo (keepalive)
@@ -48,7 +48,7 @@ jobs:
 
       # Se falhar, o site é publicado mesmo assim e a execução fica marcada como falha
       # (o GitHub avisa por e-mail). O app continua com a última calibração publicada.
-      - name: Gerar histórico, Cepea e calibração do Conilon
+      - name: Gerar histórico e preço do Conilon
         id: historico
         continue-on-error: true
         run: python scripts/historico.py app/src/main/assets/config.json app/src/main/assets/historico.json
@@ -79,21 +79,6 @@ jobs:
       - name: Copiar APK mais recente para o site
         continue-on-error: true
         run: curl -sfL https://github.com/davidcaliman-maker/painel-cafe/releases/latest/download/PainelAgro.apk -o app/src/main/assets/PainelAgro.apk
-
-      # Acerto da estimativa do Conilon (dados/acerto.csv): anotado assim que o Cepea do dia sai.
-      # Roda em toda publicação, então um atraso ou falha do GitHub numa rodada não perde o dia.
-      # Commits feitos com o token do próprio Actions não disparam este workflow de novo.
-      - name: Anotar acerto da estimativa do dia
-        continue-on-error: true
-        run: |
-          python scripts/acerto.py dados/acerto.csv app/src/main/assets
-          if [ -n "$(git status --porcelain dados)" ]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add dados/acerto.csv
-            git commit -m "Acerto da estimativa do Conilon: $(python -c 'import json;d=json.load(open("app/src/main/assets/intradia.json"))["data"];print(d[8:]+"/"+d[5:7]+"/"+d[:4])')"
-            git pull --rebase -q && git push
-          fi
 
       # Marca a publicação com o código do commit: o app compara com versao.json e se
       # recarrega sozinho quando há tela nova.

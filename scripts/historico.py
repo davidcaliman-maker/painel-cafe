@@ -1,10 +1,12 @@
-"""Gera historico.json e intradia.json: fechamentos diários de Londres, Nova York e do dólar, o indicador
-CEPEA/Esalq do Conilon e a calibração do preço físico do Conilon. intradia.json tem o gráfico do dia (5 em 5 min).
+"""Gera historico.json e intradia.json: fechamentos diários de Londres, Nova York e do dólar e o
+preço do Conilon do próprio app. intradia.json tem o gráfico do dia (5 em 5 min).
 
-Calibração: preço-alvo = último CEPEA Conilon + "ajusteConilonCepea" (config.json). O
-diferencial sobre Londres sai do fechamento de Londres e do dólar do mesmo dia do CEPEA:
-    diferencial = alvo / (0,06 × dólar) − Londres
-Durante o dia o app aplica esse diferencial às cotações ao vivo.
+Preço do Conilon (pedido do usuário em 24/10/2026, valendo a partir de 26/10/2026; o Cepea não é mais
+usado): cada dia começa no FECHAMENTO DO APP no dia anterior ("baseConilon"). O diferencial sobre
+Londres sai do fechamento de Londres e do dólar do dia anterior:
+    diferencial = base / (0,06 × dólar) − Londres
+e o preço do dia é (Londres + diferencial) × 0,06 × dólar. De vez em quando o usuário passa um preço
+para começar um dia e recalibrar (config.json → "inicios").
 
 Roda no GitHub Actions antes de publicar o site (o celular não consegue buscar esses
 dados direto). Os contratos seguem a mesma regra de troca automática do app (index.html):
@@ -34,7 +36,6 @@ MERCADOS = {
 CODIGOS = {1: "F", 3: "H", 5: "K", 7: "N", 9: "U", 11: "X", 12: "Z"}
 BRT = dt.timezone(dt.timedelta(hours=-3))
 SITE = "https://davidcaliman-maker.github.io/painel-cafe/"
-CEPEA_URL = "https://www.cepea.org.br/br/indicador/cafe.aspx"
 
 
 def contratos_ativos(mercado, hoje):
@@ -145,11 +146,11 @@ def ultimo_ate(pontos, m):
     return pontos[max(antes)] if antes else None
 
 
-async def gerar_intradia(dias, usd_diario, simbolos, ajuste_de):
+async def gerar_intradia(dias, usd_diario, simbolos):
     """Gráfico do dia (intradia.json): pontos de 5 em 5 min do último pregão de Londres.
 
-    O Conilon do dia é a mesma estimativa do app (Londres × dólar) com a calibração do Cepea
-    anterior ao dia; por isso a linha não muda depois que o Cepea do dia sai. O dólar só vale
+    O Conilon do dia é a mesma estimativa do app (Londres × dólar) sobre a base do dia (fechamento
+    do app no dia anterior ou o preço combinado pelo usuário). O dólar só vale
     "ao vivo" a partir das 9h; antes disso vale o fechamento anterior (como no app).
     """
     b_ldn = await barras(simbolos["londres"], "5", 400)
@@ -159,12 +160,11 @@ async def gerar_intradia(dias, usd_diario, simbolos, ajuste_de):
     ldn, ny, usd = por_minuto(b_ldn, dia), por_minuto(b_ny, dia), por_minuto(b_usd, dia)
 
     anteriores = [d for d in dias if d["data"] < dia]
-    com_cepea = [d for d in anteriores if "cepeaConilon" in d]
-    if not ldn or not anteriores or not com_cepea:
+    hoje = next((d for d in dias if d["data"] == dia), {})
+    if not ldn or not anteriores or hoje.get("baseConilon") is None:
         raise RuntimeError(f"intradia sem dados suficientes para {dia}")
-    ant, cal = anteriores[-1], com_cepea[-1]
-    preco_cal = cal["cepeaConilon"] + ajuste_de(dia)
-    dif = preco_cal / (0.06 * round(cal["usd"], 2)) - cal["londres"]
+    ant, base = anteriores[-1], hoje["baseConilon"]
+    dif = diferencial(base, ant)
     usd_ant = usd_diario[max(d for d in usd_diario if d < dia)]
 
     def usd_vigente(m):
@@ -176,13 +176,12 @@ async def gerar_intradia(dias, usd_diario, simbolos, ajuste_de):
     minutos = sorted(set(ldn) | {m for m in usd if m >= 9 * 60 and m >= inicio_ldn})
     conilon = [[m, arred((ultimo_ate(ldn, m) + dif) * 0.06 * round(usd_vigente(m), 2))] for m in minutos]
 
-    hoje = next((d for d in dias if d["data"] == dia), {})
     return {
         "data": dia,
-        # "conilon" = fechamento do app no dia anterior (linha pontilhada); "base" = Cepea anterior ao
-        # dia, contra o qual a variação do dia é medida (não aparece no app).
-        "anterior": {"data": ant["data"], "dataCepea": cal["data"], "base": arred(preco_cal),
-                     "conilon": ant.get("fechamentoApp", arred(preco_cal)),
+        # "conilon" = fechamento do app no dia anterior (linha pontilhada); "base" = preço em que o dia
+        # começou, contra o qual a variação do dia é medida (igual ao "conilon", salvo recalibração).
+        "anterior": {"data": ant["data"], "base": arred(base),
+                     "conilon": ant.get("fechamentoApp", arred(base)),
                      "londres": ant["londres"], "novaYork": ant["novaYork"], "usd": round(usd_ant, 4)},
         "fechamentoApp": hoje.get("fechamentoApp"),
         "series": {
@@ -194,35 +193,20 @@ async def gerar_intradia(dias, usd_diario, simbolos, ajuste_de):
     }
 
 
-def dia_da_rotina():
-    """Dia útil que a rotina da noite (22h30) confere. O GitHub às vezes atrasa o agendamento por
-    horas (20 e 21/10/2026 rodou às 3h20): se rodar antes do meio-dia, confere o dia útil anterior."""
-    agora = dt.datetime.now(BRT)
-    dia = agora.date()
-    if agora.hour < 12:
-        dia -= dt.timedelta(days=1)
-        while dia.weekday() >= 5:
-            dia -= dt.timedelta(days=1)
-    return dia.isoformat()
-
-
-def montar_dias(ldn, ny, usd, cepea):
-    """Um dia para cada data em que Londres ou Nova York negociou ou o Cepea publicou.
+def montar_dias(ldn, ny, usd):
+    """Um dia para cada data em que Londres ou Nova York negociou.
 
     Bolsa fechada no dia (feriado no Reino Unido ou nos EUA) repete o último fechamento dela e
-    fica listada em "fechadas"; assim o Cepea desses dias também é usado (o app mostra o
-    FECHAMENTO e o dia seguinte começa por ele). O dólar usa o último fechamento até o dia.
+    fica listada em "fechadas". O dólar usa o último fechamento até o dia.
     """
     inicio = max(min(ldn), min(ny), min(usd))
     ultimo = lambda serie, data: serie[max(k for k in serie if k <= data)]
     dias = []
-    for data in sorted(d for d in set(ldn) | set(ny) | set(cepea) if d >= inicio):
+    for data in sorted(d for d in set(ldn) | set(ny) if d >= inicio):
         dia = {"data": data, "usd": ultimo(usd, data), "londres": ultimo(ldn, data), "novaYork": ultimo(ny, data)}
         fechadas = [nome for nome, serie in (("londres", ldn), ("novaYork", ny)) if data not in serie]
         if fechadas:
             dia["fechadas"] = fechadas
-        if data in cepea:
-            dia["cepeaConilon"] = cepea[data]
         dias.append(dia)
     return dias
 
@@ -238,78 +222,42 @@ def minuto_fechado(dia):
     return (18 if verao else 19) * 60 + 30
 
 
-def marcar_fechamentos(dias, usd, ajuste_de, agora):
-    """Fechamento do app de cada dia ("fechamentoApp"), que é o preço mostrado depois do pregão.
+def diferencial(base, ant):
+    """Diferencial sobre Londres que faz o preço valer "base" no fechamento do dia anterior "ant"."""
+    return base / (0.06 * round(ant["usd"], 2)) - ant["londres"]
 
-    Opção B escolhida pelo usuário (03/10/2026): o app mostra o PRÓPRIO fechamento (Londres e dólar de
-    fechamento sobre a base do dia) e não o Cepea; no dia seguinte recomeça do Cepea (sem mostrá-lo).
-    Base do dia = último Cepea ANTERIOR ao dia ("baseConilon"); a variação mostrada é contra ela.
-    Hoje só tem fechamento depois que o dólar fechou (ver minuto_fechado).
+
+def marcar_fechamentos(dias, inicios, publicados, agora):
+    """Base ("baseConilon") e fechamento do app ("fechamentoApp") de cada dia desde o 1º início combinado.
+
+    Base do dia = preço combinado para o dia em "inicios" (o usuário recalibra de vez em quando) ou,
+    sem ele, o fechamento do app no dia anterior. O fechamento é a bolsa e o dólar de fechamento
+    sobre essa base; hoje só tem fechamento depois que o dólar fechou (ver minuto_fechado).
+    Dias que já passaram ficam como foram publicados ("publicados"): uma troca de contrato de
+    Londres não muda os preços antigos. Dias anteriores ao 1º início (época do Cepea, até 23/10/2026)
+    só repetem o que foi publicado.
     """
     hoje = agora.date().isoformat()
     dolar_fechou = agora.hour * 60 + agora.minute >= minuto_fechado(agora.date())
-    base = None
+    desde = min(inicios) if inicios else hoje
+    ant = None
     for d in dias:
-        if base is not None and (d["data"] < hoje or (d["data"] == hoje and dolar_fechou)):
-            preco_base = base["cepeaConilon"] + ajuste_de(d["data"])
-            dif = preco_base / (0.06 * round(base["usd"], 2)) - base["londres"]
-            d["baseConilon"] = round(preco_base * 10) / 10
-            d["fechamentoApp"] = round((d["londres"] + dif) * 0.06 * round(d["usd"], 2) * 10) / 10
-        if "cepeaConilon" in d:
-            base = d
-
-
-def proximo_dia_util(iso):
-    dia = dt.date.fromisoformat(iso) + dt.timedelta(days=1)
-    while dia.weekday() >= 5:
-        dia += dt.timedelta(days=1)
-    return dia.isoformat()
-
-
-def cepea_reserva(cfg, cepea, ajuste_de, agora):
-    """Preço combinado com o usuário para quando o Cepea de um dia não sair (config "cepeaReserva",
-    pedido de 22/10/2026: sem o Cepea de 22/10, o dia 23/10 começa em R$ 920,00).
-
-    Só vale a partir das 04h30 do dia útil seguinte (antes disso ainda espera o Cepea de verdade) e
-    só se o Cepea daquele dia não existir; se ele sair depois, mesmo atrasado, o real substitui.
-    Entra no lugar do Cepea do dia já descontado o ajuste, para o dia seguinte começar exatamente
-    no preço combinado. O dia fica marcado "cepeaReserva" (o acerto da estimativa o ignora).
-    """
-    res = cfg.get("cepeaReserva") or {}
-    dia, preco = res.get("data"), res.get("precoInicio")
-    if not dia or preco is None or dia in cepea:
-        return None
-    seguinte = proximo_dia_util(dia)
-    if (agora.date().isoformat(), agora.hour * 60 + agora.minute) < (seguinte, 4 * 60 + 30):
-        return None
-    cepea[dia] = round(float(preco) - ajuste_de(seguinte), 2)
-    print(f"aviso: sem o Cepea de {dia}; usando a reserva combinada (o dia {seguinte} começa em {preco})")
-    return dia
-
-
-def cepea_conilon():
-    """Indicador CEPEA/Esalq do café Robusta (Conilon), R$/saca: {data ISO: valor}."""
-    req = urllib.request.Request(CEPEA_URL, headers={
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
-                      "Chrome/128.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "pt-BR,pt;q=0.9",
-    })
-    with urllib.request.urlopen(req, timeout=30) as r:
-        html = r.read().decode("utf-8", "replace")
-    tabela = re.search(r'id="imagenet-indicador2".*?</table>', html, re.S)
-    if not tabela:
-        raise RuntimeError("tabela do Robusta não encontrada no CEPEA")
-    valores = {}
-    for d, m, a, v in re.findall(r"<td>(\d{2})/(\d{2})/(\d{4})</td>\s*<td>([\d.]+,\d+)</td>", tabela.group(0)):
-        valores[f"{a}-{m}-{d}"] = float(v.replace(".", "").replace(",", "."))
-    if not valores:
-        raise RuntimeError("CEPEA sem valores")
-    return valores
-
+        pub = publicados.get(d["data"], {})
+        if d["data"] < desde or (d["data"] < hoje and pub.get("fechamentoApp") is not None):
+            for k in ("baseConilon", "fechamentoApp"):
+                if pub.get(k) is not None:
+                    d[k] = pub[k]
+        elif ant is not None:
+            base = inicios.get(d["data"], ant.get("fechamentoApp"))
+            if base is not None:
+                d["baseConilon"] = round(float(base), 2)
+                if d["data"] < hoje or dolar_fechou:
+                    dif = diferencial(d["baseConilon"], ant)
+                    d["fechamentoApp"] = round((d["londres"] + dif) * 0.06 * round(d["usd"], 2) * 10) / 10
+        ant = d
 
 def publicado_anterior(nome="historico.json"):
-    """Arquivo atualmente no ar (reserva se o CEPEA ou a bolsa estiverem fora)."""
+    """Arquivo atualmente no ar (preços dos dias que já passaram; reserva se a bolsa estiver fora)."""
     try:
         with urllib.request.urlopen(SITE + nome, timeout=30) as r:
             return json.load(r)
@@ -328,53 +276,32 @@ async def main(caminho_config, caminho_saida):
     usd = await historico_diario("FX_IDC:USDBRL")
 
     anterior = publicado_anterior()
-    try:
-        cepea = cepea_conilon()
-    except Exception as e:  # CEPEA fora do ar: mantém os valores já publicados
-        print(f"aviso: CEPEA indisponível ({e}); usando o último publicado")
-        cepea = {d["data"]: d["cepeaConilon"] for d in anterior.get("dias", [])
-                 if d.get("cepeaConilon") and not d.get("cepeaReserva")}
+    # Preços combinados com o usuário para começar um dia ({data: preço}); o 1º (26/10/2026) é o
+    # fechamento do app em 23/10, quando o Cepea deixou de ser usado.
+    inicios = {i["data"]: float(i["preco"]) for i in cfg.get("inicios", [])}
+    publicados = {d["data"]: d for d in anterior.get("dias", [])}
+    dias = montar_dias(ldn, ny, usd)
+    marcar_fechamentos(dias, inicios, publicados, dt.datetime.now(BRT))
 
-    # Ajuste sobre o Cepea na BASE do dia, por período (pedidos do usuário: −10 desde 06/10/2026,
-    # −20 desde 23/10/2026). Cada dia usa o ajuste vigente nele; dias passados não mudam.
-    ajustes = sorted(cfg.get("ajustes") or [{"desde": cfg.get("ajusteDesde", ""),
-                                             "valor": cfg.get("ajusteConilonCepea", 0)}], key=lambda a: a["desde"])
-
-    def ajuste_de(dia):
-        valor = 0.0
-        for a in ajustes:
-            if not a["desde"] or dia >= a["desde"]:
-                valor = float(a["valor"])
-        return valor
-
-    reserva = cepea_reserva(cfg, cepea, ajuste_de, dt.datetime.now(BRT))
-    dias = montar_dias(ldn, ny, usd, cepea)
-    for d in dias:
-        if d["data"] == reserva:
-            d["cepeaReserva"] = True
-    marcar_fechamentos(dias, usd, ajuste_de, dt.datetime.now(BRT))
-
-    # Calibra pelo dia mais recente que tem CEPEA e fechamento de Londres.
-    calibracao = anterior.get("calibracao")
-    com_cepea = [d for d in dias if "cepeaConilon" in d]
-    if com_cepea:
-        d = com_cepea[-1]
-        usd_dia = round(d["usd"], 2)  # o app também usa o dólar com 2 casas
-        # A calibração é a base do PRÓXIMO dia: usa o ajuste que vale nele.
-        proximo = (dt.date.fromisoformat(d["data"]) + dt.timedelta(days=1)).isoformat()
-        ajuste = ajuste_de(max(hoje.isoformat(), proximo))
-        alvo = d["cepeaConilon"] + ajuste
-        calibracao = {
-            "data": d["data"],
-            "cepeaConilon": d["cepeaConilon"],
-            "ajusteConilonCepea": ajuste,
-            "ajustes": ajustes,
-            "precoConilon": round(alvo, 2),
-            "londres": d["londres"],
-            "usd": usd_dia,
-            "contrato": contratos["londres"],
-            "diferencialConilon": round(alvo / (0.06 * usd_dia) - d["londres"], 2),
-        }
+    # Calibração = fechamento do app no último dia fechado, que é a base do próximo dia (salvo preço
+    # combinado em "inicios", que o app também recebe).
+    fechados = [d for d in dias if d.get("fechamentoApp") is not None]
+    if not fechados:
+        raise RuntimeError("nenhum dia com fechamento do app (histórico publicado indisponível?)")
+    d = fechados[-1]
+    calibracao = {
+        "data": d["data"],
+        "precoConilon": d["fechamentoApp"],
+        "londres": d["londres"],
+        "usd": round(d["usd"], 2),  # o app também usa o dólar com 2 casas
+        "contrato": contratos["londres"],
+        "diferencialConilon": round(diferencial(d["fechamentoApp"], d), 2),
+        "inicios": [{"data": k, "preco": v} for k, v in sorted(inicios.items())],
+        # Só para o alerta do APK já instalado (AlertaService.java lê estes nomes antigos): base do
+        # próximo dia, sem ajuste. O app (index.html) não usa.
+        "cepeaConilon": d["fechamentoApp"],
+        "ajusteConilonCepea": 0,
+    }
 
     saida = {
         "geradoEm": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
@@ -402,7 +329,7 @@ async def main(caminho_config, caminho_saida):
     intra_anterior = publicado_anterior("intradia.json")
     try:
         simbolos = {nome: f'{MERCADOS[nome]["bolsa"]}:{contratos[nome]}' for nome in MERCADOS}
-        intra = await gerar_intradia(dias, usd, simbolos, ajuste_de)
+        intra = await gerar_intradia(dias, usd, simbolos)
         print(f'intradia {intra["data"]}: ' + ", ".join(f"{k} {len(v)}" for k, v in intra["series"].items()))
     except Exception as e:
         print(f"aviso: gráfico do dia indisponível ({e}); mantendo o publicado")
@@ -419,8 +346,6 @@ async def main(caminho_config, caminho_saida):
     if os.environ.get("GITHUB_OUTPUT"):
         with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
             f.write("mudou=" + ("true" if mudou else "false") + "\n")
-    # Falha do Cepea numa rodada não marca erro (as rodadas são de 15 em 15 min e a próxima costuma
-    # conseguir). Quem avisa o usuário é scripts/cepea_do_dia.py, às 22h30, se o dia ficou sem Cepea.
 
 
 if __name__ == "__main__":
