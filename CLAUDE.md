@@ -19,7 +19,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v36).
+  (`painel-agro-vN` → `vN+1`; hoje v38).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
@@ -55,7 +55,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   "Testar alerta") — retirados a pedido do usuário em 28/09/2026. O aviso de privacidade (Umami) fica
   numa linha do rodapé do Painel. `Native.testarAlerta` continua no APK, só não é usado.
 - Rodapés NÃO mostram de onde vêm as cotações (pedido do usuário). Única exceção, pequena no
-  Painel: "Fontes: Cepea/Esalq · Open-Meteo" (crédito; o Cepea não é usado desde 24/10 — ver Pendências).
+  Painel: "Previsão do tempo: Open-Meteo" (crédito exigido pela licença; Cepea retirado em 24/10).
 - Preço do Conilon mostrado arredondado de 10 em 10 centavos (`arred10`: card, variação e gráfico).
 - Dólar (`dolarVigente`): ao vivo só das 9h até o fechamento do pregão de câmbio (~18h Brasília);
   fora disso e no fim de semana vale o último fechamento, com a data desse pregão no card.
@@ -229,8 +229,6 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
 
 ## Pendências / ideias oferecidas e ainda não feitas
 - Nome do card "CONILON 7/8" — usuário não decidiu se renomeia.
-- Rodapé do Painel ainda diz "Fontes: Cepea/Esalq · Open-Meteo"; desde 24/10 o Cepea não é usado →
-  oferecido retirar o "Cepea/Esalq" (mudança visual: mostrar e pedir "pode publicar").
 - A análise de fatores (50%/70%) prevista para fim de out/2026 perdeu o sentido: sem Cepea não há com o
   que comparar. `dados/acerto.csv` (07/10–23/10) fica no repo como registro.
 - Bloqueio só para convidados — opções explicadas (28/09): 1) código único no app (simples, burlável;
