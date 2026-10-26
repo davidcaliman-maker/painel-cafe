@@ -159,6 +159,16 @@ def dolar_awesome():
     return float(v["bid"]), float(v["varBid"]), dt.datetime.fromtimestamp(int(v["timestamp"]), BRT)
 
 
+def dolar_yahoo():
+    """Terceira fonte do dólar (Yahoo Finanças, BRL=X): (cotação, variação no dia, quando em Brasília)."""
+    req = urllib.request.Request("https://query1.finance.yahoo.com/v8/finance/chart/BRL=X?interval=5m&range=1d",
+                                 headers={"User-Agent": "Mozilla/5.0"})
+    with urllib.request.urlopen(req, timeout=20) as r:
+        m = json.load(r)["chart"]["result"][0]["meta"]
+    preco = float(m["regularMarketPrice"])
+    return preco, preco - float(m["chartPreviousClose"]), dt.datetime.fromtimestamp(int(m["regularMarketTime"]), BRT)
+
+
 async def gerar_intradia(dias, usd_diario, simbolos, usd_reserva=None):
     """Gráfico do dia (intradia.json): pontos de 5 em 5 min do último pregão de Londres.
 
@@ -300,16 +310,22 @@ async def main(caminho_config, caminho_saida):
     # mantém o dólar publicado (o TradingView pode continuar errado para aquele dia).
     hoje_iso = hoje.isoformat()
     usd_aw = None
-    try:
-        bid, _var, quando = dolar_awesome()
+    tv = usd.get(hoje_iso)
+    lidos = [f"TradingView {tv}"]
+    for nome, fonte in (("AwesomeAPI", dolar_awesome), ("Yahoo", dolar_yahoo)):
+        try:
+            bid, _var, quando = fonte()
+        except Exception as e:
+            lidos.append(f"{nome} indisponível ({e})")
+            continue
+        lidos.append(f"{nome} {bid} às {quando:%d/%m %H:%M}")
         minuto = quando.hour * 60 + quando.minute
-        tv = usd.get(hoje_iso)
-        if quando.date() == hoje and minuto >= 9 * 60 and (tv is None or abs(bid / tv - 1) > 0.005):
+        if usd_aw is None and quando.date() == hoje and minuto >= 9 * 60 and (tv is None or abs(bid / tv - 1) > 0.005):
             usd_aw = (minuto, bid)
             usd[hoje_iso] = bid
-            print(f"aviso: dólar do TradingView ({tv}) diferente da AwesomeAPI ({bid}); usando a AwesomeAPI")
-    except Exception as e:
-        print(f"aviso: AwesomeAPI indisponível ({e})")
+            lidos.append(f"usando {nome}")
+    # Anotação na execução (aparece no GitHub): o que cada fonte do dólar mandou.
+    print("::notice title=Dólar::" + "; ".join(lidos))
 
     anterior = publicado_anterior()
     # Preços combinados com o usuário para começar um dia ({data: preço}); o 1º (26/10/2026) é o

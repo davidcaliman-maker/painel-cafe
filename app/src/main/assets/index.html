@@ -560,6 +560,23 @@
                time: Date.parse(dia + "T00:00:00Z") / 1000, fonte: "awesome" };
     }).catch(function () { return null; });
   }
+  // Terceira fonte (Yahoo Finanças, BRL=X), usada se a AwesomeAPI falhar. No Android vai pela ponte
+  // nativa; no navegador o Yahoo pode recusar (CORS) e aí simplesmente não conta.
+  function dolarYahoo() {
+    return getJson("https://query1.finance.yahoo.com/v8/finance/chart/BRL=X?interval=5m&range=1d").then(function (r) {
+      var m = r && r.chart && r.chart.result && r.chart.result[0] && r.chart.result[0].meta;
+      var preco = m ? parseFloat(m.regularMarketPrice) : NaN, ant = m ? parseFloat(m.chartPreviousClose) : NaN;
+      if (!(preco > 0)) return null;
+      var dia = new Date(parseInt(m.regularMarketTime, 10) * 1000 - 3 * 3600 * 1000).toISOString().slice(0, 10);
+      return { close: preco, prev: ant > 0 ? ant : null, change: ant > 0 ? (preco / ant - 1) * 100 : null,
+               time: Date.parse(dia + "T00:00:00Z") / 1000, fonte: "yahoo" };
+    }).catch(function () { return null; });
+  }
+  // No máximo 8 s esperando as fontes extras: se travarem, a atualização segue com o TradingView.
+  function dolarReserva() {
+    var busca = dolarAwesome().then(function (a) { return a || dolarYahoo(); });
+    return Promise.race([busca, espera(8000).then(function () { return null; })]);
+  }
 
   // ---------- formatação ----------
   function fmt(n, dec) {
@@ -784,7 +801,7 @@
         .map(function (c) { return "ICEEUR:" + c; })
         .concat(cNy.map(function (c) { return "ICEUS:" + c; }));
       return Promise.all([scan("futures", tickers),
-        scan("forex", [tUsd]).catch(function () { return {}; }), dolarAwesome()]);
+        scan("forex", [tUsd]).catch(function () { return {}; }), dolarReserva()]);
     }).then(function (r) {
       var f = r[0], fx = r[1], aw = r[2];
       var ctrLdn = cLdn.filter(function (c) { return f["ICEEUR:" + c]; })[0];

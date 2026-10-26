@@ -80,7 +80,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
     Preço = (Londres + diferencial) × 0,06 × dólar; diferencial = base / (0,06 × dólar de ontem) − Londres de
     ontem. Na prática o diferencial fica constante e o preço só segue Londres e o dólar.
   - Recalibração: de vez em quando o usuário passa um preço para começar um dia → `config.json`
-    `inicios` [{data, preco}]. O 1º é 26/10/2026 = 894,10 (fechamento do app em 23/10; em 26/10 de manhã o usuário testou 925,00 e voltou para 894,10).
+    `inicios` [{data, preco}]. O 1º é 26/10/2026: 925,00 (pedido do usuário na manhã de 26/10; antes 894,10 = fechamento do app em 23/10).
   - Depois que o câmbio fecha (17h NY → 18h30 no horário de verão dos EUA, 19h30 fora; `minutoFechado`
     no app = `minuto_fechado` no historico.py) o card mostra FECHADO dd/mm com `fechamentoApp`.
     Madrugada/fim de semana/Londres fechada: mostra o último FECHADO.
@@ -113,6 +113,9 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   TradingView mais de 0,5% (ou o TradingView falhar), vale a AwesomeAPI (no historico.py só para hoje,
   depois das 9h). O dia fica `usdFonte: "awesome"` no historico.json e, depois de passado, mantém o dólar
   publicado. Gráfico HOJE: pontos do dólar da AwesomeAPI acumulados a cada rodada (`intradia.usdFonte`).
+  Se a AwesomeAPI falhar, tenta o Yahoo Finanças (BRL=X, `dolar_yahoo`/`dolarYahoo`; no navegador pode dar
+  CORS, no Android vai pela ponte). O app espera no máximo 8 s pelas fontes extras. Cada rodada do pages.yml
+  deixa uma anotação "Dólar" com o que cada fonte mandou (API: check-runs/{id}/annotations).
 - `scripts/noticias.py`: Google Notícias RSS (últimos 7 dias), filtra fora do assunto e repetidas.
 - `historico.py` também gera `intradia.json` (barras de 5 min do TradingView; `gerar_intradia`).
 - **cron-job.org (desde 22/10/2026):** o agendamento do GitHub passou a pular a maioria das rodadas (22/10:
