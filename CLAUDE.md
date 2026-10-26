@@ -80,7 +80,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
     Preço = (Londres + diferencial) × 0,06 × dólar; diferencial = base / (0,06 × dólar de ontem) − Londres de
     ontem. Na prática o diferencial fica constante e o preço só segue Londres e o dólar.
   - Recalibração: de vez em quando o usuário passa um preço para começar um dia → `config.json`
-    `inicios` [{data, preco}]. O 1º é 26/10/2026 = 894,10 (fechamento do app em 23/10).
+    `inicios` [{data, preco}]. O 1º é 26/10/2026: era 894,10 (fechamento do app em 23/10); o usuário recalibrou para 925,00 na manhã de 26/10.
   - Depois que o câmbio fecha (17h NY → 18h30 no horário de verão dos EUA, 19h30 fora; `minutoFechado`
     no app = `minuto_fechado` no historico.py) o card mostra FECHADO dd/mm com `fechamentoApp`.
     Madrugada/fim de semana/Londres fechada: mostra o último FECHADO.
