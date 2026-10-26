@@ -548,6 +548,19 @@
     });
   }
 
+  // Segunda fonte do dólar (AwesomeAPI). Em 26/10/2026 o TradingView travou o dólar em 4,97 (fechamento
+  // de sexta) com o dólar real a R$ 5,60 (+12%). Se as duas fontes discordarem mais de 0,5%, ou o
+  // TradingView falhar, vale a AwesomeAPI. "time" = 0h UTC do dia da cotação, para o dolarVigente.
+  function dolarAwesome() {
+    return getJson("https://economia.awesomeapi.com.br/json/last/USD-BRL").then(function (r) {
+      var v = r && r.USDBRL, bid = v ? parseFloat(v.bid) : NaN, vb = v ? parseFloat(v.varBid) : NaN;
+      if (!(bid > 0)) return null;
+      var dia = new Date(parseInt(v.timestamp, 10) * 1000 - 3 * 3600 * 1000).toISOString().slice(0, 10);
+      return { close: bid, prev: isNaN(vb) ? null : bid - vb, change: parseFloat(v.pctChange),
+               time: Date.parse(dia + "T00:00:00Z") / 1000, fonte: "awesome" };
+    }).catch(function () { return null; });
+  }
+
   // ---------- formatação ----------
   function fmt(n, dec) {
     if (n == null || isNaN(n)) return "—";
@@ -770,17 +783,21 @@
       var tickers = cLdn.concat([String(calib().contrato || "").toUpperCase()]).filter(Boolean)
         .map(function (c) { return "ICEEUR:" + c; })
         .concat(cNy.map(function (c) { return "ICEUS:" + c; }));
-      return Promise.all([scan("futures", tickers), scan("forex", [tUsd])]);
+      return Promise.all([scan("futures", tickers),
+        scan("forex", [tUsd]).catch(function () { return {}; }), dolarAwesome()]);
     }).then(function (r) {
-      var f = r[0], fx = r[1];
+      var f = r[0], fx = r[1], aw = r[2];
       var ctrLdn = cLdn.filter(function (c) { return f["ICEEUR:" + c]; })[0];
       var ctrNy = cNy.filter(function (c) { return f["ICEUS:" + c]; })[0];
       if (!ctrLdn) throw new Error("Contrato de Londres sem cotação: " + cLdn.join(", "));
       if (!ctrNy) throw new Error("Contrato de NY sem cotação: " + cNy.join(", "));
-      if (!fx[tUsd]) throw new Error("Cotação do dólar indisponível");
       // O dólar nunca volta para um pregão mais antigo do que o já mostrado (fonte atrasada/reserva).
-      if (fxVisto && fx[tUsd].time < fxVisto.time) fx[tUsd] = fxVisto;
-      fxVisto = fx[tUsd];
+      if (fx[tUsd]) {
+        if (fxVisto && fx[tUsd].time < fxVisto.time) fx[tUsd] = fxVisto;
+        fxVisto = fx[tUsd];
+      }
+      if (aw && (!fx[tUsd] || Math.abs(aw.close / fx[tUsd].close - 1) > 0.005)) fx[tUsd] = aw;
+      if (!fx[tUsd]) throw new Error("Cotação do dólar indisponível");
       var qLdn = f["ICEEUR:" + ctrLdn], qNy = f["ICEUS:" + ctrNy];
       var refLdn = String(calib().contrato || ctrLdn).toUpperCase();
       var dv = dolarVigente(fx[tUsd]);

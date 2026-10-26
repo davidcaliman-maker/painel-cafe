@@ -146,7 +146,20 @@ def ultimo_ate(pontos, m):
     return pontos[max(antes)] if antes else None
 
 
-async def gerar_intradia(dias, usd_diario, simbolos):
+def dolar_awesome():
+    """Segunda fonte do dólar (AwesomeAPI): (cotação, variação no dia, quando em Brasília).
+
+    Em 26/10/2026 o TradingView travou o dólar em 4,97 (fechamento de sexta) enquanto o dólar real
+    subia 12%, a R$ 5,60; o app passou a conferir as duas fontes.
+    """
+    req = urllib.request.Request("https://economia.awesomeapi.com.br/json/last/USD-BRL",
+                                 headers={"User-Agent": "Mozilla/5.0"})
+    with urllib.request.urlopen(req, timeout=20) as r:
+        v = json.load(r)["USDBRL"]
+    return float(v["bid"]), float(v["varBid"]), dt.datetime.fromtimestamp(int(v["timestamp"]), BRT)
+
+
+async def gerar_intradia(dias, usd_diario, simbolos, usd_reserva=None):
     """Gráfico do dia (intradia.json): pontos de 5 em 5 min do último pregão de Londres.
 
     O Conilon do dia é a mesma estimativa do app (Londres × dólar) sobre a base do dia (fechamento
@@ -158,6 +171,10 @@ async def gerar_intradia(dias, usd_diario, simbolos):
     b_usd = await barras("FX_IDC:USDBRL", "5", 400)
     dia = dt.datetime.fromtimestamp(b_ldn[-1][0], BRT).date().isoformat()
     ldn, ny, usd = por_minuto(b_ldn, dia), por_minuto(b_ny, dia), por_minuto(b_usd, dia)
+    # TradingView com o dólar travado: vale a série da segunda fonte (pontos de cada rodada).
+    fonte_usd = None
+    if usd_reserva and dia == dt.datetime.now(BRT).date().isoformat():
+        usd, fonte_usd = dict(usd_reserva), "awesome"
 
     anteriores = [d for d in dias if d["data"] < dia]
     hoje = next((d for d in dias if d["data"] == dia), {})
@@ -176,7 +193,7 @@ async def gerar_intradia(dias, usd_diario, simbolos):
     minutos = sorted(set(ldn) | {m for m in usd if m >= 9 * 60 and m >= inicio_ldn})
     conilon = [[m, arred((ultimo_ate(ldn, m) + dif) * 0.06 * round(usd_vigente(m), 2))] for m in minutos]
 
-    return {
+    saida = {
         "data": dia,
         # "conilon" = fechamento do app no dia anterior (linha pontilhada); "base" = preço em que o dia
         # começou, contra o qual a variação do dia é medida (igual ao "conilon", salvo recalibração).
@@ -191,6 +208,9 @@ async def gerar_intradia(dias, usd_diario, simbolos):
             "usd": [[m, round(v, 4)] for m, v in sorted(usd.items()) if m >= 9 * 60],
         },
     }
+    if fonte_usd:
+        saida["usdFonte"] = fonte_usd
+    return saida
 
 
 def montar_dias(ldn, ny, usd):
@@ -275,12 +295,34 @@ async def main(caminho_config, caminho_saida):
     ny = await historico_diario(f'{MERCADOS["novaYork"]["bolsa"]}:{contratos["novaYork"]}')
     usd = await historico_diario("FX_IDC:USDBRL")
 
+    # Segunda fonte do dólar: se a AwesomeAPI (cotação de hoje, depois das 9h) discordar mais de
+    # 0,5% do TradingView, vale ela para hoje. O dia fica marcado "usdFonte" e, depois que passa,
+    # mantém o dólar publicado (o TradingView pode continuar errado para aquele dia).
+    hoje_iso = hoje.isoformat()
+    usd_aw = None
+    try:
+        bid, _var, quando = dolar_awesome()
+        minuto = quando.hour * 60 + quando.minute
+        tv = usd.get(hoje_iso)
+        if quando.date() == hoje and minuto >= 9 * 60 and (tv is None or abs(bid / tv - 1) > 0.005):
+            usd_aw = (minuto, bid)
+            usd[hoje_iso] = bid
+            print(f"aviso: dólar do TradingView ({tv}) diferente da AwesomeAPI ({bid}); usando a AwesomeAPI")
+    except Exception as e:
+        print(f"aviso: AwesomeAPI indisponível ({e})")
+
     anterior = publicado_anterior()
     # Preços combinados com o usuário para começar um dia ({data: preço}); o 1º (26/10/2026) é o
     # fechamento do app em 23/10, quando o Cepea deixou de ser usado.
     inicios = {i["data"]: float(i["preco"]) for i in cfg.get("inicios", [])}
     publicados = {d["data"]: d for d in anterior.get("dias", [])}
     dias = montar_dias(ldn, ny, usd)
+    for d in dias:
+        pub = publicados.get(d["data"], {})
+        if d["data"] == hoje_iso and usd_aw:
+            d["usdFonte"] = "awesome"
+        elif d["data"] < hoje_iso and pub.get("usdFonte") and pub.get("usd") is not None:
+            d["usd"], d["usdFonte"] = pub["usd"], pub["usdFonte"]
     marcar_fechamentos(dias, inicios, publicados, dt.datetime.now(BRT))
 
     # Calibração = fechamento do app no último dia fechado, que é a base do próximo dia (salvo preço
@@ -327,9 +369,15 @@ async def main(caminho_config, caminho_saida):
     # Gráfico do dia. Se falhar, mantém o publicado (o app mostra o que tiver).
     caminho_intra = os.path.join(os.path.dirname(caminho_saida), "intradia.json")
     intra_anterior = publicado_anterior("intradia.json")
+    usd_reserva = None
+    if usd_aw:  # junta os pontos do dólar da segunda fonte das rodadas anteriores de hoje
+        usd_reserva = {}
+        if intra_anterior and intra_anterior.get("data") == hoje_iso and intra_anterior.get("usdFonte"):
+            usd_reserva = {m: v for m, v in intra_anterior["series"]["usd"]}
+        usd_reserva[usd_aw[0]] = usd_aw[1]
     try:
         simbolos = {nome: f'{MERCADOS[nome]["bolsa"]}:{contratos[nome]}' for nome in MERCADOS}
-        intra = await gerar_intradia(dias, usd, simbolos)
+        intra = await gerar_intradia(dias, usd, simbolos, usd_reserva)
         print(f'intradia {intra["data"]}: ' + ", ".join(f"{k} {len(v)}" for k, v in intra["series"].items()))
     except Exception as e:
         print(f"aviso: gráfico do dia indisponível ({e}); mantendo o publicado")
