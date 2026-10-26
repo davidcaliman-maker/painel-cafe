@@ -110,9 +110,12 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
 - **Segunda fonte do dólar (AwesomeAPI, desde 26/10/2026):** nesse dia o TradingView travou o FX_IDC:USDBRL
   em 4,97 (fechamento de sexta) com o dólar real a R$ 5,60 (+12%, eleição). App (`dolarAwesome` no index.html)
   e historico.py (`dolar_awesome`) buscam `economia.awesomeapi.com.br/json/last/USD-BRL`; se discordar do
-  TradingView mais de 0,5% (ou o TradingView falhar), vale a AwesomeAPI (no historico.py só para hoje,
+  TradingView mais de 0,5% (ou o TradingView falhar), valia a AwesomeAPI (no historico.py só para hoje,
   depois das 9h). O dia fica `usdFonte: "awesome"` no historico.json e, depois de passado, mantém o dólar
   publicado. Gráfico HOJE: pontos do dólar da AwesomeAPI acumulados a cada rodada (`intradia.usdFonte`).
+  **CORRIGIDO no mesmo dia:** a notícia dos R$ 5,60 (+12%) não bateu com nenhuma fonte (TradingView 4,9652
+  ao vivo, Yahoo 4,9993 atrasado, AwesomeAPI 429 no GitHub). O TradingView NÃO tinha travado. Agora as
+  fontes extras só entram se o TradingView FALHAR (sem dólar de hoje), nunca por discordância.
   Se a AwesomeAPI falhar, tenta o Yahoo Finanças (BRL=X, `dolar_yahoo`/`dolarYahoo`; no navegador pode dar
   CORS, no Android vai pela ponte). O app espera no máximo 8 s pelas fontes extras. Cada rodada do pages.yml
   deixa uma anotação "Dólar" com o que cada fonte mandou (API: check-runs/{id}/annotations).
