@@ -107,6 +107,12 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   Solução mista escolhida pelo usuário (01/10): direto primeiro, GitHub só como reserva.
   A reserva NÃO é usada se for mais velha que a última busca direta (`ultimoDireto`), e o dólar nunca
   volta para um pregão mais antigo (`fxVisto`) — bug de 05/10: no 5G o dólar pulava de 4,99 para o 5,22 de sexta.
+- **Segunda fonte do dólar (AwesomeAPI, desde 26/10/2026):** nesse dia o TradingView travou o FX_IDC:USDBRL
+  em 4,97 (fechamento de sexta) com o dólar real a R$ 5,60 (+12%, eleição). App (`dolarAwesome` no index.html)
+  e historico.py (`dolar_awesome`) buscam `economia.awesomeapi.com.br/json/last/USD-BRL`; se discordar do
+  TradingView mais de 0,5% (ou o TradingView falhar), vale a AwesomeAPI (no historico.py só para hoje,
+  depois das 9h). O dia fica `usdFonte: "awesome"` no historico.json e, depois de passado, mantém o dólar
+  publicado. Gráfico HOJE: pontos do dólar da AwesomeAPI acumulados a cada rodada (`intradia.usdFonte`).
 - `scripts/noticias.py`: Google Notícias RSS (últimos 7 dias), filtra fora do assunto e repetidas.
 - `historico.py` também gera `intradia.json` (barras de 5 min do TradingView; `gerar_intradia`).
 - **cron-job.org (desde 22/10/2026):** o agendamento do GitHub passou a pular a maioria das rodadas (22/10:
