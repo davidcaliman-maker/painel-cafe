@@ -320,7 +320,8 @@ async def main(caminho_config, caminho_saida):
             continue
         lidos.append(f"{nome} {bid} às {quando:%d/%m %H:%M}")
         minuto = quando.hour * 60 + quando.minute
-        if usd_aw is None and quando.date() == hoje and minuto >= 9 * 60 and (tv is None or abs(bid / tv - 1) > 0.005):
+        # Só substitui se o TradingView não tem o dólar de hoje (as outras fontes atrasam mais que ele).
+        if usd_aw is None and quando.date() == hoje and minuto >= 9 * 60 and tv is None:
             usd_aw = (minuto, bid)
             usd[hoje_iso] = bid
             lidos.append(f"usando {nome}")

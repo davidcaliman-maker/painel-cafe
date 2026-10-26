@@ -813,7 +813,9 @@
         if (fxVisto && fx[tUsd].time < fxVisto.time) fx[tUsd] = fxVisto;
         fxVisto = fx[tUsd];
       }
-      if (aw && (!fx[tUsd] || Math.abs(aw.close / fx[tUsd].close - 1) > 0.005)) fx[tUsd] = aw;
+      // As fontes extras só entram se o TradingView falhar: em 26/10 elas vieram mais atrasadas que ele
+      // (Yahoo 4,9993 das 9h03 com o TradingView a 4,9652 às 10h) e a AwesomeAPI recusou (429).
+      if (aw && !fx[tUsd]) fx[tUsd] = aw;
       if (!fx[tUsd]) throw new Error("Cotação do dólar indisponível");
       var qLdn = f["ICEEUR:" + ctrLdn], qNy = f["ICEUS:" + ctrNy];
       var refLdn = String(calib().contrato || ctrLdn).toUpperCase();
