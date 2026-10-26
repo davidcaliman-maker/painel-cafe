@@ -19,7 +19,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v38).
+  (`painel-agro-vN` → `vN+1`; hoje v41).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
@@ -79,6 +79,13 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   - Cada dia começa no FECHAMENTO DO APP no dia anterior (`baseConilon` = `fechamentoApp` de ontem).
     Preço = (Londres + diferencial) × 0,06 × dólar; diferencial = base / (0,06 × dólar de ontem) − Londres de
     ontem. Na prática o diferencial fica constante e o preço só segue Londres e o dólar.
+  - **Desde 27/10/2026 (`config.json` `cccvDesde`, pedido em 26/10): o dia começa no CCCV Tipo 7/8 EXATO do
+    dia anterior** (Centro do Comércio de Café de Vitória; `cccv_conilon()` lê
+    noticiasagricolas.com.br/cotacoes/cafe/cafe-conillon-disponivel-vitoria-es, ~10 últimos pregões; fica em
+    `dias[].cccv`). Prioridade da base: `inicios` (preço combinado) → CCCV do dia anterior → fechamento do app.
+    Se o CCCV ainda não saiu, o dia começa no fechamento do app e é REFEITO quando ele sair (escolha do usuário).
+    `calibracao.cepeaConilon`/`diferencialConilon` = base do próximo dia (para o alerta do APK).
+    Comparação 19–23/10 (app × CCCV): app fechou +27,70 / +15,20 / +12,90 / +34,40 / −3,90 acima do CCCV.
   - Recalibração: de vez em quando o usuário passa um preço para começar um dia → `config.json`
     `inicios` [{data, preco}]. O 1º é 26/10/2026: 925,00 (pedido do usuário na manhã de 26/10; antes 894,10 = fechamento do app em 23/10).
   - Depois que o câmbio fecha (17h NY → 18h30 no horário de verão dos EUA, 19h30 fora; `minutoFechado`

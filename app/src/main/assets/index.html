@@ -611,7 +611,8 @@
   function calib() { return (hist && hist.calibracao) || CALIB_RESERVA; }
   // Preço do Conilon (pedido do usuário em 24/10/2026, valendo desde 26/10/2026; o Cepea não é mais
   // usado): cada dia começa no FECHAMENTO DO APP no dia anterior, salvo quando o usuário passa um
-  // preço para começar o dia (config.json → "inicios", recalibração). Durante o pregão o preço segue
+  // preço para começar o dia (config.json → "inicios", recalibração).
+  // Desde 27/10/2026 o dia começa no CCCV 7/8 (Vitória) do dia anterior, quando já saiu. Durante o pregão o preço segue
   // Londres e o dólar sobre essa base; depois que o dólar fecha (~18h30) o card mostra FECHADO com o
   // fechamento do app ("fechamentoApp"). A variação mostrada é o movimento do dia (contra a base).
   // Mesma regra de scripts/historico.py (marcar_fechamentos).
@@ -621,8 +622,10 @@
     var ant = dias.filter(function (d) { return d.data < dia; }).pop();
     var proprio = dias.filter(function (d) { return d.data === dia; })[0];
     var combinado = (c.inicios || []).filter(function (i) { return i.data === dia; })[0];
+    // Desde "cccvDesde" (27/10/2026): sem preço combinado, o dia começa no CCCV 7/8 do dia anterior.
+    var cccv = c.cccvDesde && dia >= c.cccvDesde && ant && ant.cccv != null ? ant.cccv : null;
     var preco = proprio && proprio.baseConilon != null ? proprio.baseConilon :
-      combinado ? Number(combinado.preco) : ant && ant.fechamentoApp;
+      combinado ? Number(combinado.preco) : cccv != null ? cccv : ant && ant.fechamentoApp;
     if (ant && preco != null)
       return { data: ant.data, preco: preco, dif: preco / (T_PER_SACA * (Math.round(ant.usd * 100) / 100)) - ant.londres };
     return { data: c.data, preco: c.precoConilon, dif: Number(c.diferencialConilon) };  // sem histórico

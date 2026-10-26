@@ -7,6 +7,9 @@ Londres sai do fechamento de Londres e do dólar do dia anterior:
     diferencial = base / (0,06 × dólar) − Londres
 e o preço do dia é (Londres + diferencial) × 0,06 × dólar. De vez em quando o usuário passa um preço
 para começar um dia e recalibrar (config.json → "inicios").
+Desde 27/10/2026 (config "cccvDesde", pedido do usuário em 26/10): o dia começa no CCCV Tipo 7/8 (Centro do
+Comércio de Café de Vitória, via Notícias Agrícolas) do dia anterior, exato; sem ele, no fechamento do app
+(e o dia é refeito quando o CCCV sair).
 
 Roda no GitHub Actions antes de publicar o site (o celular não consegue buscar esses
 dados direto). Os contratos seguem a mesma regra de troca automática do app (index.html):
@@ -36,6 +39,7 @@ MERCADOS = {
 CODIGOS = {1: "F", 3: "H", 5: "K", 7: "N", 9: "U", 11: "X", 12: "Z"}
 BRT = dt.timezone(dt.timedelta(hours=-3))
 SITE = "https://davidcaliman-maker.github.io/painel-cafe/"
+CCCV_URL = "https://www.noticiasagricolas.com.br/cotacoes/cafe/cafe-conillon-disponivel-vitoria-es"
 
 
 def contratos_ativos(mercado, hoje):
@@ -257,11 +261,29 @@ def diferencial(base, ant):
     return base / (0.06 * round(ant["usd"], 2)) - ant["londres"]
 
 
-def marcar_fechamentos(dias, inicios, publicados, agora):
+def cccv_conilon():
+    """CCCV Tipo 7/8 (Vitória-ES), R$/saca, dos últimos pregões: {data ISO: valor}."""
+    req = urllib.request.Request(CCCV_URL, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                                 "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36"})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        html = r.read().decode("utf-8", "replace")
+    valores = {}
+    for bloco in html.split('<div class="cotacao">')[1:]:
+        data = re.search(r"Fechamento:\s*(\d{2})/(\d{2})/(\d{4})", bloco)
+        preco = re.search(r"<td>\s*Tipo 7/8[^<]*</td>\s*<td>\s*([\d.]+,\d+)\s*</td>", bloco)
+        if data and preco:
+            d, m, a = data.groups()
+            valores[f"{a}-{m}-{d}"] = float(preco.group(1).replace(".", "").replace(",", "."))
+    if not valores:
+        raise RuntimeError("CCCV Tipo 7/8 não encontrado na página")
+    return valores
+
+
+def marcar_fechamentos(dias, inicios, publicados, agora, cccv_desde=None):
     """Base ("baseConilon") e fechamento do app ("fechamentoApp") de cada dia desde o 1º início combinado.
 
-    Base do dia = preço combinado para o dia em "inicios" (o usuário recalibra de vez em quando) ou,
-    sem ele, o fechamento do app no dia anterior. O fechamento é a bolsa e o dólar de fechamento
+    Base do dia = preço combinado para o dia em "inicios" (o usuário recalibra de vez em quando); senão,
+    desde "cccv_desde", o CCCV 7/8 do dia anterior ("cccv" no dia); senão, o fechamento do app no dia anterior. O fechamento é a bolsa e o dólar de fechamento
     sobre essa base; hoje só tem fechamento depois que o dólar fechou (ver minuto_fechado).
     Dias que já passaram ficam como foram publicados ("publicados"): uma troca de contrato de
     Londres não muda os preços antigos. Dias anteriores ao 1º início (época do Cepea, até 23/10/2026)
@@ -278,7 +300,11 @@ def marcar_fechamentos(dias, inicios, publicados, agora):
                 if pub.get(k) is not None:
                     d[k] = pub[k]
         elif ant is not None:
-            base = inicios.get(d["data"], ant.get("fechamentoApp"))
+            base = inicios.get(d["data"])
+            if base is None and cccv_desde and d["data"] >= cccv_desde:
+                base = ant.get("cccv")
+            if base is None:
+                base = ant.get("fechamentoApp")
             if base is not None:
                 d["baseConilon"] = round(float(base), 2)
                 if d["data"] < hoje or dolar_fechou:
@@ -340,7 +366,17 @@ async def main(caminho_config, caminho_saida):
             d["usdFonte"] = "awesome"
         elif d["data"] < hoje_iso and pub.get("usdFonte") and pub.get("usd") is not None:
             d["usd"], d["usdFonte"] = pub["usd"], pub["usdFonte"]
-    marcar_fechamentos(dias, inicios, publicados, dt.datetime.now(BRT))
+    # CCCV 7/8 de cada dia (a página tem os últimos ~10 pregões; os mais antigos vêm do publicado).
+    cccv = {d["data"]: d["cccv"] for d in anterior.get("dias", []) if d.get("cccv") is not None}
+    try:
+        cccv.update(cccv_conilon())
+    except Exception as e:  # fora do ar: o dia começa no fechamento do app até o CCCV voltar
+        print(f"aviso: CCCV indisponível ({e}); usando o último publicado")
+    for d in dias:
+        if d["data"] in cccv:
+            d["cccv"] = cccv[d["data"]]
+    cccv_desde = cfg.get("cccvDesde")
+    marcar_fechamentos(dias, inicios, publicados, dt.datetime.now(BRT), cccv_desde)
 
     # Calibração = fechamento do app no último dia fechado, que é a base do próximo dia (salvo preço
     # combinado em "inicios", que o app também recebe).
@@ -348,17 +384,24 @@ async def main(caminho_config, caminho_saida):
     if not fechados:
         raise RuntimeError("nenhum dia com fechamento do app (histórico publicado indisponível?)")
     d = fechados[-1]
+    # Base do próximo dia (sem preço combinado): o CCCV do último dia fechado, se já saiu; senão o fechamento.
+    seguinte = dt.date.fromisoformat(d["data"]) + dt.timedelta(days=1)
+    while seguinte.weekday() >= 5:
+        seguinte += dt.timedelta(days=1)
+    usa_cccv = cccv_desde and d.get("cccv") is not None and seguinte.isoformat() >= cccv_desde
+    proxima = d["cccv"] if usa_cccv else d["fechamentoApp"]
     calibracao = {
         "data": d["data"],
         "precoConilon": d["fechamentoApp"],
         "londres": d["londres"],
         "usd": round(d["usd"], 2),  # o app também usa o dólar com 2 casas
         "contrato": contratos["londres"],
-        "diferencialConilon": round(diferencial(d["fechamentoApp"], d), 2),
+        "diferencialConilon": round(diferencial(proxima, d), 2),
         "inicios": [{"data": k, "preco": v} for k, v in sorted(inicios.items())],
+        "cccvDesde": cccv_desde,
         # Só para o alerta do APK já instalado (AlertaService.java lê estes nomes antigos): base do
         # próximo dia, sem ajuste. O app (index.html) não usa.
-        "cepeaConilon": d["fechamentoApp"],
+        "cepeaConilon": proxima,
         "ajusteConilonCepea": 0,
     }
 

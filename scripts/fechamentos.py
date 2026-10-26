@@ -10,7 +10,7 @@ import json
 import os
 import sys
 
-COLUNAS = ["data", "abertura", "fechamento", "variacao", "londres", "dolar", "nova_york"]
+COLUNAS = ["data", "abertura", "fechamento", "variacao", "londres", "dolar", "nova_york", "cccv"]
 
 
 def main(caminho_hist, caminho_csv):
@@ -33,13 +33,14 @@ def main(caminho_hist, caminho_csv):
             "londres": f'{d["londres"]:.0f}',
             "dolar": f'{d["usd"]:.4f}',
             "nova_york": f'{d["novaYork"]:.2f}',
+            "cccv": f'{d["cccv"]:.2f}' if d.get("cccv") is not None else "",  # CCCV 7/8 do dia
         }
     if linhas == antes:
         print("fechamentos: nada novo")
         return
     os.makedirs(os.path.dirname(caminho_csv) or ".", exist_ok=True)
     with open(caminho_csv, "w", encoding="utf-8", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=COLUNAS)
+        w = csv.DictWriter(f, fieldnames=COLUNAS, restval="")
         w.writeheader()
         for data in sorted(linhas):
             w.writerow(linhas[data])
