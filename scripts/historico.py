@@ -8,8 +8,8 @@ Londres sai do fechamento de Londres e do dólar do dia anterior:
 e o preço do dia é (Londres + diferencial) × 0,06 × dólar. De vez em quando o usuário passa um preço
 para começar um dia e recalibrar (config.json → "inicios").
 Desde 27/10/2026 (config "cccvDesde", pedido do usuário em 26/10): o dia começa no CCCV Tipo 7/8 (Centro do
-Comércio de Café de Vitória, via Notícias Agrícolas) do dia anterior, exato; sem ele, no fechamento do app
-(e o dia é refeito quando o CCCV sair).
+Comércio de Café de Vitória, via Notícias Agrícolas) do dia anterior; sem ele, no fechamento do app
+(e o dia é refeito quando o CCCV sair). Desde 27/10/2026 (config "cccvAcrescimo", pedido em 27/10): CCCV + R$ 10,00.
 
 Roda no GitHub Actions antes de publicar o site (o celular não consegue buscar esses
 dados direto). Os contratos seguem a mesma regra de troca automática do app (index.html):
@@ -279,11 +279,11 @@ def cccv_conilon():
     return valores
 
 
-def marcar_fechamentos(dias, inicios, publicados, agora, cccv_desde=None):
+def marcar_fechamentos(dias, inicios, publicados, agora, cccv_desde=None, cccv_acrescimo=0):
     """Base ("baseConilon") e fechamento do app ("fechamentoApp") de cada dia desde o 1º início combinado.
 
     Base do dia = preço combinado para o dia em "inicios" (o usuário recalibra de vez em quando); senão,
-    desde "cccv_desde", o CCCV 7/8 do dia anterior ("cccv" no dia); senão, o fechamento do app no dia anterior. O fechamento é a bolsa e o dólar de fechamento
+    desde "cccv_desde", o CCCV 7/8 do dia anterior ("cccv" no dia) + "cccv_acrescimo"; senão, o fechamento do app no dia anterior. O fechamento é a bolsa e o dólar de fechamento
     sobre essa base; hoje só tem fechamento depois que o dólar fechou (ver minuto_fechado).
     Dias que já passaram ficam como foram publicados ("publicados"): uma troca de contrato de
     Londres não muda os preços antigos. Dias anteriores ao 1º início (época do Cepea, até 23/10/2026)
@@ -302,7 +302,7 @@ def marcar_fechamentos(dias, inicios, publicados, agora, cccv_desde=None):
         elif ant is not None:
             base = inicios.get(d["data"])
             if base is None and cccv_desde and d["data"] >= cccv_desde:
-                base = ant.get("cccv")
+                base = ant["cccv"] + cccv_acrescimo if ant.get("cccv") is not None else None
             if base is None:
                 base = ant.get("fechamentoApp")
             if base is not None:
@@ -376,7 +376,8 @@ async def main(caminho_config, caminho_saida):
         if d["data"] in cccv:
             d["cccv"] = cccv[d["data"]]
     cccv_desde = cfg.get("cccvDesde")
-    marcar_fechamentos(dias, inicios, publicados, dt.datetime.now(BRT), cccv_desde)
+    cccv_acrescimo = float(cfg.get("cccvAcrescimo", 0))
+    marcar_fechamentos(dias, inicios, publicados, dt.datetime.now(BRT), cccv_desde, cccv_acrescimo)
 
     # Calibração = fechamento do app no último dia fechado, que é a base do próximo dia (salvo preço
     # combinado em "inicios", que o app também recebe).
@@ -389,7 +390,7 @@ async def main(caminho_config, caminho_saida):
     while seguinte.weekday() >= 5:
         seguinte += dt.timedelta(days=1)
     usa_cccv = cccv_desde and d.get("cccv") is not None and seguinte.isoformat() >= cccv_desde
-    proxima = d["cccv"] if usa_cccv else d["fechamentoApp"]
+    proxima = round(d["cccv"] + cccv_acrescimo, 2) if usa_cccv else d["fechamentoApp"]
     calibracao = {
         "data": d["data"],
         "precoConilon": d["fechamentoApp"],
@@ -399,6 +400,7 @@ async def main(caminho_config, caminho_saida):
         "diferencialConilon": round(diferencial(proxima, d), 2),
         "inicios": [{"data": k, "preco": v} for k, v in sorted(inicios.items())],
         "cccvDesde": cccv_desde,
+        "cccvAcrescimo": cccv_acrescimo,
         # Só para o alerta do APK já instalado (AlertaService.java lê estes nomes antigos): base do
         # próximo dia, sem ajuste. O app (index.html) não usa.
         "cepeaConilon": proxima,

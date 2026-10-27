@@ -1,5 +1,6 @@
 {
   "alertaVariacaoPct": 2.0,
+  "cccvAcrescimo": 10.0,
   "cccvDesde": "2026-10-27",
   "contratoLondres": "auto",
   "contratoNovaYork": "auto",

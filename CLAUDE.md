@@ -19,7 +19,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v41).
+  (`painel-agro-vN` → `vN+1`; hoje v42).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
@@ -84,6 +84,8 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
     noticiasagricolas.com.br/cotacoes/cafe/cafe-conillon-disponivel-vitoria-es, ~10 últimos pregões; fica em
     `dias[].cccv`). Prioridade da base: `inicios` (preço combinado) → CCCV do dia anterior → fechamento do app.
     Se o CCCV ainda não saiu, o dia começa no fechamento do app e é REFEITO quando ele sair (escolha do usuário).
+    **Desde 27/10/2026 (pedido do usuário em 27/10): base = CCCV + R$ 10,00** (`config.json` `cccvAcrescimo`: 10.0;
+    vale para hoje e em diante; 27/10 começou em 905 + 10 = 915,00). Preço combinado em `inicios` continua na frente.
     `calibracao.cepeaConilon`/`diferencialConilon` = base do próximo dia (para o alerta do APK).
     Comparação 19–23/10 (app × CCCV): app fechou +27,70 / +15,20 / +12,90 / +34,40 / −3,90 acima do CCCV.
   - Recalibração: de vez em quando o usuário passa um preço para começar um dia → `config.json`
