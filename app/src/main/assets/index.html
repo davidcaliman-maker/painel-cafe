@@ -96,7 +96,6 @@
     border-top: 3px solid var(--orange); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; }
   .hero-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
   .hero-t { display: block; font-size: 19px; font-weight: 800; letter-spacing: .5px; }
-  .hero-u { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
   .hero-ref { display: block; color: var(--orange); font-size: 11.5px; font-weight: 700; margin-top: 2px; }
   .hero-main { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; margin: 12px 0 2px; }
   .hero-price { font-size: min(58px, 13.6vw); font-weight: 800; line-height: .95; letter-spacing: -1px;
@@ -164,12 +163,18 @@
   .mkt.down .v { color: #ff5a5f; }
   .mkt.down .p { background: var(--red); }
 
-  .bar { border: 3px solid var(--orange); border-radius: 3px; display: flex; align-items: center;
-    justify-content: space-between; padding: 8px 12px; margin-bottom: 14px; }
-  .bar span { font-weight: 800; letter-spacing: 3px; font-size: 18px; }
-  .bar small { color: var(--muted); font-size: 12px; letter-spacing: 0; font-weight: 500; }
-  .bar button { background: var(--orange); color: var(--on-accent); border: 0; border-radius: 4px;
-    font-weight: 800; font-size: 13px; padding: 7px 10px; letter-spacing: 1px; }
+  /* Faixa das cotações (modelo "B", 28/10/2026): pílula com a hora, "há N min" e o botão ↻ ATUALIZAR */
+  .bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--card);
+    border-radius: 24px; padding: 5px 5px 5px 16px; margin-bottom: 14px; }
+  .bar-t { color: var(--muted); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar-t b { color: var(--text); font-weight: 800; }
+  .bar small { font-size: 12px; }
+  .bar button { background: var(--orange); color: var(--on-accent); border: 0; border-radius: 20px; flex: none;
+    font-weight: 800; font-size: 13px; padding: 9px 14px; letter-spacing: 1px; display: flex; align-items: center; gap: 6px; }
+  .bar .gira { display: inline-block; font-size: 16px; line-height: 1; }
+  .bar.girando .gira { animation: gira 1s linear infinite; }
+  @keyframes gira { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .bar.girando .gira { animation: none; } }
 
   h2 { font-size: 36px; font-weight: 800; margin: 4px 2px 0; }
   .sec-sub { color: var(--orange); font-weight: 700; font-size: 17px; margin: 2px 2px 8px; }
@@ -347,7 +352,7 @@
 <div class="hero" id="hero">
   <div class="efeito" id="efeito" aria-hidden="true"></div>
   <div class="hero-top">
-    <div><span class="hero-t">CONILON 7/8</span><span class="hero-u">R$ por saca de 60 kg</span><span class="hero-ref">Referência diária: CCCV (Vitória-ES)</span></div>
+    <div><span class="hero-t">CONILON 7/8</span><span class="hero-ref">Referência diária: CCCV (Vitória-ES)</span></div>
     <div class="badge" id="conEstado"></div>
   </div>
   <div class="hero-main">
@@ -363,8 +368,8 @@
 </div>
 
 <div class="bar">
-  <span>COTAÇÕES <small id="upd">carregando…</small></span>
-  <button id="refresh">ATUALIZAR</button>
+  <span class="bar-t">Cotações <span id="upd">carregando…</span> <small id="updHa"></small></span>
+  <button id="refresh"><span class="gira" aria-hidden="true">↻</span>ATUALIZAR</button>
 </div>
 
 <div class="per-row">
@@ -374,7 +379,7 @@
     <button data-p="semana" class="on">SEMANA</button>
   </div>
 </div>
-<div class="sec-sub" id="chSub">Variação nos últimos 7 pregões</div>
+<div class="sec-sub" id="chSub"></div>
 
 <div class="tabs" id="tabs">
   <button data-s="conilon" class="on">CONILON</button>
@@ -835,11 +840,19 @@
     $("efeito").innerHTML = html;
   }
 
-  var loading = false, falhas = 0, horaOk = "";
+  var loading = false, falhas = 0, horaOk = "", tOk = 0;
+  // "(agora)", "(há 2 min)", "(há 1 h)" ao lado da hora da última atualização
+  function marcarHa() {
+    var min = Math.floor((Date.now() - tOk) / 60000);
+    $("updHa").textContent = !tOk || loading ? "" : min < 1 ? "(agora)" : min < 60 ? "(há " + min + " min)" : "(há " + Math.floor(min / 60) + " h)";
+  }
+  setInterval(marcarHa, 30000);
   function refresh(forcarHist) {
     if (loading) return;
     loading = true;
     $("upd").textContent = "atualizando…";
+    $("updHa").textContent = "";
+    document.querySelector(".bar").classList.add("girando");
     reservaUsada = null;
     var tUsd = "FX_IDC:USDBRL", cLdn, cNy;
     var cfgPronta = siteJson("config.json").then(function (c) {
@@ -881,20 +894,25 @@
       // Pela reserva, vale a hora em que o GitHub buscou as cotações.
       var now = reservaUsada ? new Date(reservaUsada) : new Date();
       horaOk = String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
-      $("upd").textContent = reservaUsada ? "atualizado às " + horaOk : horaOk;
+      $("upd").innerHTML = "de <b>" + horaOk + "</b>";
+      tOk = now.getTime();
       render();
     }).catch(function (e) {
       // Falha passageira da rede não assusta: a faixa só aparece depois de ~3 min sem conseguir
       // (o app tenta de novo a cada minuto) ou se ainda não há nenhum valor para mostrar.
       falhas++;
-      $("upd").textContent = "sem conexão";
+      $("upd").innerHTML = horaOk ? "de <b>" + horaOk + "</b> · sem conexão" : "sem conexão";
       if (falhas >= 3 || !last) {
         $("err").textContent = "Sem conexão para atualizar as cotações." +
           (last ? " Mostrando os últimos valores" + (horaOk ? " (das " + horaOk + ")" : "") + "." : " Tente de novo em instantes.");
         $("err").style.display = "block";
       }
       if (window.console) console.warn("Falha ao atualizar:", e && e.message);
-    }).then(function () { loading = false; });
+    }).then(function () {
+      loading = false;
+      document.querySelector(".bar").classList.remove("girando");
+      marcarHa();
+    });
   }
 
   $("refresh").onclick = function () { refresh(true); refreshWeather(true); refreshIntra(true); rastrear("atualizar"); };
@@ -1070,7 +1088,7 @@
       x.classList.toggle("on", x.getAttribute("data-p") === periodo);
     });
     if (periodo === "hoje") return renderDia();
-    $("chSub").textContent = "Variação nos últimos 7 pregões";
+    $("chSub").textContent = "";  // frases retiradas a pedido (28/10/2026): pouco texto na tela
     var p = pontos(serie), body = $("chBody");
     if (p.length < 2) { body.innerHTML = '<div class="empty">histórico indisponível no momento</div>'; return; }
     var first = p[0].v, lastV = p[p.length - 1].v, varPct = (lastV / first - 1) * 100;
@@ -1182,7 +1200,7 @@
   function renderDia() {
     var body = $("chBody");
     if (!intra || !intra.series) {
-      $("chSub").textContent = "Cotação de 5 em 5 minutos";
+      $("chSub").textContent = "";
       $("chNow").textContent = "—"; $("chVar").innerHTML = "";
       body.innerHTML = '<div class="empty">carregando gráfico do dia…</div>';
       return;
@@ -1190,7 +1208,7 @@
     if (arrastando) { pendente = true; return; }
     var a = agoraBRT(), ehHoje = intra.data === a.dia;
     var dSem = SEMANA_DIAS[new Date(intra.data + "T12:00:00Z").getUTCDay()];
-    $("chSub").textContent = ehHoje ? "De 5 em 5 minutos, das 5h às 18h" : "Último pregão: " + dSem + " " + ddmmIso(intra.data);
+    $("chSub").textContent = ehHoje ? "" : "Último pregão: " + dSem + " " + ddmmIso(intra.data);
 
     var r = pontosDia(serie), p = r.p, ant = intra.anterior;
     // Linha pontilhada = fechamento anterior (no Conilon, o do app). A variação do Conilon é o

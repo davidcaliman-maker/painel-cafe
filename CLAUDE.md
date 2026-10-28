@@ -19,7 +19,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v46).
+  (`painel-agro-vN` → `vN+1`; hoje v47).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
@@ -30,7 +30,8 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
 ## Telas (barra de abas no rodapé: PAINEL · CHUVA · NOTÍCIAS; roteamento por `#chuva`/`#noticias`)
 - **Painel:** card destaque do Conilon (preço grande, selo AO VIVO/FECHADO dd/mm/FERIADO, variação =
   movimento do mercado no dia "+R$ x no dia"), cards Dólar/Londres/N.York (modelo "E" escolhido em 28/10/2026:
-  fundo tingido + contorno + número + rodapé "▲ +0,45%"/"▼ −0,69%" em verde/vermelho; 0,00% cinza), botão ATUALIZAR,
+  fundo tingido + contorno + número + rodapé "▲ +0,45%"/"▼ −0,69%" em verde/vermelho; 0,00% cinza), faixa em
+  pílula "Cotações de HH:MM (há N min)" + botão "↻ ATUALIZAR" (setinha gira enquanto atualiza; modelo "B", 28/10),
   gráfico com seletor HOJE/SEMANA (escolha salva no aparelho; abas Conilon/Londres/N.York/Dólar).
   - SEMANA: 7 pregões (`historico.json`).
   - HOJE: pontos de 5 em 5 min, eixo 05h–18h, linha pontilhada = fechamento anterior, máx/mín,
@@ -72,6 +73,8 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   A variação % do dólar é calculada com o valor de 2 casas (5,23 × 5,23 = 0,00%, card cinza), pedido 02/10.
   (O `AlertaService.java` ainda usa o dólar ao vivo e o preço sem arredondar — diferença mínima.)
 - Card do Conilon NÃO deve mostrar ajuste, arroba nem faixa de indicadores (pedido do usuário).
+- Pouco texto na tela (pedido 28/10/2026): RETIRADOS "R$ por saca de 60 kg", "Variação nos últimos 7 pregões" e
+  "De 5 em 5 minutos…" (o `#chSub` só aparece no fim de semana: "Último pregão: …").
 - Card do Conilon tem a linha "Referência diária: CCCV (Vitória-ES)" (`.hero-ref`, cor de destaque), pedido
   28/10/2026 — única menção de fonte de preço na tela; NÃO citar os + R$ 10,00 (escolha do usuário).
 - Feriados nacionais (`feriado()` no index.html; fixos + Carnaval seg/ter, Sexta Santa, Corpus Christi
