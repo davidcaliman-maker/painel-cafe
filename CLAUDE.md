@@ -19,7 +19,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v43).
+  (`painel-agro-vN` → `vN+1`; hoje v44).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
@@ -29,7 +29,8 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
 
 ## Telas (barra de abas no rodapé: PAINEL · CHUVA · NOTÍCIAS; roteamento por `#chuva`/`#noticias`)
 - **Painel:** card destaque do Conilon (preço grande, selo AO VIVO/FECHADO dd/mm/FERIADO, variação =
-  movimento do mercado no dia "+R$ x no dia"), cards Dólar/Londres/N.York (vermelho/verde), botão ATUALIZAR,
+  movimento do mercado no dia "+R$ x no dia"), cards Dólar/Londres/N.York (modelo "E" escolhido em 28/10/2026:
+  fundo tingido + contorno + número + rodapé "▲ +0,45%"/"▼ −0,69%" em verde/vermelho; 0,00% cinza), botão ATUALIZAR,
   gráfico com seletor HOJE/SEMANA (escolha salva no aparelho; abas Conilon/Londres/N.York/Dólar).
   - SEMANA: 7 pregões (`historico.json`).
   - HOJE: pontos de 5 em 5 min, eixo 05h–18h, linha pontilhada = fechamento anterior, máx/mín,

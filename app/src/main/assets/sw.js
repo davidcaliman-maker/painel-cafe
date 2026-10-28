@@ -1,6 +1,6 @@
 // Service worker: guarda a "casca" do app para abrir mesmo sem internet.
 // As cotações e a previsão sempre vêm da rede (ficam salvas pelo próprio app).
-const CACHE = "painel-agro-v43";
+const CACHE = "painel-agro-v44";
 const SHELL = ["./", "index.html", "manifest.webmanifest",
   "apple-touch-icon.png", "icon-192.png", "icon-512.png"];
 

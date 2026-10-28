@@ -147,12 +147,21 @@
     .efeito { display: none; }
   }
 
-  .mkt { overflow: hidden; border-radius: 6px; padding: 6px 4px 8px; text-align: center; background: var(--mkt-neutro); }
-  .mkt.down { background: var(--red); }
-  .mkt.up { background: var(--green); }
-  .mkt .h { display: flex; justify-content: space-between; gap: 2px; font-size: min(14px, 3.15vw); font-weight: 600; white-space: nowrap; }
-  .mkt .v { font-size: min(26px, 6.6vw); font-weight: 700; margin: 4px 0 2px; font-variant-numeric: tabular-nums; }
-  .mkt .d { font-size: 13px; font-weight: 500; }
+  /* Cards Dólar/Londres/N.York (modelo "E", 28/10/2026): fundo tingido, contorno e rodapé com a variação
+     em verde (alta) ou vermelho (baixa); sem variação, cinza. */
+  .mkt { overflow: hidden; border-radius: 10px; text-align: center; background: var(--card);
+    border: 1.5px solid var(--mkt-neutro); display: flex; flex-direction: column; }
+  .mkt .h { padding: 6px 2px 0; font-size: min(13px, 3vw); font-weight: 700; letter-spacing: .5px; color: var(--muted); white-space: nowrap; }
+  .mkt .v { font-size: min(26px, 6.6vw); font-weight: 800; margin: 2px 0 0; font-variant-numeric: tabular-nums; }
+  .mkt .d { font-size: 12.5px; font-weight: 500; color: var(--muted); padding-bottom: 6px; flex: 1; }
+  .mkt .p { background: var(--mkt-neutro); font-size: min(14px, 3.3vw); font-weight: 800; padding: 4px 2px; white-space: nowrap;
+    font-variant-numeric: tabular-nums; }
+  .mkt.up { background: rgba(46, 204, 95, .13); border-color: #2ecc5f; }
+  .mkt.up .v { color: #4cd964; }
+  .mkt.up .p { background: var(--green); }
+  .mkt.down { background: rgba(255, 77, 79, .14); border-color: #ff4d4f; }
+  .mkt.down .v { color: #ff5a5f; }
+  .mkt.down .p { background: var(--red); }
 
   .bar { border: 3px solid var(--orange); border-radius: 3px; display: flex; align-items: center;
     justify-content: space-between; padding: 8px 12px; margin-bottom: 14px; }
@@ -337,9 +346,9 @@
 </div>
 
 <div class="grid3">
-  <div class="mkt" id="mUsd"><div class="h"><span>DÓLAR</span><span class="p">(–)</span></div><div class="v">—</div><div class="d">—</div></div>
-  <div class="mkt" id="mLdn"><div class="h"><span>LONDRES</span><span class="p">(–)</span></div><div class="v">—</div><div class="d">—</div></div>
-  <div class="mkt" id="mNy"><div class="h"><span>N.YORK</span><span class="p">(–)</span></div><div class="v">—</div><div class="d">—</div></div>
+  <div class="mkt" id="mUsd"><div class="h">DÓLAR</div><div class="v">—</div><div class="d">—</div><div class="p">–</div></div>
+  <div class="mkt" id="mLdn"><div class="h">LONDRES</div><div class="v">—</div><div class="d">—</div><div class="p">–</div></div>
+  <div class="mkt" id="mNy"><div class="h">N.YORK</div><div class="v">—</div><div class="d">—</div><div class="p">–</div></div>
 </div>
 
 <div class="bar">
@@ -609,7 +618,12 @@
     if (n == null || isNaN(n)) return "—";
     return (n > 0 ? "+" : n < 0 ? "−" : "") + fmt(Math.abs(n), dec) + (suffix || "");
   }
-  function pct(n) { return n == null || isNaN(n) ? "(–)" : "(" + (n > 0 ? "+" : "") + n.toFixed(2) + "%)"; }
+  // Rodapé dos cards: "▲ +0,45%", "▼ −0,69%", "0,00%" ou "–" (sem dado)
+  function pct(n) {
+    if (n == null || isNaN(n)) return "–";
+    var t = Math.abs(n).toFixed(2).replace(".", ",") + "%";
+    return Number(n.toFixed(2)) === 0 ? t : n > 0 ? "▲ +" + t : "▼ −" + t;
+  }
   function ddmm(ts) {
     if (!ts) return "";
     var d = new Date(ts * 1000);
