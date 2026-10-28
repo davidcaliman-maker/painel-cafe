@@ -19,7 +19,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v45).
+  (`painel-agro-vN` → `vN+1`; hoje v46).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
@@ -42,6 +42,10 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
     oficial (3.375). Em 06/10 o usuário PEDIU para igualar: depois do fechamento da bolsa (`fechouBolsa`:
     Londres 17h30 de Londres, NY 13h30 de NY, com horário de verão UK/EUA) o gráfico de Londres/NY ganha um
     último ponto com o ajuste oficial (= quadrado) e o topo diz "fechamento".
+- **Indicar para um amigo (28/10/2026):** ícone verde do WhatsApp no topo (ao lado do tema) e botão largo
+  "INDICAR PARA UM AMIGO" embaixo do gráfico → `https://wa.me/?text=` + `MSG_INDICAR` (mensagem com 5 benefícios,
+  link do instalar.html e "No iPhone, abra pelo Safari"). No APK, links de fora abrem no app (openExternal).
+  Umami: evento `indicar` (local: topo/painel). Título do topo diminuiu para 6vw para caber os 2 botões.
 - **Chuva:** previsão de 10 dias (Open-Meteo). Padrão Itamaraju-BA; usuário escolhe qualquer
   cidade do Brasil (busca no geocoding do Open-Meteo), salvo no aparelho. O ícone da aba mostra
   o total de mm dos 10 dias.

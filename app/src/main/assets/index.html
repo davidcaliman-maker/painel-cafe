@@ -84,10 +84,10 @@
     calc(28px + env(safe-area-inset-bottom)) calc(6px + env(safe-area-inset-left)); }
 
   /* Cabeçalho */
-  .brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px 6px; }
+  .brand { display: flex; align-items: center; gap: 8px; padding: 4px 8px 6px; }
   .logo { display: flex; align-items: flex-end; gap: 1px; }
   .logo .bean { width: min(38px, 8.5vw); height: min(38px, 8.5vw); }
-  .brand h1 { margin: 0; white-space: nowrap; line-height: 1.05; font-size: min(32px, 6.5vw); font-weight: 800; letter-spacing: .5px; }
+  .brand h1 { margin: 0; white-space: nowrap; line-height: 1.05; font-size: min(32px, 6vw); font-weight: 800; letter-spacing: .5px; }  /* 6vw: cabe com os 2 botões */
 
   .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 8px; }
 
@@ -216,8 +216,17 @@
   .up-t { color: #4cd964; }
   .down-t { color: #ff5a5f; }
 
+  /* Indicar o app pelo WhatsApp (pedido 28/10/2026): ícone no topo e botão largo no fim do Painel */
+  .indicar-btn { margin-left: auto; flex: none; width: min(44px, 10vw); height: min(44px, 10vw); border-radius: 50%;
+    background: #25d366; color: #fff; display: flex; align-items: center; justify-content: center; }
+  .indicar-btn svg { width: 62%; height: 62%; }
+  .indicar { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 14px 0 4px;
+    background: #25d366; color: #062e17; border-radius: 10px; padding: 13px 10px; text-decoration: none;
+    font-size: 16px; font-weight: 800; letter-spacing: .5px; }
+  .indicar svg { width: 24px; height: 24px; flex: none; }
+
   /* Botão do tema (preto → rosa → azul) */
-  .tema-btn { margin-left: auto; flex: none; width: min(44px, 11vw); height: min(44px, 11vw); padding: 0;
+  .tema-btn { flex: none; width: min(44px, 10vw); height: min(44px, 10vw); padding: 0;
     border-radius: 50%; border: 2px solid #ff5fa2; background: transparent; display: flex;
     align-items: center; justify-content: center; transition: background .2s; }
   .tema-btn svg { width: 86%; height: 86%; }
@@ -301,6 +310,7 @@
 <div class="brand">
   <div class="logo"><svg class="bean" viewBox="0 0 24 24" aria-hidden="true"><g transform="rotate(35 12 12)"><ellipse cx="12" cy="12" rx="7.2" ry="10.5" fill="var(--orange)"/><path d="M12 1.8c-3.2 3.4-3.2 6.6 0 10.2s3.2 6.8 0 10.2" stroke="#000" stroke-width="1.7" fill="none" stroke-linecap="round"/></g></svg></div>
   <h1>PAINEL DO AGRO</h1>
+  <a class="indicar-btn" data-local="topo" target="_blank" rel="noopener" aria-label="Indicar o app para um amigo pelo WhatsApp" title="Indicar para um amigo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.6-1.2A9 9 0 1 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M9 7.6c.3 0 .6.1.8.5l.8 1.8c.1.3 0 .5-.1.7l-.6.7a6.4 6.4 0 0 0 2.8 2.8l.7-.6c.2-.2.4-.2.7-.1l1.8.8c.4.2.5.5.4.8-.2 1-1 1.8-2 1.8-3.5-.2-6.5-3.2-6.7-6.7 0-1 .7-1.8 1.4-2.5z" fill="currentColor"/></svg></a>
   <button class="tema-btn" id="temaBtn" aria-label="Trocar tema (preto, rosa, azul)" title="Trocar tema">
     <!-- Rosto de mulher com chapéu -->
     <svg viewBox="5 6 38 37" aria-hidden="true">
@@ -376,6 +386,7 @@
   <div class="top"><div class="now" id="chNow">—</div><div class="var" id="chVar"></div></div>
   <div id="chBody"><div class="empty">carregando histórico…</div></div>
 </div>
+<a class="indicar" data-local="painel" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.6-1.2A9 9 0 1 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M9 7.6c.3 0 .6.1.8.5l.8 1.8c.1.3 0 .5-.1.7l-.6.7a6.4 6.4 0 0 0 2.8 2.8l.7-.6c.2-.2.4-.2.7-.1l1.8.8c.4.2.5.5.4.8-.2 1-1 1.8-2 1.8-3.5-.2-6.5-3.2-6.7-6.7 0-1 .7-1.8 1.4-2.5z" fill="currentColor"/></svg>INDICAR PARA UM AMIGO</a>
 
 <!-- Crédito mínimo exigido pela fonte da chuva (Open-Meteo: licença CC BY 4.0). Cepea retirado em 24/10/2026.
      O usuário pediu para não mostrar as demais fontes. -->
@@ -1335,6 +1346,26 @@
       setTimeout(function () { registrarAbertura(tentativa + 1); }, 500);
     }
   })(0);
+
+  // ---------- indicar o app pelo WhatsApp ----------
+  var MSG_INDICAR = [
+    "☕ *Painel do Agro* – cotação do café Conilon na palma da mão!",
+    "",
+    "✅ Preço do Conilon ao vivo, com referência diária do CCCV",
+    "✅ Dólar, Londres e Nova York atualizados",
+    "✅ Gráfico do dia e da semana",
+    "✅ Previsão de chuva para a sua cidade",
+    "✅ Notícias do café e do mercado",
+    "",
+    "É grátis. Instale aqui:",
+    "https://davidcaliman-maker.github.io/painel-cafe/instalar.html",
+    "",
+    "📱 No iPhone, abra o link pelo Safari."
+  ].join("\n");
+  document.querySelectorAll("[data-local]").forEach(function (a) {
+    a.href = "https://wa.me/?text=" + encodeURIComponent(MSG_INDICAR);  // o APK abre links de fora no WhatsApp
+    a.addEventListener("click", function () { rastrear("indicar", { local: a.getAttribute("data-local") }); });
+  });
 
   // ---------- tema (preto → rosa → azul) ----------
   var TEMAS = ["padrao", "rosa", "azul"];
