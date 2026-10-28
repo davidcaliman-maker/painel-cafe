@@ -56,6 +56,27 @@
     --sheet: #22101b;
     --mkt-neutro: #5a3a4c;
   }
+  /* Tema azul-escuro (pedido do usuário em 28/10/2026; o botão alterna preto → rosa → azul) */
+  html[data-tema="azul"] {
+    --bg: #07111f;
+    --card: #10203a;
+    --card-2: #172b4a;
+    --muted: #9fb4d1;
+    --orange: #38a3ff;
+    --on-accent: #04172e;
+    --line: #1f3557;
+    --line-2: #24406a;
+    --hero-a: #15305a;
+    --hero-b: #0c1a30;
+    --hero-border: #24477a;
+    --reg-bg: #13294a;
+    --tabbar: #050c17;
+    --tabbar-line: #182c4a;
+    --sheet: #0d1b30;
+    --mkt-neutro: #2c3e5a;
+    --red: #d3262d;
+    --green: #1c9a46;
+  }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; background: var(--bg); color: var(--text);
     font-family: "Roboto", -apple-system, "Helvetica Neue", Arial, sans-serif; -webkit-text-size-adjust: 100%; }
@@ -185,12 +206,13 @@
   .up-t { color: #4cd964; }
   .down-t { color: #ff5a5f; }
 
-  /* Botão do tema rosa */
+  /* Botão do tema (preto → rosa → azul) */
   .tema-btn { margin-left: auto; flex: none; width: min(44px, 11vw); height: min(44px, 11vw); padding: 0;
     border-radius: 50%; border: 2px solid #ff5fa2; background: transparent; display: flex;
     align-items: center; justify-content: center; transition: background .2s; }
   .tema-btn svg { width: 86%; height: 86%; }
   html[data-tema="rosa"] .tema-btn { background: #fff; box-shadow: 0 0 0 3px rgba(255, 95, 162, .45); }
+  html[data-tema="azul"] .tema-btn { border-color: #38a3ff; box-shadow: 0 0 0 3px rgba(56, 163, 255, .35); }
 
   /* Barra de abas (rodapé) */
   body { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
@@ -260,7 +282,7 @@
   // Aplica o tema salvo antes de desenhar a tela (evita piscar a cor padrão).
   try {
     var t = window.Native ? Native.load("tema") : localStorage.getItem("tema");
-    if (t === "rosa") document.documentElement.setAttribute("data-tema", "rosa");
+    if (t === "rosa" || t === "azul") document.documentElement.setAttribute("data-tema", t);
   } catch (e) {}
 </script>
 </head>
@@ -269,7 +291,7 @@
 <div class="brand">
   <div class="logo"><svg class="bean" viewBox="0 0 24 24" aria-hidden="true"><g transform="rotate(35 12 12)"><ellipse cx="12" cy="12" rx="7.2" ry="10.5" fill="var(--orange)"/><path d="M12 1.8c-3.2 3.4-3.2 6.6 0 10.2s3.2 6.8 0 10.2" stroke="#000" stroke-width="1.7" fill="none" stroke-linecap="round"/></g></svg></div>
   <h1>PAINEL DO AGRO</h1>
-  <button class="tema-btn" id="temaBtn" aria-label="Tema rosa" aria-pressed="false" title="Tema rosa">
+  <button class="tema-btn" id="temaBtn" aria-label="Trocar tema (preto, rosa, azul)" title="Trocar tema">
     <!-- Rosto de mulher com chapéu -->
     <svg viewBox="5 6 38 37" aria-hidden="true">
       <!-- cabelo -->
@@ -1292,29 +1314,31 @@
   // O script do Umami carrega depois da página: espera ele ficar pronto para registrar a abertura.
   (function registrarAbertura(tentativa) {
     if (window.umami && umami.track) {
-      rastrear("abertura", { plataforma: plataforma(), tema: load("tema") === "rosa" ? "rosa" : "padrão",
+      rastrear("abertura", { plataforma: plataforma(), tema: temaSalvo() === "padrao" ? "padrão" : temaSalvo(),
                              cidade_chuva: nomeCidade(cidade) });
     } else if (tentativa < 20) {
       setTimeout(function () { registrarAbertura(tentativa + 1); }, 500);
     }
   })(0);
 
-  // ---------- tema rosa ----------
-  function aplicarTema(rosa) {
-    if (rosa) document.documentElement.setAttribute("data-tema", "rosa");
-    else document.documentElement.removeAttribute("data-tema");
-    $("temaBtn").setAttribute("aria-pressed", rosa ? "true" : "false");
+  // ---------- tema (preto → rosa → azul) ----------
+  var TEMAS = ["padrao", "rosa", "azul"];
+  var COR_BARRA = { padrao: "#000000", rosa: "#1a0c15", azul: "#07111f" };
+  function temaSalvo() { var t = load("tema"); return t === "rosa" || t === "azul" ? t : "padrao"; }  // usada antes de TEMAS existir
+  function aplicarTema(t) {
+    if (t === "padrao") document.documentElement.removeAttribute("data-tema");
+    else document.documentElement.setAttribute("data-tema", t);
     var meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute("content", rosa ? "#1a0c15" : "#000000");
+    if (meta) meta.setAttribute("content", COR_BARRA[t]);
     renderChart();
   }
   $("temaBtn").onclick = function () {
-    var rosa = document.documentElement.getAttribute("data-tema") !== "rosa";
-    save("tema", rosa ? "rosa" : "padrao");
-    aplicarTema(rosa);
-    rastrear("tema", { tema: rosa ? "rosa" : "padrão" });
+    var t = TEMAS[(TEMAS.indexOf(temaSalvo()) + 1) % TEMAS.length];
+    save("tema", t);
+    aplicarTema(t);
+    rastrear("tema", { tema: t === "padrao" ? "padrão" : t });
   };
-  aplicarTema(load("tema") === "rosa");
+  aplicarTema(temaSalvo());
 
   // ---------- notícias ----------
   var noticias = null, filtro = "", lastNewsFetch = 0;

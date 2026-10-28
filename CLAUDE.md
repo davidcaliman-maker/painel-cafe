@@ -19,7 +19,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v42).
+  (`painel-agro-vN` → `vN+1`; hoje v43).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
@@ -49,8 +49,10 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   Temas: Todas · ⚡ Impacto · Sul da BA e ES (filtro `regional`) · Dólar · Mercado · Clima · Safra · Consumo. Logística, Geopolítica e
   Concorrentes RETIRADOS a pedido (exceto Vietnã/robusta, mantido em Safra). Dólar entra sem "café" no título (`BUSCAS_DOLAR`, máx. 8). Selo IMPACTO
   (`IMPACTO` em noticias.py: dispara/despenca/desaba/geada/quebra de safra/forte alta…) vai para o topo.
-- **Tema rosa:** botão no canto superior direito (ícone de mulher de chapéu com óculos, SVG
-  inline). Cores em variáveis CSS; `html[data-tema="rosa"]`. Verde/vermelho de alta e baixa não mudam.
+- **Temas preto / rosa / azul:** botão no canto superior direito (ícone de mulher de chapéu com óculos, SVG
+  inline); cada toque troca preto → rosa → azul (salvo no aparelho, chave `tema`: padrao/rosa/azul).
+  Cores em variáveis CSS; `html[data-tema="rosa"]` e `html[data-tema="azul"]` (azul-marinho, destaque
+  azul-céu #38a3ff, pedido 28/10/2026). Os 3 quadrados Dólar/Londres/N.York seguem vermelho/verde em todos.
 - Sem faixa "Indicadores Técnicos do Mercado Físico", sem botão "?" nem janela de ajuda (inclusive o
   "Testar alerta") — retirados a pedido do usuário em 28/09/2026. O aviso de privacidade (Umami) fica
   numa linha do rodapé do Painel. `Native.testarAlerta` continua no APK, só não é usado.
