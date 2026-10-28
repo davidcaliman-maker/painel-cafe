@@ -45,7 +45,8 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
 - **Indicar para um amigo (28/10/2026):** ícone verde do WhatsApp no topo (ao lado do tema) e botão largo
   "INDICAR PARA UM AMIGO" embaixo do gráfico → `https://wa.me/?text=` + `MSG_INDICAR` (mensagem com 5 benefícios,
   link do instalar.html e "No iPhone, abra pelo Safari"). No APK, links de fora abrem no app (openExternal).
-  Umami: evento `indicar` (local: topo/painel). Título do topo diminuiu para 6vw para caber os 2 botões.
+  Umami: evento `indicar` (local: topo/painel). Título do topo diminuiu para 6vw para caber os 2 botões. Usuário confirmou
+  no celular (28/10) que abre o WhatsApp com a mensagem.
 - **Chuva:** previsão de 10 dias (Open-Meteo). Padrão Itamaraju-BA; usuário escolhe qualquer
   cidade do Brasil (busca no geocoding do Open-Meteo), salvo no aparelho. O ícone da aba mostra
   o total de mm dos 10 dias.
