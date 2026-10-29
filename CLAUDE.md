@@ -317,6 +317,12 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   `inicios` no config.json (aprovado por ele ao pedir). Vale também para o dia de hoje (o gráfico e o
   card recalculam na próxima rodada).
 
+- Gráfico HOJE × card FECHADO (explicado em 29/10/2026): o gráfico termina no último NEGÓCIO de Londres (ex. 3.160 →
+  R$ 913,70) e o FECHADO usa o AJUSTE oficial (3.167 → R$ 916,00). Opções oferecidas: A) fechamento = último ponto do
+  gráfico; B) gráfico do Conilon ganhar o ponto final com o ajuste. Usuário decidiu DEIXAR COMO ESTÁ.
+- 29/10/2026: app abriu 916 (CCCV 28/10 906 + 10), fechou 916,00 (Londres −16 e dólar +0,03 se anularam) e o CCCV de
+  29/10 também deu 916 — coincidência, explicada ao usuário.
+
 ## Pendências / ideias oferecidas e ainda não feitas
 - Nome do card "CONILON 7/8" — usuário não decidiu se renomeia.
 - A análise de fatores (50%/70%) prevista para fim de out/2026 perdeu o sentido: sem Cepea não há com o
