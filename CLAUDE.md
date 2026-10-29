@@ -35,7 +35,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v58).
+  (`painel-agro-vN` → `vN+1`; hoje v59).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
@@ -269,6 +269,10 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
 - `divulgacao/cartaz-pregao-do-cafe.png` (A5 1240×1748 com QR; refeito em 29/10/2026 com nome/ícone novos, fundo azul-
   marinho, 6 itens incluindo o cálculo de calda; o antigo cartaz-painel-do-agro.png foi apagado) e `divulgacao/qrcode-instalar.png`.
 - Mensagem de WhatsApp sugerida: título, 5 benefícios, link, "No iPhone, abra pelo Safari".
+- **Não contar o dono nas estatísticas (29/10/2026):** 5 toques seguidos no logo (grão do topo) liga/desliga
+  `localStorage["umami.disabled"]` (o script do Umami não envia nada com essa chave) e mostra um aviso. Feito no celular
+  do usuário por ele mesmo; no navegador do Claude (painel do Claude Code) já foi ligado no site oficial. A cópia local
+  (localhost) já não conta (data-domains). Se o usuário limpar os dados do app, precisa repetir.
 - Umami: eventos `abertura` (plataforma, tema, cidade_chuva), `aba`, `tema`, `cidade-chuva`,
   `noticia`, `atualizar`, `instalar` (tipo).
 

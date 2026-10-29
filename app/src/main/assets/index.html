@@ -235,6 +235,11 @@
     font-size: 16px; font-weight: 800; letter-spacing: .5px; }
   .indicar svg { width: 24px; height: 24px; flex: none; }
 
+  /* Aviso rápido no rodapé (ex.: estatísticas desligadas neste aparelho) */
+  .toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+    background: var(--card-2); color: var(--text); border: 1px solid var(--orange); border-radius: 10px; padding: 10px 14px;
+    font-size: 14px; z-index: 20; max-width: 90vw; text-align: center; }
+
   /* Botão do tema (preto → rosa → azul) */
   .tema-btn { flex: none; width: min(44px, 10vw); height: min(44px, 10vw); padding: 0;
     border-radius: 50%; border: 2px solid #ff5fa2; background: transparent; display: flex;
@@ -1534,6 +1539,32 @@
   document.querySelectorAll("[data-local]").forEach(function (a) {
     a.href = "https://wa.me/?text=" + encodeURIComponent(MSG_INDICAR);  // o APK abre links de fora no WhatsApp
     a.addEventListener("click", function () { rastrear("indicar", { local: a.getAttribute("data-local") }); });
+  });
+
+  // ---------- não contar este aparelho nas estatísticas (pedido 29/10/2026) ----------
+  // 5 toques seguidos no logo (grão) liga/desliga. O script do Umami não envia nada quando existe
+  // localStorage "umami.disabled". Serve para o dono do app não aparecer nos números.
+  function aviso(t) {
+    var el = document.createElement("div");
+    el.className = "toast"; el.textContent = t; document.body.appendChild(el);
+    setTimeout(function () { el.remove(); }, 3500);
+  }
+  var toquesLogo = 0, tLogo = 0;
+  document.querySelector(".brand .logo").addEventListener("click", function () {
+    var agora = Date.now();
+    toquesLogo = agora - tLogo < 800 ? toquesLogo + 1 : 1;
+    tLogo = agora;
+    if (toquesLogo < 5) return;
+    toquesLogo = 0;
+    try {
+      if (localStorage.getItem("umami.disabled")) {
+        localStorage.removeItem("umami.disabled");
+        aviso("Este aparelho VOLTOU a ser contado nas estatísticas.");
+      } else {
+        localStorage.setItem("umami.disabled", "1");
+        aviso("Pronto: este aparelho NÃO é mais contado nas estatísticas.");
+      }
+    } catch (e) { aviso("Não foi possível mudar neste aparelho."); }
   });
 
   // ---------- tema (azul ↔ rosa) ----------
