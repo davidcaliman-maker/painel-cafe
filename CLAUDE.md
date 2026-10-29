@@ -27,7 +27,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v51).
+  (`painel-agro-vN` → `vN+1`; hoje v52).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
@@ -66,7 +66,10 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   vários). Folha: área/tanque = volume ÷ calda/ha. Solo: calda/planta = nº × volume; plantas/tanque = volume ÷
   calda/planta; área = plantas ÷ plantas/ha. Produto/tanque = dose/ha × área. Botão "ENVIAR PELO WHATSAPP"
   (wa.me com a recomendação + aviso "siga a bula e o agrônomo"). Tudo salvo no aparelho (chave `calculo`).
-  Umami: `calculo-whatsapp` (modo, equipamento, produtos). Respostas do usuário: dose por ha nos dois modos.
+  Dois botões: "ENVIAR COMPLETA" (detalhada, termina com o link do app) e "ENVIAR RESUMIDA" (`textoCurto`, para
+  leigo, SEM nome do app: "PRODUTO - DOSE POR EQUIPAMENTO - EQUIPAMENTO" por linha; via solo começa com
+  "Drench: N × V mL por planta"). Pedido 29/10/2026.
+  Umami: `calculo-whatsapp` (modo, equipamento, produtos, mensagem completa/resumida). Dose por ha nos dois modos.
 - **Chuva:** previsão de 10 dias (Open-Meteo). Padrão Itamaraju-BA; usuário escolhe qualquer
   cidade do Brasil (busca no geocoding do Open-Meteo), salvo no aparelho. O ícone da aba mostra
   o total de mm dos 10 dias.

@@ -500,7 +500,8 @@
 
   <div class="calc-box calc-res" id="cRes"></div>
 
-  <a class="indicar" id="cZap" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.6-1.2A9 9 0 1 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M9 7.6c.3 0 .6.1.8.5l.8 1.8c.1.3 0 .5-.1.7l-.6.7a6.4 6.4 0 0 0 2.8 2.8l.7-.6c.2-.2.4-.2.7-.1l1.8.8c.4.2.5.5.4.8-.2 1-1 1.8-2 1.8-3.5-.2-6.5-3.2-6.7-6.7 0-1 .7-1.8 1.4-2.5z" fill="currentColor"/></svg>ENVIAR PELO WHATSAPP</a>
+  <a class="indicar" id="cZap" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.6-1.2A9 9 0 1 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M9 7.6c.3 0 .6.1.8.5l.8 1.8c.1.3 0 .5-.1.7l-.6.7a6.4 6.4 0 0 0 2.8 2.8l.7-.6c.2-.2.4-.2.7-.1l1.8.8c.4.2.5.5.4.8-.2 1-1 1.8-2 1.8-3.5-.2-6.5-3.2-6.7-6.7 0-1 .7-1.8 1.4-2.5z" fill="currentColor"/></svg>ENVIAR COMPLETA</a>
+  <a class="indicar" id="cZapCurta" style="background:transparent;color:#25d366;border:2px solid #25d366;margin-top:8px" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.6-1.2A9 9 0 1 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M9 7.6c.3 0 .6.1.8.5l.8 1.8c.1.3 0 .5-.1.7l-.6.7a6.4 6.4 0 0 0 2.8 2.8l.7-.6c.2-.2.4-.2.7-.1l1.8.8c.4.2.5.5.4.8-.2 1-1 1.8-2 1.8-3.5-.2-6.5-3.2-6.7-6.7 0-1 .7-1.8 1.4-2.5z" fill="currentColor"/></svg>ENVIAR RESUMIDA</a>
   <div class="foot">Cálculo de apoio. Siga sempre a bula e a recomendação do agrônomo.</div>
 </div>
 
@@ -1616,6 +1617,13 @@
     return res;
   }
 
+  // Resumida (pedido 29/10/2026), para quem vai aplicar: só "PRODUTO - DOSE POR EQUIPAMENTO - EQUIPAMENTO", sem o nome do app
+  function textoCurto(r) {
+    var eq = calc.equip == 20 ? "Costal 20 L" : "Tanque " + br(Number(calc.equip), 0) + " L";
+    var linhas = r.prods.map(function (p) { return p.nome + " - " + qtd(p.tanque, p.un) + " - " + eq; });
+    if (calc.modo === "solo") linhas.unshift("Drench: " + calc.drN + " × " + br(r.vol, 0) + " mL por planta");
+    return linhas.join("\n");
+  }
   function textoZap(r) {
     var nomeT = calc.equip == 20 ? "bomba" : "tanque";
     var t = ["🧪 *Recomendação " + (calc.modo === "folha" ? "via folha" : "via solo (drench)") + " – café Conilon*", "",
@@ -1656,8 +1664,9 @@
     }
     $("cRes").innerHTML = h;
     var pronto = r.ok && r.prods.length;
-    $("cZap").style.opacity = pronto ? "" : ".45";
+    $("cZap").style.opacity = $("cZapCurta").style.opacity = pronto ? "" : ".45";
     $("cZap").href = pronto ? "https://wa.me/?text=" + encodeURIComponent(textoZap(r)) : "#";
+    $("cZapCurta").href = pronto ? "https://wa.me/?text=" + encodeURIComponent(textoCurto(r)) : "#";
   }
 
   function marcar(grupo, attr, valor) {
@@ -1708,10 +1717,11 @@
     calc.prods.push({ nome: "", dose: "", un: "L" }); desenharForm();
     var ins = document.querySelectorAll('#cProds [data-k="nome"]'); ins[ins.length - 1].focus();
   });
-  $("cZap").addEventListener("click", function (e) {
-    if ($("cZap").getAttribute("href") === "#") { e.preventDefault(); return; }
-    rastrear("calculo-whatsapp", { modo: calc.modo, equipamento: String(calc.equip), produtos: String(calcular().prods.length) });
-  });
+  ["cZap", "cZapCurta"].forEach(function (id) { $(id).addEventListener("click", function (e) {
+    if ($(id).getAttribute("href") === "#") { e.preventDefault(); return; }
+    rastrear("calculo-whatsapp", { modo: calc.modo, equipamento: String(calc.equip), produtos: String(calcular().prods.length),
+                                   mensagem: id === "cZap" ? "completa" : "resumida" });
+  }); });
   desenharForm();
 
   // ---------- abas (rodapé) ----------
