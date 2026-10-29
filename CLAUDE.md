@@ -5,8 +5,7 @@ genérico e parecido com "Painel do Café", app pago de terceiros). Trocado só 
 do topo ("PREGÃO DO" + "CAFÉ"), `<title>`, apple-mobile-web-app-title, manifest, mensagem do WhatsApp, instalar.html
 e textos do perfil do iPhone. MANTIDOS de propósito: URLs/repo `painel-cafe`, arquivos `PainelAgro.apk`/
 `PainelAgro.mobileconfig` (e identificadores), cache `painel-agro-vN` e o nome no Android (`AndroidManifest.xml`
-label "Painel do Agro" — só muda com APK novo; oferecido junto com ícone novo). Cartaz/QR de divulgação ainda
-dizem "Painel do Agro". Quem já instalou o atalho vê o nome antigo até reinstalar.
+label "Painel do Agro" — só muda com APK novo; oferecido junto com ícone novo). Quem já instalou o atalho vê o nome antigo até reinstalar.
 **29/10/2026 (pedido: "em todos os lugares"):** links do instalar.html nas mensagens viraram `instalar.html?v=pregao`
 (o WhatsApp guardava o resumo antigo do link); perfil do iPhone renomeado para `PregaoDoCafe.mobileconfig`; botão
 Android baixa `PregaoDoCafe.apk` (o pages.yml copia o APK da última release também com esse nome; `PainelAgro.apk`
@@ -259,7 +258,8 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
 
 ## Divulgação
 - Divulgar o LINK `instalar.html` (detecta iPhone/Android/computador), não o arquivo.
-- `divulgacao/cartaz-painel-do-agro.png` (A5 com QR) e `divulgacao/qrcode-instalar.png`.
+- `divulgacao/cartaz-pregao-do-cafe.png` (A5 1240×1748 com QR; refeito em 29/10/2026 com nome/ícone novos, fundo azul-
+  marinho, 6 itens incluindo o cálculo de calda; o antigo cartaz-painel-do-agro.png foi apagado) e `divulgacao/qrcode-instalar.png`.
 - Mensagem de WhatsApp sugerida: título, 5 benefícios, link, "No iPhone, abra pelo Safari".
 - Umami: eventos `abertura` (plataforma, tema, cidade_chuva), `aba`, `tema`, `cidade-chuva`,
   `noticia`, `atualizar`, `instalar` (tipo).
