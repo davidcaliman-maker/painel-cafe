@@ -35,7 +35,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v56).
+  (`painel-agro-vN` → `vN+1`; hoje v57).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
@@ -81,6 +81,14 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   Equipamento "Outro (digitar os litros)" (`equipOutro`; até 30 L = "bomba", acima = "tanque"). Campo QUADRA/TALHÃO
   (opcional) na 1ª linha das duas mensagens. Resumida com negrito/ícones: 📍 *Quadra*, 🍃 *Via folha* ou 🌱 *Via solo:* N drench
   de V mL por planta, linha em branco e 🧪 *Produto* - *dose* - Equipamento ("5" → "Quadra: 5"; "Quadra 3"/"Talhão…" fica como digitado). 29/10/2026.
+- **Consulta de produtos registrados para café (29/10/2026):** botão "🔎 CONSULTAR PRODUTOS REGISTRADOS PARA CAFÉ" na aba
+  CÁLCULO abre `#agroModal`: busca sem acento por praga/doença/planta daninha/produto/ingrediente ativo + filtro por tipo;
+  até 50 resultados; "+ USAR NO CÁLCULO" põe o nome no cálculo; "VER BULA" = pesquisa no Google. Dados:
+  `assets/agrofit-cafe.json` (versionado; ~310 KB; 1.272 produtos em 29/10) gerado por `scripts/agrofit_cafe.py` a partir do
+  CSV aberto do Agrofit/MAPA (CC-BY, ~400 MB lido em fluxo; só CULTURA = "Café" e SITUACAO TRUE; "Todas as culturas" fica
+  de fora). O CSV NÃO tem dose nem calda (estão na bula; API da Embrapa AgroAPI talvez tenha — exigiria conta do usuário).
+  `.github/workflows/agrofit.yml`: toda segunda 06:17, regrava só se mudou, faz commit e chama o pages.yml.
+  Umami: `agrofit` (acao: abrir/usar/bula). Crédito "Fonte: Agrofit/MAPA" no fim da janela (exigido pela licença).
 - **Chuva:** previsão de 10 dias (Open-Meteo). Padrão Itamaraju-BA; usuário escolhe qualquer
   cidade do Brasil (busca no geocoding do Open-Meteo), salvo no aparelho. O ícone da aba mostra
   o total de mm dos 10 dias.
