@@ -35,7 +35,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v63).
+  (`painel-agro-vN` → `vN+1`; hoje v64).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
@@ -117,9 +117,9 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
 - Card do Conilon tem a linha "Referência diária: CCCV (Vitória-ES)" (`.hero-ref`, cor de destaque), pedido
   28/10/2026 — única menção de fonte de preço na tela; NÃO citar os + R$ 10,00 (escolha do usuário).
 - **Todos os contratos de Londres (29/10/2026):** tocar no card "LONDRES ›" abre `#curvaModal` com os 8 próximos
-  vencimentos (`contratosAtivos(MERCADOS.londres)`, busca no scanner na hora): US$/t, variação do dia, R$/saca
-  (US$/t × 0,06 × dólar de hoje com 2 casas — SEM diferencial do físico e sem dólar futuro, dito na nota), diferença para
-  o contrato do app (borda + "REFERÊNCIA") e resumo da curva (longos mais baratos = "pagando mais pelo café de agora";
+  vencimentos (`contratosAtivos(MERCADOS.londres)`, busca no scanner na hora). Simplificado a pedido (29/10): cada linha só
+  tem a cotação em pts e a VARIAÇÃO DO DIA em pts, % e R$/saca (pts × 0,06 × dólar de hoje); contrato do app com borda +
+  "REFERÊNCIA"; resumo da curva (longos mais baratos = "pagando mais pelo café de agora";
   diferença < 5 US$/t = "quase iguais"). Umami: `contratos-londres`.
 - **Natal (pedido 29/10/2026):** de 21 a 25/12 (data de Brasília) um trenó 🦌🦌🛷🎅 passa atrás do preço do Conilon,
   da direita para a esquerda, sem parar (~11 s por passada; 40px, opacidade .55; `#natal` dentro do `.hero`, z-index 0).

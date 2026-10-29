@@ -249,8 +249,7 @@
   .ctr .l1, .ctr .l2 { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
   .ctr .l1 b { font-size: 16px; }
   .ctr .l1 .us { font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; }
-  .ctr .l2 { font-size: 12.5px; color: var(--muted); margin-top: 3px; font-variant-numeric: tabular-nums; }
-  .ctr .l2 .rs { color: var(--text); font-weight: 700; }
+  .ctr .l2 { font-size: 13.5px; color: var(--muted); margin-top: 4px; font-variant-numeric: tabular-nums; }
   .ctr .tag-ref { font-size: 10px; font-weight: 800; color: var(--orange); letter-spacing: .5px; margin-left: 6px; }
   .curva-resumo { background: var(--card-2); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; font-size: 14px; line-height: 1.4; }
   .toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); transform: translateX(-50%);
@@ -596,7 +595,7 @@
 <div class="modal" id="curvaModal">
   <div class="sheet">
     <h3>Londres · todos os contratos</h3>
-    <p id="curvaSub">Café robusta (base do Conilon), em US$ por tonelada e convertido para R$ por saca.</p>
+    <p id="curvaSub">Variação de hoje de cada vencimento: pontos, percentual e quanto dá em R$ por saca.</p>
     <div id="curvaResumo"></div>
     <div id="curvaLista"><div class="news-empty">carregando…</div></div>
     <p id="curvaNota" style="margin-top:10px"></p>
@@ -1546,25 +1545,25 @@
       var ref = linhas.filter(function (x) { return x.c === last.ctrLdn; })[0] || linhas[0];
       var rs = function (v) { return v * T_PER_SACA * usd; };
       $("curvaLista").innerHTML = linhas.map(function (x) {
-        var dif = x.q.close - ref.q.close, ch = x.q.change;
-        var cor = ch > 0 ? "up-t" : ch < 0 ? "down-t" : "";
-        var difTxt = x === ref ? "contrato usado pelo app" :
-          (dif >= 0 ? "+" : "−") + fmt(Math.abs(dif), 0) + " US$/t (" + (dif >= 0 ? "+" : "−") + "R$ " + fmt(Math.abs(rs(dif)), 2) + ")";
+        // Só a variação do dia (pedido 29/10/2026): pontos, % e quanto isso dá em R$ por saca
+        var ch = x.q.change || 0;
+        var pts = x.q.prev != null ? x.q.close - x.q.prev : x.q.close - x.q.close / (1 + ch / 100);
+        var cor = pts > 0 ? "up-t" : pts < 0 ? "down-t" : "", seta = pts > 0 ? "▲ " : pts < 0 ? "▼ " : "";
         return '<div class="ctr' + (x === ref ? " ref" : "") + '"><div class="l1"><b>' + ctrLabel(x.c) +
           (x === ref ? '<span class="tag-ref">REFERÊNCIA</span>' : "") + "</b>" +
-          '<span><span class="us">' + fmt(x.q.close, 0) + '</span> <small class="' + cor + '">' +
-          (ch == null ? "" : (ch > 0 ? "▲ " : ch < 0 ? "▼ " : "") + fmt(Math.abs(ch), 2) + "%") + "</small></span></div>" +
-          '<div class="l2"><span class="rs">R$ ' + fmt(rs(x.q.close), 2) + "/saca</span><span>" + difTxt + "</span></div></div>";
+          '<span class="us">' + fmt(x.q.close, 0) + ' <small style="font-weight:400;font-size:12px">pts</small></span></div>' +
+          '<div class="l2 ' + cor + '"><b>' + seta + fmt(Math.abs(pts), 0) + " pts</b><b>" + seta + fmt(Math.abs(ch), 2) +
+          "%</b><b>" + seta + "R$ " + fmt(Math.abs(rs(pts)), 2) + "/saca</b></div></div>";
       }).join("");
       var longe = linhas[linhas.length - 1], perto = linhas[0], d = longe.q.close - perto.q.close;
       $("curvaResumo").innerHTML = '<div class="curva-resumo">' + (Math.abs(d) < 5 ?
         "Contratos próximos e longos <b>quase iguais</b>: o mercado não está pagando prêmio por prazo." : d < 0 ?
         "Contratos longos <b>mais baratos</b>: o mercado está pagando <b>mais pelo café de agora</b> (" + ctrLabel(longe.c) +
-          " " + fmt(Math.abs(d), 0) + " US$/t abaixo de " + ctrLabel(perto.c) + ")." :
+          " " + fmt(Math.abs(d), 0) + " pts abaixo de " + ctrLabel(perto.c) + ")." :
         "Contratos longos <b>mais caros</b>: o mercado está pagando <b>mais pelo café futuro</b> (" + ctrLabel(longe.c) +
-          " " + fmt(d, 0) + " US$/t acima de " + ctrLabel(perto.c) + ").") + "</div>";
-      $("curvaNota").textContent = "Cotações com cerca de 10 minutos de atraso. R$/saca = US$/t × 0,06 × dólar de hoje (R$ " +
-        fmt(usd, 2) + "): é o preço da bolsa em reais, sem o diferencial do físico e sem o dólar futuro.";
+          " " + fmt(d, 0) + " pts acima de " + ctrLabel(perto.c) + ").") + "</div>";
+      $("curvaNota").textContent = "Cotações com cerca de 10 minutos de atraso. R$ por saca = pontos × 0,06 × dólar de hoje (R$ " +
+        fmt(usd, 2) + ").";
     }).catch(function () {
       $("curvaLista").innerHTML = '<div class="news-empty">Não foi possível buscar os contratos agora. Tente de novo em instantes.</div>';
     });
