@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<!-- Perfil do iPhone: cria o ícone do Painel do Agro na tela inicial (Web Clip). -->
+<!-- Perfil do iPhone: cria o ícone do Pregão do Café (antes Painel do Agro) na tela inicial (Web Clip). -->
 <plist version="1.0">
 <dict>
   <key>PayloadContent</key>
@@ -15,9 +15,9 @@
       <key>PayloadUUID</key>
       <string>9A3AB02A-06A3-4A81-BA6F-4310845CC541</string>
       <key>PayloadDisplayName</key>
-      <string>Painel do Agro</string>
+      <string>Pregão do Café</string>
       <key>Label</key>
-      <string>Painel Agro</string>
+      <string>Pregão do Café</string>
       <key>URL</key>
       <string>https://davidcaliman-maker.github.io/painel-cafe/</string>
       <key>FullScreen</key>
@@ -170,11 +170,11 @@ IBAIBAKBQCAQCAQCgUAgQIPwf0Xb0rP6TLD+AAAAAElFTkSuQmCC
   <key>PayloadUUID</key>
   <string>2E8CE11B-B35E-4076-86EC-CA615863C1FF</string>
   <key>PayloadDisplayName</key>
-  <string>Painel do Agro</string>
+  <string>Pregão do Café</string>
   <key>PayloadOrganization</key>
-  <string>Painel do Agro</string>
+  <string>Pregão do Café</string>
   <key>PayloadDescription</key>
-  <string>Adiciona o ícone do Painel do Agro (cotação do café Conilon, chuva e notícias) à tela inicial do iPhone. Não altera nenhuma configuração do aparelho.</string>
+  <string>Adiciona o ícone do Pregão do Café (cotação do café Conilon, chuva e notícias) à tela inicial do iPhone. Não altera nenhuma configuração do aparelho.</string>
   <key>PayloadRemovalDisallowed</key>
   <false/>
 </dict>

@@ -1,4 +1,12 @@
-# Painel do Agro
+# Pregão do Café (antes "Painel do Agro")
+
+**Nome do app desde 28/10/2026: "Pregão do Café"** (escolhido pelo usuário; "Preço do Café" foi descartado por ser
+genérico e parecido com "Painel do Café", app pago de terceiros). Trocado só nos lugares de pouco impacto: título
+do topo ("PREGÃO DO" + "CAFÉ"), `<title>`, apple-mobile-web-app-title, manifest, mensagem do WhatsApp, instalar.html
+e textos do perfil do iPhone. MANTIDOS de propósito: URLs/repo `painel-cafe`, arquivos `PainelAgro.apk`/
+`PainelAgro.mobileconfig` (e identificadores), cache `painel-agro-vN` e o nome no Android (`AndroidManifest.xml`
+label "Painel do Agro" — só muda com APK novo; oferecido junto com ícone novo). Cartaz/QR de divulgação ainda
+dizem "Painel do Agro". Quem já instalou o atalho vê o nome antigo até reinstalar.
 
 App de cotação do café Conilon para um corretor de café do Sul da Bahia (Itamaraju-BA).
 O usuário fala português e não é programador: responda em português, com passos simples e
@@ -19,7 +27,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v49).
+  (`painel-agro-vN` → `vN+1`; hoje v50).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados

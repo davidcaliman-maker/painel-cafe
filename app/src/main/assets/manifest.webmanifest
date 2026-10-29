@@ -1,6 +1,6 @@
 {
-  "name": "Painel do Agro",
-  "short_name": "Painel Agro",
+  "name": "Pregão do Café",
+  "short_name": "Pregão do Café",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
