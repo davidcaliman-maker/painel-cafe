@@ -19,7 +19,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v47).
+  (`painel-agro-vN` → `vN+1`; hoje v48).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
@@ -32,7 +32,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   movimento do mercado no dia "+R$ x no dia"), cards Dólar/Londres/N.York (modelo "E" escolhido em 28/10/2026:
   fundo tingido + contorno + número + rodapé "▲ +0,45%"/"▼ −0,69%" em verde/vermelho; 0,00% cinza), faixa em
   pílula "Cotações de HH:MM (há N min)" + botão "↻ ATUALIZAR" (setinha gira enquanto atualiza; modelo "B", 28/10),
-  gráfico com seletor HOJE/SEMANA (escolha salva no aparelho; abas Conilon/Londres/N.York/Dólar).
+  gráfico com seletor HOJE/SEMANA (título `#chTitulo` menor, 24px, pedido 28/10; escolha salva no aparelho; abas Conilon/Londres/N.York/Dólar).
   - SEMANA: 7 pregões (`historico.json`).
   - HOJE: pontos de 5 em 5 min, eixo 05h–18h, linha pontilhada = fechamento anterior, máx/mín,
     arrastar o dedo mostra preço/hora no topo. Dados em `intradia.json` (~5 KB), baixado SÓ com
@@ -56,8 +56,10 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   Temas: Todas · ⚡ Impacto · Sul da BA e ES (filtro `regional`) · Dólar · Mercado · Clima · Safra · Consumo. Logística, Geopolítica e
   Concorrentes RETIRADOS a pedido (exceto Vietnã/robusta, mantido em Safra). Dólar entra sem "café" no título (`BUSCAS_DOLAR`, máx. 8). Selo IMPACTO
   (`IMPACTO` em noticias.py: dispara/despenca/desaba/geada/quebra de safra/forte alta…) vai para o topo.
-- **Temas preto / rosa / azul:** botão no canto superior direito (ícone de mulher de chapéu com óculos, SVG
-  inline); cada toque troca preto → rosa → azul (salvo no aparelho, chave `tema`: padrao/rosa/azul).
+- **Temas azul (PADRÃO) / rosa:** botão no canto superior direito (ícone de mulher de chapéu com óculos, SVG
+  inline); cada toque troca azul ↔ rosa (salvo no aparelho, chave `tema`). Desde 28/10/2026 o azul é o padrão
+  e o PRETO SAIU (pedido do usuário): quem tinha "padrao" salvo vê o azul. `:root` ainda tem as cores pretas,
+  mas a página sempre põe `data-tema` (azul/rosa); manifest e theme-color = #07111f.
   Cores em variáveis CSS; `html[data-tema="rosa"]` e `html[data-tema="azul"]` (azul-marinho, destaque
   azul-céu #38a3ff, pedido 28/10/2026). Os 3 quadrados Dólar/Londres/N.York seguem vermelho/verde em todos.
 - Sem faixa "Indicadores Técnicos do Mercado Físico", sem botão "?" nem janela de ajuda (inclusive o

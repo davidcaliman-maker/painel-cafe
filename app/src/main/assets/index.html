@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#07111f">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -96,7 +96,7 @@
     border-top: 3px solid var(--orange); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; }
   .hero-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
   .hero-t { display: block; font-size: 19px; font-weight: 800; letter-spacing: .5px; }
-  .hero-ref { display: block; color: var(--orange); font-size: 11.5px; font-weight: 700; margin-top: 2px; }
+  .hero-ref { display: block; color: var(--orange); font-size: 11.5px; font-weight: 700; margin-top: 2px; white-space: nowrap; }  /* fora do .hero-top: não divide linha com o selo */
   .hero-main { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; margin: 12px 0 2px; }
   .hero-price { font-size: min(58px, 13.6vw); font-weight: 800; line-height: .95; letter-spacing: -1px;
     white-space: nowrap; font-variant-numeric: tabular-nums; }
@@ -177,6 +177,7 @@
   @media (prefers-reduced-motion: reduce) { .bar.girando .gira { animation: none; } }
 
   h2 { font-size: 36px; font-weight: 800; margin: 4px 2px 0; }
+  #chTitulo { font-size: 24px; }  /* SEMANA/HOJE menor (pedido 28/10/2026) */
   .sec-sub { color: var(--orange); font-weight: 700; font-size: 17px; margin: 2px 2px 8px; }
 
   .rain-total { background: var(--card); border: 3px solid var(--orange); border-radius: 6px;
@@ -306,7 +307,7 @@
   // Aplica o tema salvo antes de desenhar a tela (evita piscar a cor padrão).
   try {
     var t = window.Native ? Native.load("tema") : localStorage.getItem("tema");
-    if (t === "rosa" || t === "azul") document.documentElement.setAttribute("data-tema", t);
+    document.documentElement.setAttribute("data-tema", t === "rosa" ? "rosa" : "azul");  // azul é o padrão
   } catch (e) {}
 </script>
 </head>
@@ -316,7 +317,7 @@
   <div class="logo"><svg class="bean" viewBox="0 0 24 24" aria-hidden="true"><g transform="rotate(35 12 12)"><ellipse cx="12" cy="12" rx="7.2" ry="10.5" fill="var(--orange)"/><path d="M12 1.8c-3.2 3.4-3.2 6.6 0 10.2s3.2 6.8 0 10.2" stroke="#000" stroke-width="1.7" fill="none" stroke-linecap="round"/></g></svg></div>
   <h1>PAINEL DO AGRO</h1>
   <a class="indicar-btn" data-local="topo" target="_blank" rel="noopener" aria-label="Indicar o app para um amigo pelo WhatsApp" title="Indicar para um amigo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.6-1.2A9 9 0 1 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M9 7.6c.3 0 .6.1.8.5l.8 1.8c.1.3 0 .5-.1.7l-.6.7a6.4 6.4 0 0 0 2.8 2.8l.7-.6c.2-.2.4-.2.7-.1l1.8.8c.4.2.5.5.4.8-.2 1-1 1.8-2 1.8-3.5-.2-6.5-3.2-6.7-6.7 0-1 .7-1.8 1.4-2.5z" fill="currentColor"/></svg></a>
-  <button class="tema-btn" id="temaBtn" aria-label="Trocar tema (preto, rosa, azul)" title="Trocar tema">
+  <button class="tema-btn" id="temaBtn" aria-label="Trocar tema (azul ou rosa)" title="Trocar tema">
     <!-- Rosto de mulher com chapéu -->
     <svg viewBox="5 6 38 37" aria-hidden="true">
       <!-- cabelo -->
@@ -352,9 +353,10 @@
 <div class="hero" id="hero">
   <div class="efeito" id="efeito" aria-hidden="true"></div>
   <div class="hero-top">
-    <div><span class="hero-t">CONILON 7/8</span><span class="hero-ref">Referência diária: CCCV (Vitória-ES)</span></div>
+    <div><span class="hero-t">CONILON 7/8</span></div>
     <div class="badge" id="conEstado"></div>
   </div>
+  <span class="hero-ref">Referência diária: CCCV (Vitória-ES)</span>
   <div class="hero-main">
     <div class="hero-price"><small>R$</small><span id="fisConilon">—</span></div>
     <div class="hero-var" id="conVar"></div>
@@ -1358,7 +1360,7 @@
   // O script do Umami carrega depois da página: espera ele ficar pronto para registrar a abertura.
   (function registrarAbertura(tentativa) {
     if (window.umami && umami.track) {
-      rastrear("abertura", { plataforma: plataforma(), tema: temaSalvo() === "padrao" ? "padrão" : temaSalvo(),
+      rastrear("abertura", { plataforma: plataforma(), tema: temaSalvo(),
                              cidade_chuva: nomeCidade(cidade) });
     } else if (tentativa < 20) {
       setTimeout(function () { registrarAbertura(tentativa + 1); }, 500);
@@ -1385,13 +1387,13 @@
     a.addEventListener("click", function () { rastrear("indicar", { local: a.getAttribute("data-local") }); });
   });
 
-  // ---------- tema (preto → rosa → azul) ----------
-  var TEMAS = ["padrao", "rosa", "azul"];
-  var COR_BARRA = { padrao: "#000000", rosa: "#1a0c15", azul: "#07111f" };
-  function temaSalvo() { var t = load("tema"); return t === "rosa" || t === "azul" ? t : "padrao"; }  // usada antes de TEMAS existir
+  // ---------- tema (azul ↔ rosa) ----------
+  // Desde 28/10/2026 o azul é o padrão e o preto saiu (quem tinha o preto salvo passa para o azul).
+  var TEMAS = ["azul", "rosa"];
+  var COR_BARRA = { rosa: "#1a0c15", azul: "#07111f" };
+  function temaSalvo() { return load("tema") === "rosa" ? "rosa" : "azul"; }  // usada antes de TEMAS existir
   function aplicarTema(t) {
-    if (t === "padrao") document.documentElement.removeAttribute("data-tema");
-    else document.documentElement.setAttribute("data-tema", t);
+    document.documentElement.setAttribute("data-tema", t);
     var meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute("content", COR_BARRA[t]);
     renderChart();
@@ -1400,7 +1402,7 @@
     var t = TEMAS[(TEMAS.indexOf(temaSalvo()) + 1) % TEMAS.length];
     save("tema", t);
     aplicarTema(t);
-    rastrear("tema", { tema: t === "padrao" ? "padrão" : t });
+    rastrear("tema", { tema: t });
   };
   aplicarTema(temaSalvo());
 
