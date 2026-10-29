@@ -78,7 +78,10 @@ jobs:
       # GitHub (alguns celulares/navegadores falham neles).
       - name: Copiar APK mais recente para o site
         continue-on-error: true
-        run: curl -sfL https://github.com/davidcaliman-maker/painel-cafe/releases/latest/download/PainelAgro.apk -o app/src/main/assets/PainelAgro.apk
+        run: |
+          curl -sfL https://github.com/davidcaliman-maker/painel-cafe/releases/latest/download/PainelAgro.apk -o app/src/main/assets/PainelAgro.apk
+          # nome novo (Pregão do Café, 29/10/2026); o PainelAgro.apk continua para os links antigos
+          cp app/src/main/assets/PainelAgro.apk app/src/main/assets/PregaoDoCafe.apk
 
       # Guarda para sempre o fechamento do Conilon de cada dia (o historico.json só tem os últimos pregões).
       # Commits feitos com o token do próprio Actions não disparam este workflow de novo.

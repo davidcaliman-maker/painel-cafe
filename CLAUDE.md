@@ -7,6 +7,12 @@ e textos do perfil do iPhone. MANTIDOS de propósito: URLs/repo `painel-cafe`, a
 `PainelAgro.mobileconfig` (e identificadores), cache `painel-agro-vN` e o nome no Android (`AndroidManifest.xml`
 label "Painel do Agro" — só muda com APK novo; oferecido junto com ícone novo). Cartaz/QR de divulgação ainda
 dizem "Painel do Agro". Quem já instalou o atalho vê o nome antigo até reinstalar.
+**29/10/2026 (pedido: "em todos os lugares"):** links do instalar.html nas mensagens viraram `instalar.html?v=pregao`
+(o WhatsApp guardava o resumo antigo do link); perfil do iPhone renomeado para `PregaoDoCafe.mobileconfig`; botão
+Android baixa `PregaoDoCafe.apk` (o pages.yml copia o APK da última release também com esse nome; `PainelAgro.apk`
+continua para links antigos); `AndroidManifest.xml` label "Pregão do Café" e `build-apk.sh` 3.1 (code 9) — APK 3.1
+gerado e com a MESMA assinatura, mas a release v3.1 depende de autorização do usuário (bloqueada pelo modo automático).
+Quando a release existir com o asset `PregaoDoCafe.apk`, trocar o link alternativo (btnApk2) para ele. README renomeado.
 
 App de cotação do café Conilon para um corretor de café do Sul da Bahia (Itamaraju-BA).
 O usuário fala português e não é programador: responda em português, com passos simples e
@@ -27,7 +33,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v54).
+  (`painel-agro-vN` → `vN+1`; hoje v55).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
