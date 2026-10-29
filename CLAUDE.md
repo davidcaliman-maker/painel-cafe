@@ -11,8 +11,11 @@ dizem "Painel do Agro". Quem já instalou o atalho vê o nome antigo até reinst
 (o WhatsApp guardava o resumo antigo do link); perfil do iPhone renomeado para `PregaoDoCafe.mobileconfig`; botão
 Android baixa `PregaoDoCafe.apk` (o pages.yml copia o APK da última release também com esse nome; `PainelAgro.apk`
 continua para links antigos); `AndroidManifest.xml` label "Pregão do Café" e `build-apk.sh` 3.1 (code 9) — APK 3.1
-gerado e com a MESMA assinatura, mas a release v3.1 depende de autorização do usuário (bloqueada pelo modo automático).
-Quando a release existir com o asset `PregaoDoCafe.apk`, trocar o link alternativo (btnApk2) para ele. README renomeado.
+publicado na release v3.1 (assets PregaoDoCafe.apk + PainelAgro.apk + PainelCafe.apk, mesma assinatura), autorizado pelo
+usuário; link alternativo (btnApk2) já aponta para PregaoDoCafe.apk. README renomeado.
+**Ícone novo (29/10/2026):** grão escuro (#04172E) sobre azul (#38A3FF), igual ao logo do topo: `res/drawable/ic_launcher.xml`
+(APK 3.1), `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` e o ícone embutido no `PregaoDoCafe.mobileconfig`
+(gerados com Pillow; risco do grão encurtado ~12,5% em cada ponta, pontas redondas).
 
 App de cotação do café Conilon para um corretor de café do Sul da Bahia (Itamaraju-BA).
 O usuário fala português e não é programador: responda em português, com passos simples e
@@ -33,7 +36,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v55).
+  (`painel-agro-vN` → `vN+1`; hoje v56).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
@@ -229,7 +232,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
 - Confirmar com o usuário antes de publicar/instalar coisas que custem ou que baixem ferramentas grandes
   (ele recusou baixar Gradle/SDK novo; APK é feito sem Gradle).
 
-## APK Android (só para mudanças nativas: ícone, nome, Java, alertas) — versão atual 3.0
+## APK Android (só para mudanças nativas: ícone, nome, Java, alertas) — versão atual 3.1 (code 9)
 - `bash build-apk.sh` → `build/PainelCafe.apk` (sem Gradle; Android SDK build-tools 30.0.0 +
   platform android-30 + JDK 17; targetSdk 30).
 - Assinado com `~/.android/debug.keystore`. **Esse arquivo precisa ser o mesmo em qualquer
@@ -322,5 +325,4 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   — oferecido, sem resposta.
 - Trocas gratuitas: chuva → MET Norway; dólar → fonte oficial — oferecido, não feito.
 - Alertas no iPhone (OneSignal) — oferecido, não feito.
-- Ícone da tela inicial ainda é "A + grão" (o logo dentro do app é só o grão).
 - Tarefas agendadas locais `monitor-conilon-itamaraju(-tarde)` estão DESATIVADAS (substituídas pelo GitHub).
