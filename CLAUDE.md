@@ -19,13 +19,17 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v48).
+  (`painel-agro-vN` → `vN+1`; hoje v49).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
   (historico/intradia/cotacoes/noticias) não existem na cópia local: para simular, gere com
   `python scripts/historico.py ...` em `build/teste/` e copie para assets — e APAGUE antes do commit.
 - Antes de publicar uma mudança visual, mostrar ao usuário (preview) e pedir o "pode publicar".
+
+## Topo
+- Título "A + D" (28/10/2026): grão num quadradinho arredondado da cor do tema (`.logo`) + "PAINEL DO" fino/claro
+  e "AGRO" em negrito na cor do tema (`h1 small`), uma linha só; à direita, botões WhatsApp e tema.
 
 ## Telas (barra de abas no rodapé: PAINEL · CHUVA · NOTÍCIAS; roteamento por `#chuva`/`#noticias`)
 - **Painel:** card destaque do Conilon (preço grande, selo AO VIVO/FECHADO dd/mm/FERIADO, variação =
