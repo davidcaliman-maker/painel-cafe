@@ -35,7 +35,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v65).
+  (`painel-agro-vN` → `vN+1`; hoje v66).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
@@ -118,8 +118,10 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   28/10/2026 — única menção de fonte de preço na tela; NÃO citar os + R$ 10,00 (escolha do usuário).
 - **Todos os vencimentos de Londres (29/10/2026, versão final pedida com um print):** só com o gráfico em HOJE + aba
   LONDRES aparece abaixo dele o quadro `#curva` ("TODOS OS VENCIMENTOS · LONDRES"): gráfico da curva (9 vencimentos,
-  JAN27…MAI28) e tabela VENC · LAST · Δ% · MÁX · MÍN (scanner, colunas close/change/high/low, no máx. 1 busca por minuto;
-  ★ azul = contrato do app). A janela anterior ao tocar no card LONDRES (com R$/saca) foi RETIRADA; o card voltou a
+  JAN27…MAI28) e tabela VENC · LAST · Δ% · R$/SC (scanner, no máx. 1 busca por minuto; ★ azul = contrato do app).
+  R$/SC (no lugar de máx/mín, pedido 29/10) = diferença ACUMULADA para o vencimento mais próximo ("base"), pts × 0,06 ×
+  dólar de hoje. `analiseCurva()` escreve o resumo entre gráfico e tabela: curva invertida (sugere vender já) / positiva
+  (segurar ou travar) / quase reta (< 5 pts), maior degrau (≥ 10 pts) e se a diferença próximo×longo aumentou/diminuiu no dia (≥ 2 pts). A janela anterior ao tocar no card LONDRES (com R$/saca) foi RETIRADA; o card voltou a
   "LONDRES". O Δ% do scanner pode diferir de outros sites (print do usuário: MAR27 −1,34% × app −0,50%).
 - **Natal (pedido 29/10/2026):** de 21 a 25/12 (data de Brasília) um trenó 🦌🦌🛷🎅 passa atrás do preço do Conilon,
   da direita para a esquerda, sem parar (~11 s por passada; 40px, opacidade .55; `#natal` dentro do `.hero`, z-index 0).

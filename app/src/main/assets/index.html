@@ -257,6 +257,9 @@
   .curva .pct.down { background: rgba(255, 90, 95, .16); color: #ff5a5f; }
   .curva .pct.up { background: rgba(76, 217, 100, .16); color: #4cd964; }
   .curva .nota { font-size: 11px; color: var(--muted); margin: 6px 2px 4px; }
+  .curva-analise { background: var(--card); border-radius: 8px; padding: 2px 10px; margin: 6px 0 2px; font-size: 13.5px; line-height: 1.45; }
+  .curva-analise p { margin: 8px 0; }
+  .curva-analise:empty { display: none; }
   /* Aviso rápido no rodapé (ex.: estatísticas desligadas neste aparelho) */
   .toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); transform: translateX(-50%);
     background: var(--card-2); color: var(--text); border: 1px solid var(--orange); border-radius: 10px; padding: 10px 14px;
@@ -463,6 +466,7 @@
 <div class="curva" id="curva" hidden>
   <h4>TODOS OS VENCIMENTOS · LONDRES</h4>
   <div id="curvaGraf"></div>
+  <div class="curva-analise" id="curvaAnalise"></div>
   <div id="curvaTab"><div class="empty">carregando…</div></div>
 </div>
 <a class="indicar" data-local="painel" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.6-1.2A9 9 0 1 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M9 7.6c.3 0 .6.1.8.5l.8 1.8c.1.3 0 .5-.1.7l-.6.7a6.4 6.4 0 0 0 2.8 2.8l.7-.6c.2-.2.4-.2.7-.1l1.8.8c.4.2.5.5.4.8-.2 1-1 1.8-2 1.8-3.5-.2-6.5-3.2-6.7-6.7 0-1 .7-1.8 1.4-2.5z" fill="currentColor"/></svg>INDICAR PARA UM AMIGO</a>
@@ -1577,15 +1581,48 @@
         ctrLabel(x.c).toUpperCase() + "</text>";
     });
     $("curvaGraf").innerHTML = '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Preço de cada vencimento de Londres">' + g + "</svg>";
-    $("curvaTab").innerHTML = "<table><tr><th>VENC</th><th>LAST</th><th>Δ%</th><th>MÁX</th><th>MÍN</th></tr>" +
-      p.map(function (x) {
-        var ch = x.q.change || 0, lado = ch > 0 ? "up" : ch < 0 ? "down" : "";
+    // Coluna R$/SC (pedido 29/10/2026, no lugar de máx/mín): diferença acumulada de cada vencimento para o
+    // mais próximo (o "mais antigo"), em reais por saca = pontos × 0,06 × dólar de hoje.
+    var usd = Math.round(last.usd * 100) / 100, base = p[0].q.close;
+    var rs = function (pts) { return pts * T_PER_SACA * usd; };
+    $("curvaTab").innerHTML = "<table><tr><th>VENC</th><th>LAST</th><th>Δ%</th><th>R$/SC</th></tr>" +
+      p.map(function (x, i) {
+        var ch = x.q.change || 0, lado = ch > 0 ? "up" : ch < 0 ? "down" : "", d = rs(x.q.close - base);
         return '<tr class="' + (x.c === last.ctrLdn ? "ref" : "") + '"><td><span class="estrela">★</span>' + ctrLabel(x.c).toUpperCase() +
           '</td><td class="v ' + (lado ? lado + "-t" : "") + '">' + fmt(x.q.close, 0) +
-          '</td><td><span class="pct ' + lado + '">' + (ch > 0 ? "▲ +" : ch < 0 ? "▼ −" : "") + fmt(Math.abs(ch), 2) + "%</span></td><td>" +
-          (x.q.high ? fmt(x.q.high, 0) : "—") + "</td><td>" + (x.q.low ? fmt(x.q.low, 0) : "—") + "</td></tr>";
+          '</td><td><span class="pct ' + lado + '">' + (ch > 0 ? "▲ +" : ch < 0 ? "▼ −" : "") + fmt(Math.abs(ch), 2) + "%</span></td>" +
+          '<td class="v ' + (i === 0 ? "" : d > 0 ? "up-t" : d < 0 ? "down-t" : "") + '">' +
+          (i === 0 ? "base" : (d > 0 ? "+" : d < 0 ? "−" : "") + fmt(Math.abs(d), 2)) + "</td></tr>";
       }).join("") + "</table>" +
-      '<div class="nota">★ contrato usado pelo app · cotações com cerca de 10 min de atraso</div>';
+      '<div class="nota">★ contrato usado pelo app · R$/SC = diferença para ' + ctrLabel(p[0].c).toUpperCase() +
+      " em reais por saca (dólar R$ " + fmt(usd, 2) + ") · cotações com cerca de 10 min de atraso</div>";
+    $("curvaAnalise").innerHTML = analiseCurva(p, rs);
+  }
+
+  // Resumo em palavras do gráfico da curva: formato (longos mais baratos ou mais caros), o tamanho da diferença,
+  // o maior degrau entre dois vencimentos e se hoje a diferença entre o próximo e o mais longo aumentou ou diminuiu.
+  function analiseCurva(p, rs) {
+    var a = p[0], z = p[p.length - 1], d = z.q.close - a.q.close, nA = ctrLabel(a.c).toUpperCase(), nZ = ctrLabel(z.c).toUpperCase();
+    var t = [];
+    if (Math.abs(d) < 5) t.push("📊 <b>Curva quase reta:</b> " + nZ + " e " + nA + " praticamente no mesmo preço. O mercado não paga prêmio por prazo.");
+    else if (d < 0) t.push("📉 <b>Curva invertida:</b> " + nZ + " está " + fmt(-d, 0) + " pts (<b>R$ " + fmt(-rs(d), 2) +
+      "/saca</b>) abaixo de " + nA + ". O mercado paga mais pelo café para entrega próxima, sinal de oferta apertada agora: vender já tende a valer mais que esperar.");
+    else t.push("📈 <b>Curva positiva:</b> " + nZ + " está " + fmt(d, 0) + " pts (<b>R$ " + fmt(rs(d), 2) +
+      "/saca</b>) acima de " + nA + ". O mercado paga mais pelo café futuro: segurar o café ou fazer uma venda futura (trava) pode compensar.");
+    var deg = null;
+    for (var i = 1; i < p.length; i++) {
+      var dd = p[i].q.close - p[i - 1].q.close;
+      if (!deg || Math.abs(dd) > Math.abs(deg.d)) deg = { d: dd, de: p[i - 1].c, para: p[i].c };
+    }
+    if (deg && Math.abs(deg.d) >= 10) t.push("Maior degrau: de " + ctrLabel(deg.de).toUpperCase() + " para " + ctrLabel(deg.para).toUpperCase() +
+      " (" + (deg.d > 0 ? "+" : "−") + fmt(Math.abs(deg.d), 0) + " pts, " + (deg.d > 0 ? "+" : "−") + "R$ " + fmt(Math.abs(rs(deg.d)), 2) + "/saca).");
+    var cA = a.q.change || 0, cZ = z.q.change || 0;
+    var ontem = function (x) { return x.q.close / (1 + (x.q.change || 0) / 100); };
+    var dOntem = ontem(z) - ontem(a), mudou = Math.abs(d) - Math.abs(dOntem);
+    if (Math.abs(mudou) >= 2) t.push("Hoje " + nA + " " + (cA < 0 ? "caiu " : "subiu ") + fmt(Math.abs(cA), 2) + "% e " + nZ + " " +
+      (cZ < 0 ? "caiu " : "subiu ") + fmt(Math.abs(cZ), 2) + "%: a diferença entre eles " + (mudou > 0 ? "<b>aumentou</b>" : "<b>diminuiu</b>") +
+      " " + fmt(Math.abs(mudou), 0) + " pts no dia.");
+    return t.map(function (x) { return "<p>" + x + "</p>"; }).join("");
   }
 
   // ---------- Natal: Papai Noel atrás do preço de 21 a 25 de dezembro ----------
