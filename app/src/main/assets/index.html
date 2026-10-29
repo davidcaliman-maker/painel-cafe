@@ -261,6 +261,41 @@
     border-radius: 9px; white-space: nowrap; font-variant-numeric: tabular-nums; }
   .tab-mm:empty { display: none; }
 
+  /* Cálculo de calda (aba CÁLCULO, pedido 29/10/2026): defensivos via folha ou via solo (drench) no Conilon */
+  .calc-box { background: var(--card); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
+  .calc-box h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: 1px; color: var(--muted); font-weight: 800; }
+  .calc-row { display: flex; gap: 8px; align-items: flex-end; }
+  .calc-row label { flex: 1; min-width: 0; font-size: 12px; color: var(--muted); }
+  .calc-in { width: 100%; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 8px;
+    padding: 10px; font-size: 17px; margin-top: 3px; font-variant-numeric: tabular-nums; }
+  .calc-in:focus { outline: none; border-color: var(--orange); }
+  .calc-x { color: var(--muted); padding-bottom: 12px; }
+  .calc-info { margin-top: 8px; font-size: 13px; color: var(--muted); }
+  .calc-info b { color: var(--text); }
+  .opcoes { display: flex; flex-wrap: wrap; gap: 6px; }
+  .opcoes button { flex: 1 1 auto; background: var(--bg); color: var(--text); border: 1px solid var(--line);
+    border-radius: 8px; padding: 10px 8px; font-size: 14px; font-weight: 700; }
+  .opcoes button.on { background: var(--orange); color: var(--on-accent); border-color: var(--orange); }
+  .opcoes.grande button { font-size: 15px; padding: 12px 8px; }
+  #cEquip { display: grid; grid-template-columns: 1fr 1fr; }
+  .calc-sub { margin-top: 10px; }
+  .prod { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 10px; }
+  .prod:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
+  .prod .calc-row + .calc-row { margin-top: 6px; }
+  .prod select.calc-in { padding: 10px 6px; }
+  .prod-del { flex: none; background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 8px;
+    width: 44px; height: 44px; font-size: 20px; }
+  .btn-add { width: 100%; margin-top: 10px; background: none; color: var(--orange); border: 1.5px dashed var(--orange);
+    border-radius: 8px; padding: 11px; font-size: 14px; font-weight: 800; letter-spacing: .5px; }
+  .calc-res { border: 1.5px solid var(--orange); }
+  .calc-res .linha { display: flex; justify-content: space-between; gap: 8px; padding: 5px 0; font-size: 14px;
+    border-bottom: 1px solid var(--line); }
+  .calc-res .linha:last-child { border-bottom: 0; }
+  .calc-res .linha span { color: var(--muted); }
+  .calc-res .linha b { text-align: right; font-variant-numeric: tabular-nums; }
+  .calc-res .qtd { color: var(--orange); font-size: 17px; }
+  .calc-aviso { color: var(--muted); font-size: 13px; }
+
   /* Notícias */
   .news { display: block; background: var(--card-2); border-radius: 8px; padding: 10px 12px 9px; margin-bottom: 7px;
     color: var(--text); text-decoration: none; border-left: 4px solid transparent; }
@@ -408,6 +443,67 @@
 
 </div><!-- /vPainel -->
 
+<div id="vCalculo" hidden>
+  <h2>CÁLCULO</h2>
+  <div class="sec-sub">Defensivos no café Conilon</div>
+
+  <div class="calc-box">
+    <h3>ESPAÇAMENTO (METROS)</h3>
+    <div class="calc-row">
+      <label>Entre linhas<input class="calc-in" id="cLinhas" inputmode="decimal" placeholder="3,0"></label>
+      <span class="calc-x">×</span>
+      <label>Entre plantas<input class="calc-in" id="cPlantas" inputmode="decimal" placeholder="1,0"></label>
+    </div>
+    <div class="calc-info" id="cPlantasHa"></div>
+  </div>
+
+  <div class="calc-box">
+    <h3>EQUIPAMENTO</h3>
+    <div class="opcoes" id="cEquip">
+      <button data-l="20">Costal 20 L</button>
+      <button data-l="400">Tanque 400 L</button>
+      <button data-l="1000">Tanque 1.000 L</button>
+      <button data-l="2000">Tanque 2.000 L</button>
+    </div>
+  </div>
+
+  <div class="calc-box">
+    <h3>APLICAÇÃO</h3>
+    <div class="opcoes grande" id="cModo">
+      <button data-m="folha">🍃 Via folha</button>
+      <button data-m="solo">🌱 Via solo</button>
+    </div>
+    <div class="calc-sub" id="cFolha">
+      <label class="calc-aviso">Volume de calda por hectare (L/ha)<input class="calc-in" id="cCalda" inputmode="decimal" placeholder="400"></label>
+    </div>
+    <div class="calc-sub" id="cSolo" hidden>
+      <div class="calc-aviso">Volume de cada drench (calda por planta)</div>
+      <div class="opcoes" id="cDrVol" style="margin-top:4px">
+        <button data-v="30">30 mL</button>
+        <button data-v="50">50 mL</button>
+        <button data-v="outro">Outro</button>
+      </div>
+      <input class="calc-in" id="cDrOutro" inputmode="decimal" placeholder="mL por drench" hidden>
+      <div class="calc-aviso" style="margin-top:8px">Drench por planta</div>
+      <div class="opcoes" id="cDrN" style="margin-top:4px">
+        <button data-n="1">1 drench</button>
+        <button data-n="2">2 drench</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="calc-box">
+    <h3>PRODUTOS (DOSE POR HECTARE)</h3>
+    <div id="cProds"></div>
+    <button class="btn-add" id="cAdd">+ ADICIONAR PRODUTO</button>
+  </div>
+
+  <div class="calc-box calc-res" id="cRes"></div>
+
+  <a class="indicar" id="cZap" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.6-1.2A9 9 0 1 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M9 7.6c.3 0 .6.1.8.5l.8 1.8c.1.3 0 .5-.1.7l-.6.7a6.4 6.4 0 0 0 2.8 2.8l.7-.6c.2-.2.4-.2.7-.1l1.8.8c.4.2.5.5.4.8-.2 1-1 1.8-2 1.8-3.5-.2-6.5-3.2-6.7-6.7 0-1 .7-1.8 1.4-2.5z" fill="currentColor"/></svg>ENVIAR PELO WHATSAPP</a>
+  <div class="foot">Cálculo de apoio. Siga sempre a bula e a recomendação do agrônomo.</div>
+</div>
+
 <div id="vChuva" hidden>
   <h2>CHUVA</h2>
   <div class="sec-sub">
@@ -449,6 +545,10 @@
   <button data-v="painel" class="on" aria-label="Painel">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 20V11M10 20V5M16 20v-7M22 20H2"/></svg>
     <span>PAINEL</span>
+  </button>
+  <button data-v="calculo" aria-label="Cálculo de calda">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6.5L4.6 18.4A1.8 1.8 0 0 0 6.2 21h11.6a1.8 1.8 0 0 0 1.6-2.6L14 9.5V3"/><path d="M7.3 15h9.4"/></svg>
+    <span>CÁLCULO</span>
   </button>
   <button data-v="chuva" aria-label="Chuva">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 15a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 17.7 7.5 3.8 3.8 0 0 1 17.5 15z"/><path d="M8 18.5 7 21M12.5 18.5l-1 2.5M17 18.5l-1 2.5"/></svg>
@@ -1466,9 +1566,157 @@
     });
   });
 
+  // ---------- cálculo de calda (aba CÁLCULO) ----------
+  // Dose sempre por hectare. Via folha: área do tanque = volume do tanque ÷ calda por hectare.
+  // Via solo (drench): calda por planta = nº de drench × volume; área do tanque = plantas atendidas ÷ plantas/ha.
+  // Nos dois, produto por tanque = dose/ha × área do tanque. O que o produtor digita fica salvo no aparelho.
+  var calc = { linhas: "", plantas: "", equip: 400, modo: "folha", calda: "400", drVol: "50", drOutro: "", drN: 1,
+               prods: [{ nome: "", dose: "", un: "L" }] };
+  try { var csCalc = load("calculo"); if (csCalc) calc = Object.assign(calc, JSON.parse(csCalc)); } catch (e) {}
+  function num(v) { var n = parseFloat(String(v || "").replace(",", ".")); return isFinite(n) && n > 0 ? n : 0; }
+  function br(n, dec) { return n.toLocaleString("pt-BR", { minimumFractionDigits: dec, maximumFractionDigits: dec }); }
+  function brAuto(n) { return n.toLocaleString("pt-BR", { maximumFractionDigits: n >= 100 ? 0 : n >= 10 ? 1 : 2 }); }  // 5 L, 2,5 kg, 0,17
+  // 0,25 L → 250 mL; 1.500 g → 1,5 kg
+  function qtd(v, un) {
+    var grande = un === "L" || un === "kg";
+    if (grande && v < 1) return brAuto(v * 1000) + " " + (un === "L" ? "mL" : "g");
+    if (!grande && v >= 1000) return brAuto(v / 1000) + " " + (un === "mL" ? "L" : "kg");
+    return brAuto(v) + " " + un;
+  }
+  function area(ha) {
+    return ha < 1 ? br(ha, 3).replace(/0+$/, "").replace(/,$/, "") + " ha (" + br(ha * 10000, 0) + " m²)" : br(ha, 2) + " ha";
+  }
+  function nomeEquip(l) { return l == 20 ? "Bomba costal de 20 L" : "Tanque de " + br(Number(l), 0) + " L"; }
+  function esc2(t) {
+    return String(t).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; });
+  }
+
+  function calcular() {
+    var L = num(calc.linhas), P = num(calc.plantas), V = Number(calc.equip);
+    var res = { ok: false, plantasHa: L && P ? 10000 / (L * P) : 0 };
+    if (!res.plantasHa) { res.falta = "Informe o espaçamento entre linhas e entre plantas."; return res; }
+    if (calc.modo === "folha") {
+      var cha = num(calc.calda);
+      if (!cha) { res.falta = "Informe o volume de calda por hectare."; return res; }
+      res.ha = V / cha; res.caldaHa = cha;
+    } else {
+      var vol = calc.drVol === "outro" ? num(calc.drOutro) : Number(calc.drVol);
+      if (!vol) { res.falta = "Informe o volume do drench."; return res; }
+      res.vol = vol;
+      res.caldaPlanta = vol * calc.drN;                     // mL por planta
+      res.plantasTanque = V * 1000 / res.caldaPlanta;
+      res.ha = res.plantasTanque / res.plantasHa;
+      res.caldaHa = res.plantasHa * res.caldaPlanta / 1000;  // L/ha
+    }
+    res.tanquesHa = 1 / res.ha;
+    res.prods = calc.prods.filter(function (p) { return num(p.dose); }).map(function (p) {
+      return { nome: p.nome.trim() || "Produto sem nome", dose: num(p.dose), un: p.un, tanque: num(p.dose) * res.ha };
+    });
+    res.ok = true;
+    return res;
+  }
+
+  function textoZap(r) {
+    var nomeT = calc.equip == 20 ? "bomba" : "tanque";
+    var t = ["🧪 *Recomendação " + (calc.modo === "folha" ? "via folha" : "via solo (drench)") + " – café Conilon*", "",
+      "📏 Espaçamento: " + String(calc.linhas).replace(".", ",") + " × " + String(calc.plantas).replace(".", ",") +
+        " m (" + br(r.plantasHa, 0) + " plantas/ha)",
+      "🚜 Equipamento: " + nomeEquip(calc.equip)];
+    if (calc.modo === "folha") t.push("💧 Calda: " + br(r.caldaHa, 0) + " L/ha");
+    else t.push("💧 Drench: " + calc.drN + " × " + br(r.vol, 0) + " mL = " + br(r.caldaPlanta, 0) +
+      " mL de calda por planta (" + br(r.caldaHa, 0) + " L/ha)");
+    t.push("📐 Cada " + nomeT + " cobre " + area(r.ha) + (calc.modo === "solo" ? " = " + br(r.plantasTanque, 0) + " plantas" : ""));
+    t.push("", "*Produtos por " + nomeT + " de " + br(Number(calc.equip), 0) + " L:*");
+    r.prods.forEach(function (p) {
+      t.push("• " + p.nome + ": *" + qtd(p.tanque, p.un) + "* (dose " + brAuto(p.dose) + " " + p.un + "/ha)");
+    });
+    t.push("", "_Cálculo de apoio. Siga sempre a bula e a recomendação do agrônomo._",
+      "Feito no app Pregão do Café: https://davidcaliman-maker.github.io/painel-cafe/instalar.html");
+    return t.join("\n");
+  }
+
+  function renderCalc() {
+    save("calculo", JSON.stringify(calc));
+    var r = calcular(), nomeT = calc.equip == 20 ? "bomba" : "tanque", h = "";
+    $("cPlantasHa").innerHTML = r.plantasHa ? "<b>" + br(r.plantasHa, 0) + "</b> plantas por hectare" : "";
+    if (!r.ok) h = '<div class="calc-aviso">' + r.falta + "</div>";
+    else {
+      h += "<h3>RESULTADO POR " + nomeT.toUpperCase() + " DE " + br(Number(calc.equip), 0) + " L</h3>";
+      if (calc.modo === "solo") {
+        h += '<div class="linha"><span>Calda por planta</span><b>' + br(r.caldaPlanta, 0) + " mL</b></div>";
+        h += '<div class="linha"><span>Plantas por ' + nomeT + "</span><b>" + br(r.plantasTanque, 0) + "</b></div>";
+        h += '<div class="linha"><span>Calda por hectare</span><b>' + br(r.caldaHa, 0) + " L</b></div>";
+      }
+      h += '<div class="linha"><span>Área por ' + nomeT + "</span><b>" + area(r.ha) + "</b></div>";
+      h += '<div class="linha"><span>' + (calc.equip == 20 ? "Bombas" : "Tanques") + " por hectare</span><b>" + brAuto(r.tanquesHa) + "</b></div>";
+      if (!r.prods.length) h += '<div class="calc-aviso" style="margin-top:8px">Adicione um produto com a dose por hectare.</div>';
+      r.prods.forEach(function (p) {
+        h += '<div class="linha"><span>' + esc2(p.nome) + '</span><b class="qtd">' + qtd(p.tanque, p.un) + "</b></div>";
+      });
+    }
+    $("cRes").innerHTML = h;
+    var pronto = r.ok && r.prods.length;
+    $("cZap").style.opacity = pronto ? "" : ".45";
+    $("cZap").href = pronto ? "https://wa.me/?text=" + encodeURIComponent(textoZap(r)) : "#";
+  }
+
+  function marcar(grupo, attr, valor) {
+    document.querySelectorAll("#" + grupo + " button").forEach(function (b) { b.classList.toggle("on", b.getAttribute(attr) == valor); });
+  }
+  function desenharForm() {
+    $("cLinhas").value = calc.linhas; $("cPlantas").value = calc.plantas; $("cCalda").value = calc.calda;
+    $("cDrOutro").value = calc.drOutro; $("cDrOutro").hidden = calc.drVol !== "outro";
+    marcar("cEquip", "data-l", calc.equip); marcar("cModo", "data-m", calc.modo);
+    marcar("cDrVol", "data-v", calc.drVol); marcar("cDrN", "data-n", calc.drN);
+    $("cFolha").hidden = calc.modo !== "folha"; $("cSolo").hidden = calc.modo !== "solo";
+    $("cProds").innerHTML = calc.prods.map(function (p, i) {
+      return '<div class="prod" data-i="' + i + '"><div class="calc-row">' +
+        '<label>Produto<input class="calc-in" data-k="nome" value="' + esc2(p.nome) + '" placeholder="Nome do produto"></label>' +
+        (calc.prods.length > 1 ? '<button class="prod-del" data-del="' + i + '" aria-label="Remover produto">×</button>' : "") +
+        '</div><div class="calc-row">' +
+        '<label>Dose por hectare<input class="calc-in" data-k="dose" inputmode="decimal" value="' + esc2(p.dose) + '" placeholder="1,5"></label>' +
+        '<label style="flex:0 0 96px">Unidade<select class="calc-in" data-k="un">' +
+        ["L", "mL", "kg", "g"].map(function (u) { return "<option" + (u === p.un ? " selected" : "") + ">" + u + "</option>"; }).join("") +
+        "</select></label></div></div>";
+    }).join("");
+    renderCalc();
+  }
+  [["cLinhas", "linhas"], ["cPlantas", "plantas"], ["cCalda", "calda"], ["cDrOutro", "drOutro"]].forEach(function (x) {
+    $(x[0]).addEventListener("input", function () { calc[x[1]] = this.value; renderCalc(); });
+  });
+  function clique(id, fn) { $(id).addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) fn(b); }); }
+  clique("cEquip", function (b) { calc.equip = Number(b.getAttribute("data-l")); desenharForm(); });
+  clique("cModo", function (b) { calc.modo = b.getAttribute("data-m"); desenharForm(); });
+  clique("cDrVol", function (b) {
+    calc.drVol = b.getAttribute("data-v"); desenharForm();
+    if (calc.drVol === "outro") $("cDrOutro").focus();
+  });
+  clique("cDrN", function (b) { calc.drN = Number(b.getAttribute("data-n")); desenharForm(); });
+  $("cProds").addEventListener("input", function (e) {
+    var k = e.target.getAttribute("data-k"), box = e.target.closest(".prod");
+    if (k && box) { calc.prods[Number(box.getAttribute("data-i"))][k] = e.target.value; renderCalc(); }
+  });
+  $("cProds").addEventListener("change", function (e) {
+    var box = e.target.closest(".prod");
+    if (e.target.getAttribute("data-k") === "un" && box) { calc.prods[Number(box.getAttribute("data-i"))].un = e.target.value; renderCalc(); }
+  });
+  clique("cProds", function (b) {
+    var d = b.getAttribute("data-del");
+    if (d != null) { calc.prods.splice(Number(d), 1); desenharForm(); }
+  });
+  $("cAdd").addEventListener("click", function () {
+    calc.prods.push({ nome: "", dose: "", un: "L" }); desenharForm();
+    var ins = document.querySelectorAll('#cProds [data-k="nome"]'); ins[ins.length - 1].focus();
+  });
+  $("cZap").addEventListener("click", function (e) {
+    if ($("cZap").getAttribute("href") === "#") { e.preventDefault(); return; }
+    rastrear("calculo-whatsapp", { modo: calc.modo, equipamento: String(calc.equip), produtos: String(calcular().prods.length) });
+  });
+  desenharForm();
+
   // ---------- abas (rodapé) ----------
-  // Usa o endereço (#chuva, #noticias) para o botão "voltar" do Android retornar ao painel.
-  var ABAS = { painel: "vPainel", chuva: "vChuva", noticias: "vNoticias" };
+  // Usa o endereço (#calculo, #chuva, #noticias) para o botão "voltar" do Android retornar ao painel.
+  var ABAS = { painel: "vPainel", calculo: "vCalculo", chuva: "vChuva", noticias: "vNoticias" };
   function abaAtual() { var h = location.hash.slice(1); return ABAS[h] ? h : "painel"; }
   function mostrarAba() {
     var atual = abaAtual();

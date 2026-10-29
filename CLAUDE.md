@@ -27,7 +27,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v50).
+  (`painel-agro-vN` → `vN+1`; hoje v51).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
@@ -39,7 +39,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
 - Título "A + D" (28/10/2026): grão num quadradinho arredondado da cor do tema (`.logo`) + "PAINEL DO" fino/claro
   e "AGRO" em negrito na cor do tema (`h1 small`), uma linha só; à direita, botões WhatsApp e tema.
 
-## Telas (barra de abas no rodapé: PAINEL · CHUVA · NOTÍCIAS; roteamento por `#chuva`/`#noticias`)
+## Telas (barra de abas no rodapé: PAINEL · CÁLCULO · CHUVA · NOTÍCIAS; roteamento por `#calculo`/`#chuva`/`#noticias`)
 - **Painel:** card destaque do Conilon (preço grande, selo AO VIVO/FECHADO dd/mm/FERIADO, variação =
   movimento do mercado no dia "+R$ x no dia"), cards Dólar/Londres/N.York (modelo "E" escolhido em 28/10/2026:
   fundo tingido + contorno + número + rodapé "▲ +0,45%"/"▼ −0,69%" em verde/vermelho; 0,00% cinza), faixa em
@@ -60,6 +60,13 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   link do instalar.html e "No iPhone, abra pelo Safari"). No APK, links de fora abrem no app (openExternal).
   Umami: evento `indicar` (local: topo/painel). Título do topo diminuiu para 6vw para caber os 2 botões. Usuário confirmou
   no celular (28/10) que abre o WhatsApp com a mensagem.
+- **Cálculo (aba CÁLCULO, 29/10/2026):** calda de defensivos no Conilon. Espaçamento (linhas × plantas, m →
+  plantas/ha), equipamento (costal 20 L, tanques 400/1.000/2.000 L), via folha (calda L/ha, padrão 400) ou via solo
+  (drench 30/50 mL ou "Outro", 1 ou 2 drench por planta). Produtos livres (nome + dose POR HECTARE em L/mL/kg/g,
+  vários). Folha: área/tanque = volume ÷ calda/ha. Solo: calda/planta = nº × volume; plantas/tanque = volume ÷
+  calda/planta; área = plantas ÷ plantas/ha. Produto/tanque = dose/ha × área. Botão "ENVIAR PELO WHATSAPP"
+  (wa.me com a recomendação + aviso "siga a bula e o agrônomo"). Tudo salvo no aparelho (chave `calculo`).
+  Umami: `calculo-whatsapp` (modo, equipamento, produtos). Respostas do usuário: dose por ha nos dois modos.
 - **Chuva:** previsão de 10 dias (Open-Meteo). Padrão Itamaraju-BA; usuário escolhe qualquer
   cidade do Brasil (busca no geocoding do Open-Meteo), salvo no aparelho. O ícone da aba mostra
   o total de mm dos 10 dias.
