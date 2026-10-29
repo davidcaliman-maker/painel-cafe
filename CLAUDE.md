@@ -271,7 +271,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
 - Mensagem de WhatsApp sugerida: título, 5 benefícios, link, "No iPhone, abra pelo Safari".
 - **Não contar o dono nas estatísticas (29/10/2026):** 5 toques seguidos no logo (grão do topo) liga/desliga
   `localStorage["umami.disabled"]` (o script do Umami não envia nada com essa chave) e mostra um aviso. Feito no celular
-  do usuário por ele mesmo; no navegador do Claude (painel do Claude Code) já foi ligado no site oficial. A cópia local
+  do usuário por ele mesmo (confirmou o aviso em 29/10); no navegador do Claude (painel do Claude Code) já foi ligado no site oficial. A cópia local
   (localhost) já não conta (data-domains). Se o usuário limpar os dados do app, precisa repetir.
 - Umami: eventos `abertura` (plataforma, tema, cidade_chuva), `aba`, `tema`, `cidade-chuva`,
   `noticia`, `atualizar`, `instalar` (tipo).
