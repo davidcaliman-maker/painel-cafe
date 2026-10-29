@@ -297,21 +297,6 @@
   .calc-res .linha b { text-align: right; font-variant-numeric: tabular-nums; }
   .calc-res .qtd { color: var(--orange); font-size: 17px; }
   .calc-aviso { color: var(--muted); font-size: 13px; }
-  .btn-agro { width: 100%; margin-top: 8px; background: var(--card-2); color: var(--text); border: 1px solid var(--line);
-    border-radius: 8px; padding: 11px; font-size: 14px; font-weight: 800; letter-spacing: .5px; }
-  /* Consulta Agrofit (produtos registrados para café) */
-  .agro-item { background: var(--card); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
-  .agro-item b { display: block; font-size: 16px; }
-  .agro-item small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; line-height: 1.35; }
-  .agro-item .alvos { font-size: 13px; margin-top: 6px; line-height: 1.4; }
-  .agro-item .alvos mark { background: var(--orange); color: var(--on-accent); border-radius: 3px; padding: 0 3px; }
-  .agro-acoes { display: flex; gap: 8px; margin-top: 8px; }
-  .agro-acoes button, .agro-acoes a { flex: 1; text-align: center; border-radius: 8px; padding: 8px 4px; font-size: 12.5px;
-    font-weight: 800; text-decoration: none; white-space: nowrap; }
-  .agro-acoes button { background: var(--orange); color: var(--on-accent); border: 0; }
-  .agro-acoes a { border: 1px solid var(--line); color: var(--text); }
-  .agro-info { color: var(--muted); font-size: 12.5px; margin: 2px 0 8px; }
-  #agroModal .chips { margin-top: 2px; }
 
   /* Notícias */
   .news { display: block; background: var(--card-2); border-radius: 8px; padding: 10px 12px 9px; margin-bottom: 7px;
@@ -520,7 +505,6 @@
     <h3>PRODUTOS (DOSE POR HECTARE)</h3>
     <div id="cProds"></div>
     <button class="btn-add" id="cAdd">+ ADICIONAR PRODUTO</button>
-    <button class="btn-agro" id="cAgro">🔎 CONSULTAR PRODUTOS REGISTRADOS PARA CAFÉ</button>
   </div>
 
   <div class="calc-box calc-res" id="cRes"></div>
@@ -588,27 +572,6 @@
 </nav>
 
 <!-- Escolha da cidade da previsão de chuva -->
-<!-- Consulta de produtos registrados para café (Agrofit/MAPA), aberta pela aba CÁLCULO -->
-<div class="modal" id="agroModal">
-  <div class="sheet">
-    <h3>Produtos registrados para café</h3>
-    <p>Busque pela praga, doença, planta daninha, nome do produto ou ingrediente ativo.</p>
-    <input class="busca" id="agroBusca" type="search" placeholder="Ex.: ferrugem, broca, bicho-mineiro…" autocomplete="off">
-    <div class="chips" id="agroTipo">
-      <button data-t="" class="on">Todos</button>
-      <button data-t="fungicida">Fungicida</button>
-      <button data-t="inseticida">Inseticida</button>
-      <button data-t="herbicida">Herbicida</button>
-      <button data-t="acaricida">Acaricida</button>
-      <button data-t="nematicida">Nematicida</button>
-    </div>
-    <div class="agro-info" id="agroInfo">carregando…</div>
-    <div id="agroLista"></div>
-    <p id="agroFonte" style="margin-top:10px"></p>
-    <div class="actions"><button class="btn-ok" id="agroFechar">Fechar</button></div>
-  </div>
-</div>
-
 <div class="modal" id="cidadeModal">
   <div class="sheet">
     <h3>Cidade da previsão</h3>
@@ -1810,73 +1773,6 @@
                                    mensagem: id === "cZap" ? "completa" : "resumida" });
   }); });
   desenharForm();
-
-  // ---------- consulta de produtos registrados para café (Agrofit) ----------
-  // agrofit-cafe.json é gerado por scripts/agrofit_cafe.py (dados abertos do MAPA, sem dose: a dose fica na bula).
-  var agro = null, agroTipo = "";
-  function semAcento(t) { return String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); }
-  function abrirAgro() {
-    $("agroModal").classList.add("open");
-    rastrear("agrofit", { acao: "abrir" });
-    if (agro) { listarAgro(); return; }
-    fetch("agrofit-cafe.json").then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (d) {
-      d.produtos.forEach(function (p) {
-        p.alvos = p.p.map(function (i) { return d.pragas[i]; });
-        p.busca = semAcento([p.m, p.i, p.c].concat(p.alvos.map(function (a) { return a.n + " " + a.s; })).join(" "));
-      });
-      agro = d;
-      var g = d.geradoEm.split("-");
-      $("agroFonte").textContent = "Fonte: Agrofit/MAPA (dados abertos), atualizado em " + g[2] + "/" + g[1] + "/" + g[0] +
-        ". A dose e o volume de calda estão na bula. Siga sempre a bula e o receituário agronômico.";
-      listarAgro();
-    }).catch(function () { $("agroInfo").textContent = "Não foi possível carregar a lista. Verifique a internet e tente de novo."; });
-  }
-  function listarAgro() {
-    var termos = semAcento($("agroBusca").value).split(/\s+/).filter(Boolean);
-    var achados = agro.produtos.filter(function (p) {
-      return (!agroTipo || semAcento(p.c).indexOf(agroTipo) >= 0) &&
-        termos.every(function (t) { return p.busca.indexOf(t) >= 0; });
-    });
-    var MAX = 50;
-    $("agroInfo").textContent = achados.length ? achados.length + " produto" + (achados.length > 1 ? "s" : "") +
-      (achados.length > MAX ? " (mostrando " + MAX + "; refine a busca)" : "") : "Nenhum produto encontrado.";
-    $("agroLista").innerHTML = achados.slice(0, MAX).map(function (p) {
-      // alvos que batem com a busca vêm primeiro e destacados
-      var bate = function (a) { var t = semAcento(a.n + " " + a.s); return termos.some(function (x) { return t.indexOf(x) >= 0; }); };
-      var alvos = p.alvos.filter(bate).concat(p.alvos.filter(function (a) { return !bate(a); }));
-      var mostra = alvos.slice(0, 6).map(function (a) {
-        var nome = esc2((a.n || a.s).split(";")[0].trim());
-        return bate(a) && termos.length ? "<mark>" + nome + "</mark>" : nome;
-      }).join(", ") + (alvos.length > 6 ? " e mais " + (alvos.length - 6) : "");
-      var bula = "https://www.google.com/search?q=" + encodeURIComponent("bula " + p.m + " café");
-      return '<div class="agro-item"><b>' + esc2(p.m) + "</b><small>" + esc2(p.c) + " · " + esc2(p.i) + "</small>" +
-        '<div class="alvos">' + mostra + "</div>" +
-        '<div class="agro-acoes"><button data-usar="' + esc2(p.r) + '">+ USAR NO CÁLCULO</button>' +
-        '<a href="' + bula + '" target="_blank" rel="noopener" data-bula="' + esc2(p.m) + '">VER BULA</a></div></div>';
-    }).join("");
-  }
-  $("cAgro").addEventListener("click", abrirAgro);
-  $("agroFechar").addEventListener("click", function () { $("agroModal").classList.remove("open"); });
-  $("agroBusca").addEventListener("input", function () { if (agro) listarAgro(); });
-  clique("agroTipo", function (b) {
-    agroTipo = b.getAttribute("data-t");
-    document.querySelectorAll("#agroTipo button").forEach(function (x) { x.classList.toggle("on", x === b); });
-    if (agro) listarAgro();
-  });
-  $("agroLista").addEventListener("click", function (e) {
-    var b = e.target.closest("[data-usar]"), a = e.target.closest("[data-bula]");
-    if (a) rastrear("agrofit", { acao: "bula" });
-    if (!b) return;
-    var p = agro.produtos.filter(function (x) { return x.r === b.getAttribute("data-usar"); })[0];
-    var vazio = calc.prods.filter(function (x) { return !x.nome.trim() && !num(x.dose); })[0];
-    if (vazio) vazio.nome = p.m; else calc.prods.push({ nome: p.m, dose: "", un: "L" });
-    $("agroModal").classList.remove("open");
-    desenharForm();
-    var i = calc.prods.indexOf(vazio || calc.prods[calc.prods.length - 1]);
-    var dose = document.querySelectorAll('#cProds [data-k="dose"]')[i];
-    if (dose) { dose.scrollIntoView({ block: "center" }); dose.focus(); }
-    rastrear("agrofit", { acao: "usar" });
-  });
 
   // ---------- abas (rodapé) ----------
   // Usa o endereço (#calculo, #chuva, #noticias) para o botão "voltar" do Android retornar ao painel.
