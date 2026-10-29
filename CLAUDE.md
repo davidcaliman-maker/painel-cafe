@@ -35,7 +35,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v61).
+  (`painel-agro-vN` → `vN+1`; hoje v62).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
@@ -116,6 +116,9 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   "De 5 em 5 minutos…" (o `#chSub` só aparece no fim de semana: "Último pregão: …").
 - Card do Conilon tem a linha "Referência diária: CCCV (Vitória-ES)" (`.hero-ref`, cor de destaque), pedido
   28/10/2026 — única menção de fonte de preço na tela; NÃO citar os + R$ 10,00 (escolha do usuário).
+- **Natal (pedido 29/10/2026):** de 21 a 25/12 (data de Brasília) um trenó 🦌🦌🛷🎅 passa atrás do preço do Conilon,
+  da direita para a esquerda, sem parar (~11 s por passada; 40px, opacidade .55; `#natal` dentro do `.hero`, z-index 0).
+  Some sozinho em 26/12. Teste fora da época: abrir o site com `?natal=1`. Reduzir animações = trenó parado.
 - Feriados nacionais (`feriado()` no index.html; fixos + Carnaval seg/ter, Sexta Santa, Corpus Christi
   pela Páscoa): selo roxo FERIADO no lugar de AO VIVO (estimativa continua). Pedido do usuário em 01/10.
 - Variação do dia >= 3% (`VARIACAO_FORTE` no index.html, não é o `alertaVariacaoPct`): borda do card verde/vermelha,

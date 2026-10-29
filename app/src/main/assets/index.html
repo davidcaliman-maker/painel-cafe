@@ -128,7 +128,7 @@
   .hero.forte-alta .hero-price span, .hero.forte-baixa .hero-price span { animation: precoBrilha 2s ease-in-out infinite; }
   /* Efeito por cima do preço: fogos (alta) ou dinheiro voando embora (baixa) */
   .hero { position: relative; overflow: hidden; }
-  .hero > :not(.efeito) { position: relative; z-index: 1; }
+  .hero > :not(.efeito):not(.natal) { position: relative; z-index: 1; }
   .efeito { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
   .efeito .voa { position: absolute; font-size: 22px; opacity: 0; animation: notaVoa 3s ease-in infinite; }
   .efeito .fogo { position: absolute; width: 0; height: 0; }
@@ -143,9 +143,18 @@
   .forte-tag { position: absolute; right: 0; bottom: 100%; margin-bottom: 4px; white-space: nowrap; color: var(--forte);
     font-size: 11px; font-weight: 800; letter-spacing: 1.2px; animation: pisca 1.4s ease-in-out infinite; }
   @keyframes precoBrilha { 0%, 100% { text-shadow: none; } 50% { text-shadow: 0 0 18px var(--forte-brilho); } }
+  /* Natal (21 a 25/12, pedido 29/10/2026): Papai Noel no trenó passando atrás do preço, sem parar */
+  .natal { position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .natal .treno { position: absolute; top: 34%; left: 0; white-space: nowrap; font-size: 40px; opacity: .55;
+    animation: trenoPassa 11s linear infinite; }
+  .natal .treno span { display: inline-block; animation: trenoBalanca 1.6s ease-in-out infinite; }
+  /* da direita para a esquerda: as renas (🦌) olham para a esquerda e vão na frente puxando o trenó */
+  @keyframes trenoPassa { from { transform: translateX(100vw); } to { transform: translateX(-110%); } }
+  @keyframes trenoBalanca { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
   @media (prefers-reduced-motion: reduce) {
     .hero.forte-alta, .hero.forte-baixa, .hero-price span, .forte-tag { animation: none !important; }
     .efeito { display: none; }
+    .natal .treno, .natal .treno span { animation: none; left: 30%; }
   }
 
   /* Cards Dólar/Londres/N.York (modelo "E", 28/10/2026): fundo tingido, contorno e rodapé com a variação
@@ -393,6 +402,7 @@
 
 <div class="hero" id="hero">
   <div class="efeito" id="efeito" aria-hidden="true"></div>
+  <div class="natal" id="natal" aria-hidden="true" hidden><div class="treno"><span>🦌🦌🛷🎅</span></div></div>
   <div class="hero-top">
     <div><span class="hero-t">CONILON 7/8</span></div>
     <div class="badge" id="conEstado"></div>
@@ -1497,6 +1507,15 @@
     a.href = "https://wa.me/?text=" + encodeURIComponent(MSG_INDICAR);  // o APK abre links de fora no WhatsApp
     a.addEventListener("click", function () { rastrear("indicar", { local: a.getAttribute("data-local") }); });
   });
+
+  // ---------- Natal: Papai Noel atrás do preço de 21 a 25 de dezembro ----------
+  // (endereço com ?natal=1 mostra fora da época, para testar)
+  function mostrarNatal() {
+    var md = hojeBRT().slice(5);
+    $("natal").hidden = !(/[?&]natal=1/.test(location.search) || (md >= "12-21" && md <= "12-25"));
+  }
+  mostrarNatal();
+  setInterval(mostrarNatal, 60 * 60000);  // vira o dia com o app aberto
 
   // ---------- não contar este aparelho nas estatísticas (pedido 29/10/2026) ----------
   // 5 toques seguidos no logo (grão) liga/desliga. O script do Umami não envia nada quando existe
