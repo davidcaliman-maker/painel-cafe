@@ -35,7 +35,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v57).
+  (`painel-agro-vN` → `vN+1`; hoje v58).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
@@ -79,8 +79,8 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   "Drench: N × V mL por planta"). Pedido 29/10/2026.
   Umami: `calculo-whatsapp` (modo, equipamento, produtos, mensagem completa/resumida). Dose por ha nos dois modos.
   Equipamento "Outro (digitar os litros)" (`equipOutro`; até 30 L = "bomba", acima = "tanque"). Campo QUADRA/TALHÃO
-  (opcional) na 1ª linha das duas mensagens. Resumida com negrito/ícones: 📍 *Quadra*, 🍃 *Via folha* ou 🌱 *Via solo:* N drench
-  de V mL por planta, linha em branco e 🧪 *Produto* - *dose* - Equipamento ("5" → "Quadra: 5"; "Quadra 3"/"Talhão…" fica como digitado). 29/10/2026.
+  (opcional) na 1ª linha das duas mensagens. Resumida com negrito; ícone SÓ na quadra e sem linha em branco: 📍 *Quadra*,
+  *Via folha* ou *Via solo:* N drench de V mL por planta, depois *Produto* - *dose* - Equipamento (ajuste de 29/10) ("5" → "Quadra: 5"; "Quadra 3"/"Talhão…" fica como digitado). 29/10/2026.
 - **Consulta de produtos registrados para café (29/10/2026):** botão "🔎 CONSULTAR PRODUTOS REGISTRADOS PARA CAFÉ" na aba
   CÁLCULO abre `#agroModal`: busca sem acento por praga/doença/planta daninha/produto/ingrediente ativo + filtro por tipo;
   até 50 resultados; "+ USAR NO CÁLCULO" põe o nome no cálculo; "VER BULA" = pesquisa no Google. Dados:

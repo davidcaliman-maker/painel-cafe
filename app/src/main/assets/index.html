@@ -1673,12 +1673,12 @@
   // Resumida (pedido 29/10/2026), para quem vai aplicar: só "PRODUTO - DOSE POR EQUIPAMENTO - EQUIPAMENTO", sem o nome do app
   function textoCurto(r) {
     var eq = eqCurto();
-    // Negrito e ícones do WhatsApp (pedido 29/10/2026): *texto* = negrito
-    var linhas = r.prods.map(function (p) { return "🧪 *" + p.nome + "* - *" + qtd(p.tanque, p.un) + "* - " + eq; });
+    // Negrito do WhatsApp (*texto*); ícone só na quadra e sem linha em branco (pedidos de 29/10/2026)
+    var linhas = r.prods.map(function (p) { return "*" + p.nome + "* - *" + qtd(p.tanque, p.un) + "* - " + eq; });
     var topo = [];
     if (calc.quadra.trim()) topo.push("📍 *" + nomeQuadra() + "*");
-    topo.push(calc.modo === "folha" ? "🍃 *Via folha*" : "🌱 *Via solo:* " + calc.drN + " drench de " + br(r.vol, 0) + " mL por planta");
-    return topo.concat([""], linhas).join("\n");
+    topo.push(calc.modo === "folha" ? "*Via folha*" : "*Via solo:* " + calc.drN + " drench de " + br(r.vol, 0) + " mL por planta");
+    return topo.concat(linhas).join("\n");
   }
   function textoZap(r) {
     var t = ["🧪 *Recomendação " + (calc.modo === "folha" ? "via folha" : "via solo (drench)") + " – café Conilon*", ""];
