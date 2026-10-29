@@ -35,7 +35,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v59).
+  (`painel-agro-vN` → `vN+1`; hoje v60).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
@@ -122,9 +122,10 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   28/10/2026 — única menção de fonte de preço na tela; NÃO citar os + R$ 10,00 (escolha do usuário).
 - Feriados nacionais (`feriado()` no index.html; fixos + Carnaval seg/ter, Sexta Santa, Corpus Christi
   pela Páscoa): selo roxo FERIADO no lugar de AO VIVO (estimativa continua). Pedido do usuário em 01/10.
-- Variação do dia >= 3% (`VARIACAO_FORTE` no index.html, não é o `alertaVariacaoPct`): card brilha,
-  selo FORTE ALTA/BAIXA, fogos + 💵💰 subindo (alta) ou 💸 voando (baixa) em `#efeito`. O preço NÃO
-  aumenta de tamanho (usuário preferiu os fogos). Respeita "reduzir animações".
+- Variação do dia >= 3% (`VARIACAO_FORTE` no index.html, não é o `alertaVariacaoPct`): borda do card verde/vermelha,
+  selo FORTE ALTA/BAIXA (posicionado por cima do percentual, sem ocupar linha), SÓ fogos na alta e 💸 voando na baixa
+  em `#efeito`. Desde 29/10/2026 (pedido): sem o brilho pulsando em volta e sem as notas 💵💰 — a caixa NÃO muda de
+  tamanho. O preço NÃO aumenta. Respeita "reduzir animações".
   Não há preço físico do Arábica (só cotação de NY).
 
 ## Dados e automações (GitHub Actions)
