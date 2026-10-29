@@ -241,17 +241,23 @@
     font-size: 16px; font-weight: 800; letter-spacing: .5px; }
   .indicar svg { width: 24px; height: 24px; flex: none; }
 
+  /* Curva de Londres (gráfico HOJE + aba LONDRES, pedido 29/10/2026): todos os vencimentos abaixo do gráfico */
+  .curva { background: var(--card-2); border-radius: 6px; padding: 10px 10px 4px; margin: -6px 0 14px; }
+  .curva h4 { margin: 0 0 4px; font-size: 13px; letter-spacing: 1px; color: var(--muted); font-weight: 800; }
+  .curva svg { display: block; width: 100%; height: auto; }
+  .curva table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; margin-top: 4px; }
+  .curva th { font-size: 11px; letter-spacing: 1.5px; color: var(--muted); font-weight: 800; text-align: right; padding: 8px 4px; }
+  .curva th:first-child, .curva td:first-child { text-align: left; }
+  .curva td { font-size: 15px; font-weight: 700; text-align: right; padding: 9px 4px; border-top: 1px solid var(--line); }
+  .curva td.v { white-space: nowrap; }
+  .curva tr.ref td:first-child { color: var(--orange); }
+  .curva .estrela { color: var(--muted); font-size: 11px; margin-right: 5px; }
+  .curva tr.ref .estrela { color: var(--orange); }
+  .curva .pct { display: inline-block; padding: 2px 6px; border-radius: 6px; font-size: 12.5px; }
+  .curva .pct.down { background: rgba(255, 90, 95, .16); color: #ff5a5f; }
+  .curva .pct.up { background: rgba(76, 217, 100, .16); color: #4cd964; }
+  .curva .nota { font-size: 11px; color: var(--muted); margin: 6px 2px 4px; }
   /* Aviso rápido no rodapé (ex.: estatísticas desligadas neste aparelho) */
-  /* Todos os contratos de Londres (toque no card LONDRES, pedido 29/10/2026) */
-  #mLdn { cursor: pointer; }
-  .ctr { background: var(--card); border-radius: 10px; padding: 9px 12px; margin-bottom: 6px; border: 1px solid transparent; }
-  .ctr.ref { border-color: var(--orange); }
-  .ctr .l1, .ctr .l2 { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-  .ctr .l1 b { font-size: 16px; }
-  .ctr .l1 .us { font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; }
-  .ctr .l2 { font-size: 13.5px; color: var(--muted); margin-top: 4px; font-variant-numeric: tabular-nums; }
-  .ctr .tag-ref { font-size: 10px; font-weight: 800; color: var(--orange); letter-spacing: .5px; margin-left: 6px; }
-  .curva-resumo { background: var(--card-2); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; font-size: 14px; line-height: 1.4; }
   .toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); transform: translateX(-50%);
     background: var(--card-2); color: var(--text); border: 1px solid var(--orange); border-radius: 10px; padding: 10px 14px;
     font-size: 14px; z-index: 20; max-width: 90vw; text-align: center; }
@@ -426,7 +432,7 @@
 
 <div class="grid3">
   <div class="mkt" id="mUsd"><div class="h">DÓLAR</div><div class="v">—</div><div class="d">—</div><div class="p">–</div></div>
-  <div class="mkt" id="mLdn" role="button" aria-label="Ver todos os contratos de Londres"><div class="h">LONDRES ›</div><div class="v">—</div><div class="d">—</div><div class="p">–</div></div>
+  <div class="mkt" id="mLdn"><div class="h">LONDRES</div><div class="v">—</div><div class="d">—</div><div class="p">–</div></div>
   <div class="mkt" id="mNy"><div class="h">N.YORK</div><div class="v">—</div><div class="d">—</div><div class="p">–</div></div>
 </div>
 
@@ -453,6 +459,11 @@
 <div class="chart">
   <div class="top"><div class="now" id="chNow">—</div><div class="var" id="chVar"></div></div>
   <div id="chBody"><div class="empty">carregando histórico…</div></div>
+</div>
+<div class="curva" id="curva" hidden>
+  <h4>TODOS OS VENCIMENTOS · LONDRES</h4>
+  <div id="curvaGraf"></div>
+  <div id="curvaTab"><div class="empty">carregando…</div></div>
 </div>
 <a class="indicar" data-local="painel" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.6-1.2A9 9 0 1 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M9 7.6c.3 0 .6.1.8.5l.8 1.8c.1.3 0 .5-.1.7l-.6.7a6.4 6.4 0 0 0 2.8 2.8l.7-.6c.2-.2.4-.2.7-.1l1.8.8c.4.2.5.5.4.8-.2 1-1 1.8-2 1.8-3.5-.2-6.5-3.2-6.7-6.7 0-1 .7-1.8 1.4-2.5z" fill="currentColor"/></svg>INDICAR PARA UM AMIGO</a>
 
@@ -590,18 +601,6 @@
     <span>NOTÍCIAS</span>
   </button>
 </nav>
-
-<!-- Todos os vencimentos de Londres (robusta), aberto ao tocar no card LONDRES -->
-<div class="modal" id="curvaModal">
-  <div class="sheet">
-    <h3>Londres · todos os contratos</h3>
-    <p id="curvaSub">Variação de hoje de cada vencimento: pontos, percentual e quanto dá em R$ por saca.</p>
-    <div id="curvaResumo"></div>
-    <div id="curvaLista"><div class="news-empty">carregando…</div></div>
-    <p id="curvaNota" style="margin-top:10px"></p>
-    <div class="actions"><button class="btn-ok" id="curvaFechar">Fechar</button></div>
-  </div>
-</div>
 
 <!-- Escolha da cidade da previsão de chuva -->
 <div class="modal" id="cidadeModal">
@@ -1229,6 +1228,7 @@
 
   function renderChart() {
     $("chTitulo").textContent = periodo === "hoje" ? "HOJE" : "SEMANA";
+    mostrarCurva();
     document.querySelectorAll("#periodo button").forEach(function (x) {
       x.classList.toggle("on", x.getAttribute("data-p") === periodo);
     });
@@ -1530,46 +1530,63 @@
     a.addEventListener("click", function () { rastrear("indicar", { local: a.getAttribute("data-local") }); });
   });
 
-  // ---------- todos os contratos de Londres (toque no card LONDRES) ----------
-  // Preço de cada vencimento em US$/t e em R$/saca (US$/t × 0,06 × dólar de hoje), a diferença para o
-  // contrato que o app usa e um resumo da curva: longos mais baratos = mercado pagando mais pelo café de agora.
-  function abrirCurva() {
-    $("curvaModal").classList.add("open");
-    rastrear("contratos-londres");
-    var lista = contratosAtivos(MERCADOS.londres).slice(0, 8);
-    $("curvaLista").innerHTML = '<div class="news-empty">carregando…</div>';
-    scan("futures", lista.map(function (c) { return "ICEEUR:" + c; })).then(function (f) {
-      var usd = Math.round(last.usd * 100) / 100;
-      var linhas = lista.map(function (c) { var q = f["ICEEUR:" + c]; return q && q.close ? { c: c, q: q } : null; }).filter(Boolean);
+  // ---------- todos os vencimentos de Londres (abaixo do gráfico HOJE, aba LONDRES) ----------
+  // Pedido de 29/10/2026, no estilo de um print que o usuário mandou: gráfico da curva (preço de cada vencimento)
+  // e tabela VENC · LAST · Δ% · MÁX · MÍN. Busca no máximo 1 vez por minuto, só com HOJE + LONDRES na tela.
+  var curvaDados = null, curvaHora = 0;
+  function mostrarCurva() {
+    var ver = periodo === "hoje" && serie === "londres";
+    $("curva").hidden = !ver;
+    if (!ver) return;
+    if (curvaDados) desenharCurva();
+    if (Date.now() - curvaHora < 60000) return;
+    curvaHora = Date.now();
+    var lista = contratosAtivos(MERCADOS.londres).slice(0, 9);
+    postJson("https://scanner.tradingview.com/futures/scan", {
+      symbols: { tickers: lista.map(function (c) { return "ICEEUR:" + c; }) },
+      columns: ["close", "change", "high", "low"]
+    }).then(function (res) {
+      var por = {};
+      (res.data || []).forEach(function (r) { por[r.s] = { close: r.d[0], change: r.d[1], high: r.d[2], low: r.d[3] }; });
+      var linhas = lista.map(function (c) { var q = por["ICEEUR:" + c]; return q && q.close ? { c: c, q: q } : null; }).filter(Boolean);
       if (!linhas.length) throw new Error("sem cotações");
-      var ref = linhas.filter(function (x) { return x.c === last.ctrLdn; })[0] || linhas[0];
-      var rs = function (v) { return v * T_PER_SACA * usd; };
-      $("curvaLista").innerHTML = linhas.map(function (x) {
-        // Só a variação do dia (pedido 29/10/2026): pontos, % e quanto isso dá em R$ por saca
-        var ch = x.q.change || 0;
-        var pts = x.q.prev != null ? x.q.close - x.q.prev : x.q.close - x.q.close / (1 + ch / 100);
-        var cor = pts > 0 ? "up-t" : pts < 0 ? "down-t" : "", seta = pts > 0 ? "▲ " : pts < 0 ? "▼ " : "";
-        return '<div class="ctr' + (x === ref ? " ref" : "") + '"><div class="l1"><b>' + ctrLabel(x.c) +
-          (x === ref ? '<span class="tag-ref">REFERÊNCIA</span>' : "") + "</b>" +
-          '<span class="us">' + fmt(x.q.close, 0) + ' <small style="font-weight:400;font-size:12px">pts</small></span></div>' +
-          '<div class="l2 ' + cor + '"><b>' + seta + fmt(Math.abs(pts), 0) + " pts</b><b>" + seta + fmt(Math.abs(ch), 2) +
-          "%</b><b>" + seta + "R$ " + fmt(Math.abs(rs(pts)), 2) + "/saca</b></div></div>";
-      }).join("");
-      var longe = linhas[linhas.length - 1], perto = linhas[0], d = longe.q.close - perto.q.close;
-      $("curvaResumo").innerHTML = '<div class="curva-resumo">' + (Math.abs(d) < 5 ?
-        "Contratos próximos e longos <b>quase iguais</b>: o mercado não está pagando prêmio por prazo." : d < 0 ?
-        "Contratos longos <b>mais baratos</b>: o mercado está pagando <b>mais pelo café de agora</b> (" + ctrLabel(longe.c) +
-          " " + fmt(Math.abs(d), 0) + " pts abaixo de " + ctrLabel(perto.c) + ")." :
-        "Contratos longos <b>mais caros</b>: o mercado está pagando <b>mais pelo café futuro</b> (" + ctrLabel(longe.c) +
-          " " + fmt(d, 0) + " pts acima de " + ctrLabel(perto.c) + ").") + "</div>";
-      $("curvaNota").textContent = "Cotações com cerca de 10 minutos de atraso. R$ por saca = pontos × 0,06 × dólar de hoje (R$ " +
-        fmt(usd, 2) + ").";
+      curvaDados = linhas;
+      desenharCurva();
     }).catch(function () {
-      $("curvaLista").innerHTML = '<div class="news-empty">Não foi possível buscar os contratos agora. Tente de novo em instantes.</div>';
+      curvaHora = 0;
+      if (!curvaDados) $("curvaTab").innerHTML = '<div class="empty">não foi possível buscar os vencimentos agora</div>';
     });
   }
-  $("mLdn").addEventListener("click", function () { if (last) abrirCurva(); });
-  $("curvaFechar").addEventListener("click", function () { $("curvaModal").classList.remove("open"); });
+  function desenharCurva() {
+    var p = curvaDados, W = 340, H = 120, L = 34, R = 18, T = 12, B = 22;
+    var vals = p.map(function (x) { return x.q.close; });
+    var vMax = Math.max.apply(null, vals), vMin = Math.min.apply(null, vals), pad = (vMax - vMin) * 0.2 || 10;
+    var min = vMin - pad, max = vMax + pad;
+    var X = function (i) { return L + i * (W - L - R) / Math.max(1, p.length - 1); };
+    var Y = function (v) { return T + (max - v) / (max - min) * (H - T - B); };
+    var cor = "var(--orange)", g = "";
+    [max - pad / 2, (max + min) / 2, min + pad / 2].forEach(function (v) {
+      g += '<text x="0" y="' + (Y(v) + 3).toFixed(1) + '" font-size="9" fill="var(--muted)">' + fmt(v, 0) + "</text>";
+    });
+    g += '<path d="' + p.map(function (x, i) { return (i ? "L" : "M") + X(i).toFixed(1) + "," + Y(x.q.close).toFixed(1); }).join(" ") +
+      '" fill="none" stroke="' + cor + '" stroke-width="2"/>';
+    p.forEach(function (x, i) {
+      var ult = i === p.length - 1;
+      g += '<circle cx="' + X(i).toFixed(1) + '" cy="' + Y(x.q.close).toFixed(1) + '" r="' + (ult ? 4 : 2.6) + '" fill="' + cor + '"/>';
+      g += '<text x="' + X(i).toFixed(1) + '" y="' + (H - 6) + '" font-size="8.5" text-anchor="middle" fill="var(--muted)">' +
+        ctrLabel(x.c).toUpperCase() + "</text>";
+    });
+    $("curvaGraf").innerHTML = '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Preço de cada vencimento de Londres">' + g + "</svg>";
+    $("curvaTab").innerHTML = "<table><tr><th>VENC</th><th>LAST</th><th>Δ%</th><th>MÁX</th><th>MÍN</th></tr>" +
+      p.map(function (x) {
+        var ch = x.q.change || 0, lado = ch > 0 ? "up" : ch < 0 ? "down" : "";
+        return '<tr class="' + (x.c === last.ctrLdn ? "ref" : "") + '"><td><span class="estrela">★</span>' + ctrLabel(x.c).toUpperCase() +
+          '</td><td class="v ' + (lado ? lado + "-t" : "") + '">' + fmt(x.q.close, 0) +
+          '</td><td><span class="pct ' + lado + '">' + (ch > 0 ? "▲ +" : ch < 0 ? "▼ −" : "") + fmt(Math.abs(ch), 2) + "%</span></td><td>" +
+          (x.q.high ? fmt(x.q.high, 0) : "—") + "</td><td>" + (x.q.low ? fmt(x.q.low, 0) : "—") + "</td></tr>";
+      }).join("") + "</table>" +
+      '<div class="nota">★ contrato usado pelo app · cotações com cerca de 10 min de atraso</div>';
+  }
 
   // ---------- Natal: Papai Noel atrás do preço de 21 a 25 de dezembro ----------
   // (endereço com ?natal=1 mostra fora da época, para testar)

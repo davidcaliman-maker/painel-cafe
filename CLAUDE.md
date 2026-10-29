@@ -35,7 +35,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v64).
+  (`painel-agro-vN` → `vN+1`; hoje v65).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
@@ -116,11 +116,11 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   "De 5 em 5 minutos…" (o `#chSub` só aparece no fim de semana: "Último pregão: …").
 - Card do Conilon tem a linha "Referência diária: CCCV (Vitória-ES)" (`.hero-ref`, cor de destaque), pedido
   28/10/2026 — única menção de fonte de preço na tela; NÃO citar os + R$ 10,00 (escolha do usuário).
-- **Todos os contratos de Londres (29/10/2026):** tocar no card "LONDRES ›" abre `#curvaModal` com os 8 próximos
-  vencimentos (`contratosAtivos(MERCADOS.londres)`, busca no scanner na hora). Simplificado a pedido (29/10): cada linha só
-  tem a cotação em pts e a VARIAÇÃO DO DIA em pts, % e R$/saca (pts × 0,06 × dólar de hoje); contrato do app com borda +
-  "REFERÊNCIA"; resumo da curva (longos mais baratos = "pagando mais pelo café de agora";
-  diferença < 5 US$/t = "quase iguais"). Umami: `contratos-londres`.
+- **Todos os vencimentos de Londres (29/10/2026, versão final pedida com um print):** só com o gráfico em HOJE + aba
+  LONDRES aparece abaixo dele o quadro `#curva` ("TODOS OS VENCIMENTOS · LONDRES"): gráfico da curva (9 vencimentos,
+  JAN27…MAI28) e tabela VENC · LAST · Δ% · MÁX · MÍN (scanner, colunas close/change/high/low, no máx. 1 busca por minuto;
+  ★ azul = contrato do app). A janela anterior ao tocar no card LONDRES (com R$/saca) foi RETIRADA; o card voltou a
+  "LONDRES". O Δ% do scanner pode diferir de outros sites (print do usuário: MAR27 −1,34% × app −0,50%).
 - **Natal (pedido 29/10/2026):** de 21 a 25/12 (data de Brasília) um trenó 🦌🦌🛷🎅 passa atrás do preço do Conilon,
   da direita para a esquerda, sem parar (~11 s por passada; 40px, opacidade .55; `#natal` dentro do `.hero`, z-index 0).
   Some sozinho em 26/12. Teste fora da época: abrir o site com `?natal=1`. Reduzir animações = trenó parado.
