@@ -448,6 +448,11 @@
   <div class="sec-sub">Defensivos no café Conilon</div>
 
   <div class="calc-box">
+    <h3>QUADRA / TALHÃO</h3>
+    <input class="calc-in" id="cQuadra" placeholder="Ex.: Quadra 3 (opcional)">
+  </div>
+
+  <div class="calc-box">
     <h3>ESPAÇAMENTO (METROS)</h3>
     <div class="calc-row">
       <label>Entre linhas<input class="calc-in" id="cLinhas" inputmode="decimal" placeholder="3,0"></label>
@@ -464,7 +469,9 @@
       <button data-l="400">Tanque 400 L</button>
       <button data-l="1000">Tanque 1.000 L</button>
       <button data-l="2000">Tanque 2.000 L</button>
+      <button data-l="outro" style="grid-column: 1 / -1">Outro (digitar os litros)</button>
     </div>
+    <input class="calc-in" id="cEquipOutro" inputmode="decimal" placeholder="Litros do equipamento" hidden>
   </div>
 
   <div class="calc-box">
@@ -1571,7 +1578,7 @@
   // Dose sempre por hectare. Via folha: área do tanque = volume do tanque ÷ calda por hectare.
   // Via solo (drench): calda por planta = nº de drench × volume; área do tanque = plantas atendidas ÷ plantas/ha.
   // Nos dois, produto por tanque = dose/ha × área do tanque. O que o produtor digita fica salvo no aparelho.
-  var calc = { linhas: "", plantas: "", equip: 400, modo: "folha", calda: "400", drVol: "50", drOutro: "", drN: 1,
+  var calc = { quadra: "", linhas: "", plantas: "", equip: 400, equipOutro: "", modo: "folha", calda: "400", drVol: "50", drOutro: "", drN: 1,
                prods: [{ nome: "", dose: "", un: "L" }] };
   try { var csCalc = load("calculo"); if (csCalc) calc = Object.assign(calc, JSON.parse(csCalc)); } catch (e) {}
   function num(v) { var n = parseFloat(String(v || "").replace(",", ".")); return isFinite(n) && n > 0 ? n : 0; }
@@ -1587,15 +1594,21 @@
   function area(ha) {
     return ha < 1 ? br(ha, 3).replace(/0+$/, "").replace(/,$/, "") + " ha (" + br(ha * 10000, 0) + " m²)" : br(ha, 2) + " ha";
   }
-  function nomeEquip(l) { return l == 20 ? "Bomba costal de 20 L" : "Tanque de " + br(Number(l), 0) + " L"; }
+  // Equipamento: botões prontos ou "outro" (o produtor digita os litros; até 30 L é chamado de bomba)
+  function litros() { return calc.equip === "outro" ? num(calc.equipOutro) : Number(calc.equip); }
+  function ehBomba() { return litros() <= 30; }
+  function nomeT() { return ehBomba() ? "bomba" : "tanque"; }
+  function eqCurto() { return calc.equip == 20 ? "Costal 20 L" : (ehBomba() ? "Bomba " : "Tanque ") + brAuto(litros()) + " L"; }
+  function nomeEquip() { return calc.equip == 20 ? "Bomba costal de 20 L" : (ehBomba() ? "Bomba de " : "Tanque de ") + brAuto(litros()) + " L"; }
   function esc2(t) {
     return String(t).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; });
   }
 
   function calcular() {
-    var L = num(calc.linhas), P = num(calc.plantas), V = Number(calc.equip);
+    var L = num(calc.linhas), P = num(calc.plantas), V = litros();
     var res = { ok: false, plantasHa: L && P ? 10000 / (L * P) : 0 };
     if (!res.plantasHa) { res.falta = "Informe o espaçamento entre linhas e entre plantas."; return res; }
+    if (!V) { res.falta = "Informe os litros do equipamento."; return res; }
     if (calc.modo === "folha") {
       var cha = num(calc.calda);
       if (!cha) { res.falta = "Informe o volume de calda por hectare."; return res; }
@@ -1617,24 +1630,29 @@
     return res;
   }
 
+  // "3" → "Quadra: 3"; "Quadra 3" ou "Talhão do brejo" ficam como foram digitados
+  function nomeQuadra() { var q = calc.quadra.trim(); return /^(quadra|talh)/i.test(q) ? q : "Quadra: " + q; }
+
   // Resumida (pedido 29/10/2026), para quem vai aplicar: só "PRODUTO - DOSE POR EQUIPAMENTO - EQUIPAMENTO", sem o nome do app
   function textoCurto(r) {
-    var eq = calc.equip == 20 ? "Costal 20 L" : "Tanque " + br(Number(calc.equip), 0) + " L";
+    var eq = eqCurto();
     var linhas = r.prods.map(function (p) { return p.nome + " - " + qtd(p.tanque, p.un) + " - " + eq; });
     if (calc.modo === "solo") linhas.unshift("Drench: " + calc.drN + " × " + br(r.vol, 0) + " mL por planta");
+    if (calc.quadra.trim()) linhas.unshift(nomeQuadra());
     return linhas.join("\n");
   }
   function textoZap(r) {
-    var nomeT = calc.equip == 20 ? "bomba" : "tanque";
-    var t = ["🧪 *Recomendação " + (calc.modo === "folha" ? "via folha" : "via solo (drench)") + " – café Conilon*", "",
+    var t = ["🧪 *Recomendação " + (calc.modo === "folha" ? "via folha" : "via solo (drench)") + " – café Conilon*", ""];
+    if (calc.quadra.trim()) t.push("📍 " + nomeQuadra());
+    t.push(
       "📏 Espaçamento: " + String(calc.linhas).replace(".", ",") + " × " + String(calc.plantas).replace(".", ",") +
         " m (" + br(r.plantasHa, 0) + " plantas/ha)",
-      "🚜 Equipamento: " + nomeEquip(calc.equip)];
+      "🚜 Equipamento: " + nomeEquip());
     if (calc.modo === "folha") t.push("💧 Calda: " + br(r.caldaHa, 0) + " L/ha");
     else t.push("💧 Drench: " + calc.drN + " × " + br(r.vol, 0) + " mL = " + br(r.caldaPlanta, 0) +
       " mL de calda por planta (" + br(r.caldaHa, 0) + " L/ha)");
-    t.push("📐 Cada " + nomeT + " cobre " + area(r.ha) + (calc.modo === "solo" ? " = " + br(r.plantasTanque, 0) + " plantas" : ""));
-    t.push("", "*Produtos por " + nomeT + " de " + br(Number(calc.equip), 0) + " L:*");
+    t.push("📐 Cada " + nomeT() + " cobre " + area(r.ha) + (calc.modo === "solo" ? " = " + br(r.plantasTanque, 0) + " plantas" : ""));
+    t.push("", "*Produtos por " + nomeT() + " de " + brAuto(litros()) + " L:*");
     r.prods.forEach(function (p) {
       t.push("• " + p.nome + ": *" + qtd(p.tanque, p.un) + "* (dose " + brAuto(p.dose) + " " + p.un + "/ha)");
     });
@@ -1645,18 +1663,18 @@
 
   function renderCalc() {
     save("calculo", JSON.stringify(calc));
-    var r = calcular(), nomeT = calc.equip == 20 ? "bomba" : "tanque", h = "";
+    var r = calcular(), nT = nomeT(), h = "";
     $("cPlantasHa").innerHTML = r.plantasHa ? "<b>" + br(r.plantasHa, 0) + "</b> plantas por hectare" : "";
     if (!r.ok) h = '<div class="calc-aviso">' + r.falta + "</div>";
     else {
-      h += "<h3>RESULTADO POR " + nomeT.toUpperCase() + " DE " + br(Number(calc.equip), 0) + " L</h3>";
+      h += "<h3>RESULTADO POR " + nT.toUpperCase() + " DE " + brAuto(litros()) + " L</h3>";
       if (calc.modo === "solo") {
         h += '<div class="linha"><span>Calda por planta</span><b>' + br(r.caldaPlanta, 0) + " mL</b></div>";
-        h += '<div class="linha"><span>Plantas por ' + nomeT + "</span><b>" + br(r.plantasTanque, 0) + "</b></div>";
+        h += '<div class="linha"><span>Plantas por ' + nT + "</span><b>" + br(r.plantasTanque, 0) + "</b></div>";
         h += '<div class="linha"><span>Calda por hectare</span><b>' + br(r.caldaHa, 0) + " L</b></div>";
       }
-      h += '<div class="linha"><span>Área por ' + nomeT + "</span><b>" + area(r.ha) + "</b></div>";
-      h += '<div class="linha"><span>' + (calc.equip == 20 ? "Bombas" : "Tanques") + " por hectare</span><b>" + brAuto(r.tanquesHa) + "</b></div>";
+      h += '<div class="linha"><span>Área por ' + nT + "</span><b>" + area(r.ha) + "</b></div>";
+      h += '<div class="linha"><span>' + (ehBomba() ? "Bombas" : "Tanques") + " por hectare</span><b>" + brAuto(r.tanquesHa) + "</b></div>";
       if (!r.prods.length) h += '<div class="calc-aviso" style="margin-top:8px">Adicione um produto com a dose por hectare.</div>';
       r.prods.forEach(function (p) {
         h += '<div class="linha"><span>' + esc2(p.nome) + '</span><b class="qtd">' + qtd(p.tanque, p.un) + "</b></div>";
@@ -1673,6 +1691,7 @@
     document.querySelectorAll("#" + grupo + " button").forEach(function (b) { b.classList.toggle("on", b.getAttribute(attr) == valor); });
   }
   function desenharForm() {
+    $("cQuadra").value = calc.quadra; $("cEquipOutro").value = calc.equipOutro; $("cEquipOutro").hidden = calc.equip !== "outro";
     $("cLinhas").value = calc.linhas; $("cPlantas").value = calc.plantas; $("cCalda").value = calc.calda;
     $("cDrOutro").value = calc.drOutro; $("cDrOutro").hidden = calc.drVol !== "outro";
     marcar("cEquip", "data-l", calc.equip); marcar("cModo", "data-m", calc.modo);
@@ -1690,11 +1709,15 @@
     }).join("");
     renderCalc();
   }
-  [["cLinhas", "linhas"], ["cPlantas", "plantas"], ["cCalda", "calda"], ["cDrOutro", "drOutro"]].forEach(function (x) {
+  [["cQuadra", "quadra"], ["cEquipOutro", "equipOutro"], ["cLinhas", "linhas"], ["cPlantas", "plantas"], ["cCalda", "calda"], ["cDrOutro", "drOutro"]].forEach(function (x) {
     $(x[0]).addEventListener("input", function () { calc[x[1]] = this.value; renderCalc(); });
   });
   function clique(id, fn) { $(id).addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) fn(b); }); }
-  clique("cEquip", function (b) { calc.equip = Number(b.getAttribute("data-l")); desenharForm(); });
+  clique("cEquip", function (b) {
+    var l = b.getAttribute("data-l");
+    calc.equip = l === "outro" ? "outro" : Number(l); desenharForm();
+    if (l === "outro") $("cEquipOutro").focus();
+  });
   clique("cModo", function (b) { calc.modo = b.getAttribute("data-m"); desenharForm(); });
   clique("cDrVol", function (b) {
     calc.drVol = b.getAttribute("data-v"); desenharForm();
@@ -1719,7 +1742,7 @@
   });
   ["cZap", "cZapCurta"].forEach(function (id) { $(id).addEventListener("click", function (e) {
     if ($(id).getAttribute("href") === "#") { e.preventDefault(); return; }
-    rastrear("calculo-whatsapp", { modo: calc.modo, equipamento: String(calc.equip), produtos: String(calcular().prods.length),
+    rastrear("calculo-whatsapp", { modo: calc.modo, equipamento: calc.equip === "outro" ? "outro" : String(calc.equip), produtos: String(calcular().prods.length),
                                    mensagem: id === "cZap" ? "completa" : "resumida" });
   }); });
   desenharForm();
