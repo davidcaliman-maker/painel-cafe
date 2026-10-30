@@ -292,6 +292,12 @@
   .tab-mm:empty { display: none; }
 
   /* Cálculo de calda (aba CÁLCULO, pedido 29/10/2026): defensivos via folha ou via solo (drench) no Conilon */
+  /* Faixa da Agro Center no topo da aba (opção "B" escolhida em 30/10/2026): fundo verde, logo + slogan */
+  .parceiro { display: flex; align-items: center; gap: 12px; background: #1f4d2b; border: 1px solid #2f7a42;
+    border-radius: 12px; padding: 10px 12px; margin: 4px 0 10px; }
+  .parceiro img { flex: none; width: min(120px, 32vw); height: auto; }
+  .parceiro span { color: #fff; font-weight: 700; font-size: 14px; line-height: 1.25; }
+  .parceiro b { color: #8be08f; }
   .calc-box { background: var(--card); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
   .calc-box h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: 1px; color: var(--muted); font-weight: 800; }
   .calc-row { display: flex; gap: 8px; align-items: flex-end; }
@@ -481,6 +487,10 @@
 </div><!-- /vPainel -->
 
 <div id="vCalculo" hidden>
+  <div class="parceiro">
+    <img src="logo-agrocenter.png" alt="Agro Center" width="146" height="63">
+    <span>Sua loja de defensivos em <b>Itamaraju</b></span>
+  </div>
   <h2>CÁLCULO</h2>
   <div class="sec-sub">Defensivos no café Conilon</div>
 
