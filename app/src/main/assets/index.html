@@ -1525,6 +1525,11 @@
     if (window.umami && umami.track) {
       rastrear("abertura", { plataforma: plataforma(), tema: temaSalvo(),
                              cidade_chuva: nomeCidade(cidade) });
+      // Primeiro uso no aparelho (pedido 30/10/2026): enviado uma vez só; o aparelho guarda que já enviou.
+      if (!load("primeiroUso")) {
+        rastrear("primeiro-uso", { plataforma: plataforma() });
+        save("primeiroUso", hojeBRT());
+      }
     } else if (tentativa < 20) {
       setTimeout(function () { registrarAbertura(tentativa + 1); }, 500);
     }

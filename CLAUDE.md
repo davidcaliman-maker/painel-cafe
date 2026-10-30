@@ -35,7 +35,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v69).
+  (`painel-agro-vN` → `vN+1`; hoje v70).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
@@ -288,6 +288,8 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   (localhost) já não conta (data-domains). Se o usuário limpar os dados do app, precisa repetir.
 - Umami: eventos `abertura` (plataforma, tema, cidade_chuva), `aba`, `tema`, `cidade-chuva`,
   `noticia`, `atualizar`, `instalar` (tipo).
+  `primeiro-uso` (plataforma; desde 30/10/2026, uma vez por aparelho, chave `primeiroUso` salva no aparelho;
+  quem já usava conta uma vez na 1ª abertura depois disso).
 
 ## Custos e riscos conhecidos (explicados ao usuário)
 - GitHub: grátis enquanto o repo for público. Umami: grátis até 100 mil eventos/mês.
