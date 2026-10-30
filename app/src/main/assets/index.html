@@ -293,12 +293,16 @@
 
   /* Cálculo de calda (aba CÁLCULO, pedido 29/10/2026): defensivos via folha ou via solo (drench) no Conilon */
   /* Agro Center ao lado do título (30/10/2026): quadrinho verde com logo e slogan, cores da opção "B" */
-  .calc-topo { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 4px; }
-  .parceiro { flex: none; width: min(136px, 37vw); background: #1f4d2b; border: 1px solid #2f7a42; border-radius: 10px;
-    padding: 5px 6px 6px; text-align: center; }
-  .parceiro img { display: block; width: 100%; height: auto; }
-  .parceiro span { display: block; color: #fff; font-weight: 700; font-size: 10px; line-height: 1.2; margin-top: 2px; }
-  .parceiro b { color: #8be08f; }
+  /* Topo do CÁLCULO num cartão verde da Agro Center (opção "3B", 30/10/2026) */
+  .calc-topo { background: #1f4d2b; border: 1px solid #2f7a42; border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; }
+  .calc-topo .l1 { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .calc-topo h2 { margin: 0; font-size: 32px; color: #fff; }
+  .calc-topo .sub { color: #8be08f; font-weight: 700; font-size: 15px; }
+  .calc-topo img { flex: none; width: min(120px, 30vw); height: auto; }
+  .calc-topo .l2 { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 6px;
+    padding-top: 6px; border-top: 1px solid #2f7a42; color: #fff; font-weight: 700; font-size: 12px; white-space: nowrap; }
+  .calc-topo .l2 b { color: #8be08f; }
+  .calc-topo .of { color: #8be08f; font-size: 10px; letter-spacing: 1px; font-weight: 800; }
   .calc-box { background: var(--card); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
   .calc-box h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: 1px; color: var(--muted); font-weight: 800; }
   .calc-row { display: flex; gap: 8px; align-items: flex-end; }
@@ -489,11 +493,11 @@
 
 <div id="vCalculo" hidden>
   <div class="calc-topo">
-    <div><h2>CÁLCULO</h2><div class="sec-sub">Defensivos no café Conilon</div></div>
-    <div class="parceiro">
+    <div class="l1">
+      <div><h2>CÁLCULO</h2><div class="sub">Defensivos no café Conilon</div></div>
       <img src="logo-agrocenter.png" alt="Agro Center" width="146" height="63">
-      <span>Sua loja de defensivos em <b>Itamaraju</b></span>
     </div>
+    <div class="l2"><span class="of">OFERECIMENTO</span><span>Sua loja de defensivos em <b>Itamaraju</b></span></div>
   </div>
 
   <div class="calc-box">
