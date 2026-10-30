@@ -35,7 +35,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v67).
+  (`painel-agro-vN` → `vN+1`; hoje v68).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
@@ -81,9 +81,10 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   Equipamento "Outro (digitar os litros)" (`equipOutro`; até 30 L = "bomba", acima = "tanque"). Campo QUADRA/TALHÃO
   (opcional) na 1ª linha das duas mensagens. Resumida com negrito; ícone SÓ na quadra e sem linha em branco: 📍 *Quadra*,
   *Via folha* ou *Via solo:* N drench de V mL por planta, depois *Produto* - *dose* - Equipamento (ajuste de 29/10) ("5" → "Quadra: 5"; "Quadra 3"/"Talhão…" fica como digitado). 29/10/2026.
-- **Agro Center na aba CÁLCULO (30/10/2026):** faixa verde-escura (#1f4d2b) no topo da aba com o logo
-  (`assets/logo-agrocenter.png`, 292×126, fundo transparente, enviado pelo usuário) e o slogan "Sua loja de defensivos em
-  **Itamaraju**" (opção "B" entre 4 mostradas; antes o logo pequeno ao lado do título foi recusado).
+- **Agro Center na aba CÁLCULO (30/10/2026):** quadrinho verde-escuro (#1f4d2b, borda #2f7a42) À DIREITA do título
+  "CÁLCULO" (`.calc-topo`/`.parceiro`, ~136px) com o logo (`assets/logo-agrocenter.png`, 292×126, fundo transparente,
+  enviado pelo usuário) e embaixo "Sua loja de defensivos em **Itamaraju**" (branco + verde-claro #8be08f). Histórico:
+  logo pequeno solto ao lado do título → recusado; faixa larga verde no topo (opção B) → "ocupou muito espaço".
 - **Consulta de produtos registrados (Agrofit) — RETIRADA em 29/10/2026** a pedido do usuário ("não achei interessante"):
   apagados o botão/janela da aba CÁLCULO, `assets/agrofit-cafe.json`, `scripts/agrofit_cafe.py` e `.github/workflows/agrofit.yml`.
   (Sabido: o CSV aberto do Agrofit/MAPA tem produto × cultura × praga, ~1.272 produtos para café, mas NÃO tem dose nem calda.)
