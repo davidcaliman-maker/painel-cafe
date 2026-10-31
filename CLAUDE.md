@@ -35,7 +35,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v70).
+  (`painel-agro-vN` → `vN+1`; hoje v71).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
@@ -81,6 +81,9 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   Equipamento "Outro (digitar os litros)" (`equipOutro`; até 30 L = "bomba", acima = "tanque"). Campo QUADRA/TALHÃO
   (opcional) na 1ª linha das duas mensagens. Resumida com negrito; ícone SÓ na quadra e sem linha em branco: 📍 *Quadra*,
   *Via folha* ou *Via solo:* N drench de V mL por planta, depois *Produto* - *dose* - Equipamento (ajuste de 29/10) ("5" → "Quadra: 5"; "Quadra 3"/"Talhão…" fica como digitado). 29/10/2026.
+- **Ordem da aba CÁLCULO (31/10/2026, pedido):** APLICAÇÃO (via folha/solo + calda ou drench) em cima de tudo →
+  Quadra → ESPAÇAMENTO (`#cEspBox`, SÓ aparece via solo; na folha não entra na conta nem na mensagem completa) →
+  Equipamento → Produtos → Resultado.
 - **Agro Center na aba CÁLCULO (30/10/2026, opção "3B" escolhida):** o topo da aba é um CARTÃO VERDE (`.calc-topo`,
   #1f4d2b, borda #2f7a42): "CÁLCULO" branco + "Defensivos no café Conilon" verde-claro (#8be08f) à esquerda, logo
   (`assets/logo-agrocenter.png`, 292×126, fundo transparente, enviado pelo usuário) à direita; linha de baixo com
