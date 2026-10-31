@@ -501,33 +501,6 @@
   </div>
 
   <div class="calc-box">
-    <h3>QUADRA / TALHÃO</h3>
-    <input class="calc-in" id="cQuadra" placeholder="Ex.: Quadra 3 (opcional)">
-  </div>
-
-  <div class="calc-box">
-    <h3>ESPAÇAMENTO (METROS)</h3>
-    <div class="calc-row">
-      <label>Entre linhas<input class="calc-in" id="cLinhas" inputmode="decimal" placeholder="3,0"></label>
-      <span class="calc-x">×</span>
-      <label>Entre plantas<input class="calc-in" id="cPlantas" inputmode="decimal" placeholder="1,0"></label>
-    </div>
-    <div class="calc-info" id="cPlantasHa"></div>
-  </div>
-
-  <div class="calc-box">
-    <h3>EQUIPAMENTO</h3>
-    <div class="opcoes" id="cEquip">
-      <button data-l="20">Costal 20 L</button>
-      <button data-l="400">Tanque 400 L</button>
-      <button data-l="1000">Tanque 1.000 L</button>
-      <button data-l="2000">Tanque 2.000 L</button>
-      <button data-l="outro" style="grid-column: 1 / -1">Outro (digitar os litros)</button>
-    </div>
-    <input class="calc-in" id="cEquipOutro" inputmode="decimal" placeholder="Litros do equipamento" hidden>
-  </div>
-
-  <div class="calc-box">
     <h3>APLICAÇÃO</h3>
     <div class="opcoes grande" id="cModo">
       <button data-m="folha">🍃 Via folha</button>
@@ -550,6 +523,33 @@
         <button data-n="2">2 drench</button>
       </div>
     </div>
+  </div>
+
+  <div class="calc-box">
+    <h3>QUADRA / TALHÃO</h3>
+    <input class="calc-in" id="cQuadra" placeholder="Ex.: Quadra 3 (opcional)">
+  </div>
+
+  <div class="calc-box" id="cEspBox">
+    <h3>ESPAÇAMENTO (METROS)</h3>
+    <div class="calc-row">
+      <label>Entre linhas<input class="calc-in" id="cLinhas" inputmode="decimal" placeholder="3,0"></label>
+      <span class="calc-x">×</span>
+      <label>Entre plantas<input class="calc-in" id="cPlantas" inputmode="decimal" placeholder="1,0"></label>
+    </div>
+    <div class="calc-info" id="cPlantasHa"></div>
+  </div>
+
+  <div class="calc-box">
+    <h3>EQUIPAMENTO</h3>
+    <div class="opcoes" id="cEquip">
+      <button data-l="20">Costal 20 L</button>
+      <button data-l="400">Tanque 400 L</button>
+      <button data-l="1000">Tanque 1.000 L</button>
+      <button data-l="2000">Tanque 2.000 L</button>
+      <button data-l="outro" style="grid-column: 1 / -1">Outro (digitar os litros)</button>
+    </div>
+    <input class="calc-in" id="cEquipOutro" inputmode="decimal" placeholder="Litros do equipamento" hidden>
   </div>
 
   <div class="calc-box">
@@ -1789,7 +1789,8 @@
   function calcular() {
     var L = num(calc.linhas), P = num(calc.plantas), V = litros();
     var res = { ok: false, plantasHa: L && P ? 10000 / (L * P) : 0 };
-    if (!res.plantasHa) { res.falta = "Informe o espaçamento entre linhas e entre plantas."; return res; }
+    // Espaçamento só entra na conta via solo (pedido 31/10/2026: na folha o campo some)
+    if (calc.modo === "solo" && !res.plantasHa) { res.falta = "Informe o espaçamento entre linhas e entre plantas."; return res; }
     if (!V) { res.falta = "Informe os litros do equipamento."; return res; }
     if (calc.modo === "folha") {
       var cha = num(calc.calda);
@@ -1828,10 +1829,10 @@
   function textoZap(r) {
     var t = ["🧪 *Recomendação " + (calc.modo === "folha" ? "via folha" : "via solo (drench)") + " – café Conilon*", ""];
     if (calc.quadra.trim()) t.push("📍 " + nomeQuadra());
-    t.push(
+    if (calc.modo === "solo") t.push(
       "📏 Espaçamento: " + String(calc.linhas).replace(".", ",") + " × " + String(calc.plantas).replace(".", ",") +
-        " m (" + br(r.plantasHa, 0) + " plantas/ha)",
-      "🚜 Equipamento: " + nomeEquip());
+        " m (" + br(r.plantasHa, 0) + " plantas/ha)");
+    t.push("🚜 Equipamento: " + nomeEquip());
     if (calc.modo === "folha") t.push("💧 Calda: " + br(r.caldaHa, 0) + " L/ha");
     else t.push("💧 Drench: " + calc.drN + " × " + br(r.vol, 0) + " mL = " + br(r.caldaPlanta, 0) +
       " mL de calda por planta (" + br(r.caldaHa, 0) + " L/ha)");
@@ -1881,6 +1882,7 @@
     marcar("cEquip", "data-l", calc.equip); marcar("cModo", "data-m", calc.modo);
     marcar("cDrVol", "data-v", calc.drVol); marcar("cDrN", "data-n", calc.drN);
     $("cFolha").hidden = calc.modo !== "folha"; $("cSolo").hidden = calc.modo !== "solo";
+    $("cEspBox").hidden = calc.modo !== "solo";
     $("cProds").innerHTML = calc.prods.map(function (p, i) {
       return '<div class="prod" data-i="' + i + '"><div class="calc-row">' +
         '<label>Produto<input class="calc-in" data-k="nome" value="' + esc2(p.nome) + '" placeholder="Nome do produto"></label>' +
