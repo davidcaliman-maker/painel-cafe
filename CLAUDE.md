@@ -35,7 +35,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v71).
+  (`painel-agro-vN` → `vN+1`; hoje v72).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
@@ -68,6 +68,13 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   link do instalar.html e "No iPhone, abra pelo Safari"). No APK, links de fora abrem no app (openExternal).
   Umami: evento `indicar` (local: topo/painel). Título do topo diminuiu para 6vw para caber os 2 botões. Usuário confirmou
   no celular (28/10) que abre o WhatsApp com a mensagem.
+- **"👥 N pessoas usaram o Pregão do Café hoje" (02/11/2026, lugar 3 + caminho A escolhidos):** linha `#usaram`
+  logo acima do botão INDICAR do Painel. Visitantes únicos do dia (meia-noite de Brasília → agora) lidos do LINK DE
+  COMPARTILHAMENTO do Umami criado pelo usuário (https://cloud.umami.is/share/MsrqdhCzWwUmxcxn; público: quem tiver o link
+  vê as estatísticas). `contarUsaram()`: GET gateway-us.umami.is/api/share/<id> → token; GET /websites/<id>/stats com
+  headers `x-umami-share-token` + `x-umami-share-context: 1` (sem o context dá 401). CORS liberado (*). Só mostra a partir
+  de `USARAM_MIN` = 5; atualiza a cada 10 min; se falhar, some. Desligar o share no Umami = linha some.
+  Também explicado: "online agora" e "únicos do dia" ele vê em Umami → Realtime / período Hoje.
 - **Cálculo (aba CÁLCULO, 29/10/2026):** calda de defensivos no Conilon. Espaçamento (linhas × plantas, m →
   plantas/ha), equipamento (costal 20 L, tanques 400/1.000/2.000 L), via folha (calda L/ha, padrão 400) ou via solo
   (drench 30/50 mL ou "Outro", 1 ou 2 drench por planta). Produtos livres (nome + dose POR HECTARE em L/mL/kg/g,

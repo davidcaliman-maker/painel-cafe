@@ -240,6 +240,8 @@
     background: #25d366; color: #062e17; border-radius: 10px; padding: 13px 10px; text-decoration: none;
     font-size: 16px; font-weight: 800; letter-spacing: .5px; }
   .indicar svg { width: 24px; height: 24px; flex: none; }
+  .usaram { font-size: 13px; color: var(--muted); text-align: center; margin: 12px 0 -6px; }
+  .usaram b { color: var(--text); }
 
   /* Curva de Londres (gráfico HOJE + aba LONDRES, pedido 29/10/2026): todos os vencimentos abaixo do gráfico */
   .curva { background: var(--card-2); border-radius: 6px; padding: 10px 10px 4px; margin: -6px 0 14px; }
@@ -480,6 +482,7 @@
   <div class="curva-analise" id="curvaAnalise"></div>
   <div id="curvaTab"><div class="empty">carregando…</div></div>
 </div>
+<div class="usaram" id="usaram" hidden>👥 <b id="usaramN"></b> usaram o Pregão do Café hoje</div>
 <a class="indicar" data-local="painel" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.6-1.2A9 9 0 1 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M9 7.6c.3 0 .6.1.8.5l.8 1.8c.1.3 0 .5-.1.7l-.6.7a6.4 6.4 0 0 0 2.8 2.8l.7-.6c.2-.2.4-.2.7-.1l1.8.8c.4.2.5.5.4.8-.2 1-1 1.8-2 1.8-3.5-.2-6.5-3.2-6.7-6.7 0-1 .7-1.8 1.4-2.5z" fill="currentColor"/></svg>INDICAR PARA UM AMIGO</a>
 
 <!-- Crédito mínimo exigido pela fonte da chuva (Open-Meteo: licença CC BY 4.0). Cepea retirado em 24/10/2026.
@@ -1554,6 +1557,26 @@
     a.href = "https://wa.me/?text=" + encodeURIComponent(MSG_INDICAR);  // o APK abre links de fora no WhatsApp
     a.addEventListener("click", function () { rastrear("indicar", { local: a.getAttribute("data-local") }); });
   });
+
+  // ---------- "N pessoas usaram o Pregão do Café hoje" (acima do INDICAR, pedido 02/11/2026) ----------
+  // Visitantes únicos do dia (meia-noite de Brasília até agora) lidos do link de compartilhamento do Umami
+  // (cloud.umami.is/share/MsrqdhCzWwUmxcxn). Só aparece a partir de USARAM_MIN pessoas; atualiza a cada 10 min.
+  var UMAMI_API = "https://gateway-us.umami.is/api", UMAMI_SHARE = "MsrqdhCzWwUmxcxn", USARAM_MIN = 5;
+  function contarUsaram() {
+    fetch(UMAMI_API + "/share/" + UMAMI_SHARE).then(function (r) { return r.json(); }).then(function (sh) {
+      var ini = Date.parse(hojeBRT() + "T00:00:00-03:00");
+      return fetch(UMAMI_API + "/websites/" + sh.websiteId + "/stats?startAt=" + ini + "&endAt=" + Date.now(), {
+        headers: { "x-umami-share-token": sh.token, "x-umami-share-context": "1" }
+      });
+    }).then(function (r) { return r.json(); }).then(function (st) {
+      var n = typeof st.visitors === "object" ? st.visitors.value : st.visitors;
+      if (!(n >= USARAM_MIN)) return;
+      $("usaramN").textContent = n.toLocaleString("pt-BR") + " pessoas";
+      $("usaram").hidden = false;
+    }).catch(function () {});
+  }
+  contarUsaram();
+  setInterval(contarUsaram, 10 * 60 * 1000);
 
   // ---------- todos os vencimentos de Londres (abaixo do gráfico HOJE, aba LONDRES) ----------
   // Pedido de 29/10/2026, no estilo de um print que o usuário mandou: gráfico da curva (preço de cada vencimento)
