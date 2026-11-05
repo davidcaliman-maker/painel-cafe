@@ -35,7 +35,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v72).
+  (`painel-agro-vN` → `vN+1`; hoje v73).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
@@ -193,6 +193,10 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   Se ainda falhar, `scan()` usa a RESERVA `cotacoes.json` (gerada por `historico.py`/`cotacoes_scanner`
   a cada rodada do pages.yml, ~15 min; 4 vencimentos de cada bolsa + dólar) e mostra "atualizado às HH:MM".
   Solução mista escolhida pelo usuário (01/10): direto primeiro, GitHub só como reserva.
+  Arquivos do site (`siteJson`: historico/intradia/config/noticias/versao) também têm reserva desde 05/11/2026:
+  fetch → ponte do Android (`Native.get` com a URL completa) → fetch após 3 s. Motivo: no 5G o fetch do WebView
+  falhava enquanto a ponte funcionava (cotações ao vivo ok, gráfico HOJE preso no dia anterior). O sw.js não
+  guarda mais no cache os pedidos com "?t=" (enchiam o cache a cada minuto).
   A reserva NÃO é usada se for mais velha que a última busca direta (`ultimoDireto`), e o dólar nunca
   volta para um pregão mais antigo (`fxVisto`) — bug de 05/10: no 5G o dólar pulava de 4,99 para o 5,22 de sexta.
 - **Segunda fonte do dólar (AwesomeAPI, desde 26/10/2026):** nesse dia o TradingView travou o FX_IDC:USDBRL

@@ -666,11 +666,21 @@
   try { var cc = load("config"); if (cc) cfg = Object.assign(cfg, JSON.parse(cc)); } catch (e) {}
 
   // Busca um arquivo do próprio site, sempre a versão mais nova.
+  // Arquivos do próprio site (histórico, gráfico do dia, config…). No 5G o fetch do WebView às vezes
+  // falha ("Unable to resolve host") enquanto a ponte do Android funciona (05/11/2026: cotações ao vivo
+  // e o gráfico HOJE preso no dia anterior). Então: fetch → ponte do Android → fetch de novo após 3 s.
   function siteJson(name) {
-    return fetch(name + "?t=" + Date.now(), { cache: "no-store" }).then(function (r) {
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      return r.json();
-    });
+    var url = name + "?t=" + Date.now();
+    var direto = function () {
+      return fetch(url, { cache: "no-store" }).then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      });
+    };
+    return direto().catch(function (erro) {
+      if (!window.Native || !/^https?:/.test(location.protocol)) throw erro;
+      return viaAndroid("GET", new URL(url, location.href).href);
+    }).catch(function () { return espera(3000).then(direto); });
   }
 
   // ---------- troca automática de contrato ----------

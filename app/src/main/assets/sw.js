@@ -1,6 +1,6 @@
 // Service worker: guarda a "casca" do app para abrir mesmo sem internet.
 // As cotações e a previsão sempre vêm da rede (ficam salvas pelo próprio app).
-const CACHE = "painel-agro-v72";
+const CACHE = "painel-agro-v73";
 const SHELL = ["./", "index.html", "manifest.webmanifest",
   "apple-touch-icon.png", "icon-192.png", "icon-512.png"];
 
@@ -24,7 +24,11 @@ self.addEventListener("fetch", (e) => {
   e.respondWith(
     // no-cache: sempre confere com o servidor para pegar a versão nova do HTML.
     fetch(e.request, { cache: "no-cache" })
-      .then((res) => { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(e.request, copy)); return res; })
+      .then((res) => {
+        // Só guarda arquivos sem "?t=…" (os JSON pedidos com hora mudam a cada minuto e encheriam o cache).
+        if (!url.search) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(e.request, copy)); }
+        return res;
+      })
       .catch(() => caches.match(e.request))
   );
 });
