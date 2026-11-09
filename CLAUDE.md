@@ -35,7 +35,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v73).
+  (`painel-agro-vN` → `vN+1`; hoje v74).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
@@ -109,6 +109,16 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   Temas: Todas · ⚡ Impacto · Sul da BA e ES (filtro `regional`) · Dólar · Mercado · Clima · Safra · Consumo. Logística, Geopolítica e
   Concorrentes RETIRADOS a pedido (exceto Vietnã/robusta, mantido em Safra). Dólar entra sem "café" no título (`BUSCAS_DOLAR`, máx. 8). Selo IMPACTO
   (`IMPACTO` em noticias.py: dispara/despenca/desaba/geada/quebra de safra/forte alta…) vai para o topo.
+- **Notícias refeitas em 09/11/2026 (pedido; vale por cima do item acima):** `scripts/noticias.py` com 4 grupos de busca.
+  **Vietnã** (colheita mexe no Conilon): `BUSCAS_VIETNA`, categoria e chip "Vietnã", 30 dias (sai pouco em português),
+  máx. 8; fonte Vietnam.vn excluída (`FONTES_FORA`, tradução automática/institucional). **Dólar:** só notícia do DIA
+  (data de Brasília), no robô e no app (`renderNoticias` esconde Dólar de outro dia), inclusive as que citam café.
+  **Sul da BA e ES:** 30 dias, máx. 20; `REGIAO` com limite de palavra ("compradores" casava com "prado").
+  **"⚡ Impacto" virou "🔥 Importantes"** (campo do JSON continua `impacto`): `importante()` só marca movimento forte do
+  café/dólar LOGO depois do assunto ou ≥ 3% (dólar ≥ 1,5%, na mesma frase), intervenção do BC, clima com dano à lavoura,
+  mudança de estimativa de safra (Conab/IBGE/USDA…), colheita/oferta/preço do Vietnã, estoques certificados e tarifas;
+  selo vale 7 dias. `FORA_MERCADO` tira prêmios/eventos/curiosidades da lista de mercado (no regional ficam).
+  Avaliação é por regras no TÍTULO; oferecido (sem resposta) usar IA para avaliar cada notícia (custo mensal + conta do usuário).
 - **Temas azul (PADRÃO) / rosa:** botão no canto superior direito (ícone de mulher de chapéu com óculos, SVG
   inline); cada toque troca azul ↔ rosa (salvo no aparelho, chave `tema`). Desde 28/10/2026 o azul é o padrão
   e o PRETO SAIU (pedido do usuário): quem tinha "padrao" salvo vê o azul. `:root` ainda tem as cores pretas,

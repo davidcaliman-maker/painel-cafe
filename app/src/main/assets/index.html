@@ -349,6 +349,7 @@
     border-radius: 4px; text-transform: uppercase; background: var(--line-2); color: #fff; }
   .tag.Clima { background: #0a84ff; } .tag.Safra { background: #1f8f3a; } .tag.Dólar { background: #0f6e56; }
   .tag.impacto { background: #ffcc00; color: #3d2e00; margin-right: 5px; }
+  .tag.Vietnã { background: #b3261e; }
   .tag.Consumo { background: #d35400; } .tag.Regional { background: var(--orange); color: var(--on-accent); }
   .chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin: 0 -2px; scrollbar-width: none; }
   .chips::-webkit-scrollbar { display: none; }
@@ -592,8 +593,9 @@
 
   <div class="chips" id="nChips">
     <button data-c="" class="on">Todas</button>
-    <button data-c="impacto">⚡ Impacto</button>
+    <button data-c="impacto">🔥 Importantes</button>
     <button data-c="regional">Sul da BA e ES</button>
+    <button data-c="Vietnã">Vietnã</button>
     <button data-c="Dólar">Dólar</button>
     <button data-c="Mercado">Mercado</button>
     <button data-c="Clima">Clima</button>
@@ -1750,20 +1752,25 @@
   function cartao(n, reg) {
     var link = /^https:\/\//.test(n.link) ? n.link : "#";
     return '<a class="news' + (reg ? " reg" : "") + '" href="' + esc(link) + '" target="_blank" rel="noopener">' +
-      (n.impacto ? '<span class="tag impacto">⚡ Impacto</span>' : "") +
+      (n.impacto ? '<span class="tag impacto">🔥 Importante</span>' : "") +
       '<span class="tag ' + esc(n.categoria) + '">' + esc(n.categoria) + '</span>' +
       '<b>' + esc(n.titulo) + '</b><small>' + esc(n.fonte) + " · " + haQuanto(n.data) + '</small></a>';
   }
   function renderNoticias() {
     if (!noticias) return;
     // Uma lista só (pedido do usuário em 06/10/2026): Sul da BA e ES junto das outras, com borda
-    // laranja e um filtro próprio. Impacto primeiro; depois as mais recentes.
+    // laranja e um filtro próprio. Muito importantes primeiro (selo dado pelo scripts/noticias.py só ao que
+    // mexe de verdade no preço, pedido 09/11/2026); depois as mais recentes.
+    // Dólar: só notícia do dia (o dólar muda durante o dia), mesmo que o arquivo guardado seja de ontem.
+    var hoje = hojeBRT();
     var todas = (noticias.regional || []).map(function (n) { return Object.assign({ reg: true }, n); })
       .concat(noticias.mercado || []).filter(function (n) {
+        if (n.categoria === "Dólar" && new Date(new Date(n.data).getTime() - 3 * 3600 * 1000).toISOString().slice(0, 10) !== hoje) return false;
         return !filtro || (filtro === "impacto" ? n.impacto : filtro === "regional" ? n.reg : n.categoria === filtro);
       }).sort(function (x, y) { return (y.impacto ? 1 : 0) - (x.impacto ? 1 : 0) || (y.data > x.data ? 1 : y.data < x.data ? -1 : 0); });
     $("nMercado").innerHTML = todas.length ? todas.map(function (n) { return cartao(n, n.reg); }).join("")
-      : '<div class="news-empty">Nenhuma notícia deste tema nos últimos dias.</div>';
+      : '<div class="news-empty">' + (filtro === "impacto" ? "Nenhuma notícia muito importante agora." :
+        filtro === "Dólar" ? "Nenhuma notícia do dólar hoje." : "Nenhuma notícia deste tema nos últimos dias.") + "</div>";
   }
   function refreshNoticias(force) {
     if (!force && Date.now() - lastNewsFetch < 30 * 60000) return;
