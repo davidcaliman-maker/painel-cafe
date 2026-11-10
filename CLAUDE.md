@@ -235,6 +235,10 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   o header X-GitHub-Api-Version no cron-job.org pela versão atual (docs.github.com/rest/about-the-rest-api/api-versions).
   `agendado=sim` faz a rodada se comportar como agendada (só republica se mudou). Agendas do GitHub ficam
   como reserva. Nunca pedir/ver o token: o usuário cola direto no cron-job.org.
+- **Trava de 10/11/2026:** uma rodada ficou 2 h presa no `historico.py` (canal do TradingView só mandava heartbeat,
+  o `while` nunca saía) e, pelo `concurrency: pages`, todas as seguintes ficaram canceladas → gráfico HOJE parado às 10h.
+  Corrigido: `barras()` desiste em 60 s; no pages.yml `timeout-minutes: 20` no job e 8 nos passos do histórico e das
+  notícias (com `continue-on-error`, a rodada segue e publica o que já estava no ar).
 - `pages.yml` roda: dias úteis a cada 15 min das 05h às 22h (Brasília);
   sáb/dom 09h, 15h, 20h. Agendadas só republicam se histórico ou notícias mudaram. Keepalive incluso.
 - **Cepea removido em 24/10/2026** (pedido do usuário): apagados `conferencia.yml` ("Cepea do dia", e-mail

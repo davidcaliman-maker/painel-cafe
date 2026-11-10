@@ -97,7 +97,13 @@ def _msg(func, params):
 
 
 async def barras(simbolo, resolucao, quantidade):
-    """Barras do canal de gráficos do TradingView: lista de [tempo, abertura, máx, mín, fechamento, …]."""
+    """Barras do canal de gráficos do TradingView: lista de [tempo, abertura, máx, mín, fechamento, …].
+    Desiste em 60 s: em 10/11/2026 o servidor só mandava "heartbeat" e a rodada ficou 2 h presa,
+    travando as seguintes (gráfico HOJE parado)."""
+    return await asyncio.wait_for(_barras(simbolo, resolucao, quantidade), 60)
+
+
+async def _barras(simbolo, resolucao, quantidade):
     cs = "cs_" + "".join(random.choices(string.ascii_lowercase, k=12))
     async with websockets.connect(
         "wss://data.tradingview.com/socket.io/websocket",

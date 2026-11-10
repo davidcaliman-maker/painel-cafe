@@ -36,6 +36,8 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # Rede travada não pode prender a fila (10/11/2026: rodada presa 2 h, as seguintes canceladas).
+    timeout-minutes: 20
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -50,11 +52,13 @@ jobs:
       # (o GitHub avisa por e-mail). O app continua com a última calibração publicada.
       - name: Gerar histórico e preço do Conilon
         id: historico
+        timeout-minutes: 8
         continue-on-error: true
         run: python scripts/historico.py app/src/main/assets/config.json app/src/main/assets/historico.json
 
       - name: Buscar notícias do café
         id: noticias
+        timeout-minutes: 8
         continue-on-error: true
         run: python scripts/noticias.py app/src/main/assets/noticias.json
 
