@@ -13,3 +13,7 @@ app/src/main/assets/noticias.json
 app/src/main/assets/PainelAgro.apk
 app/src/main/assets/PregaoDoCafe.apk
 __pycache__/
+# chave do APK (NUNCA enviar ao GitHub)
+chave-apk/
+*.keystore
+*.jks
