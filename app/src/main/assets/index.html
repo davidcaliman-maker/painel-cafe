@@ -126,16 +126,13 @@
   /* Sem brilho pulsando em volta: parecia que a caixa "inflava" (pedido 29/10/2026); fica só a borda colorida */
   .hero.forte-alta, .hero.forte-baixa { border-color: var(--forte); border-top-color: var(--forte); }
   .hero.forte-alta .hero-price span, .hero.forte-baixa .hero-price span { animation: precoBrilha 2s ease-in-out infinite; }
-  /* Efeito por cima do preço: fogos (alta) ou dinheiro voando embora (baixa) */
+  /* Efeito por cima do preço: fogos (só na alta) */
   .hero { position: relative; overflow: hidden; }
   .hero > :not(.efeito):not(.natal) { position: relative; z-index: 1; }
   .efeito { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
-  .efeito .voa { position: absolute; font-size: 22px; opacity: 0; animation: notaVoa 3s ease-in infinite; }
   .efeito .fogo { position: absolute; width: 0; height: 0; }
   .efeito .fogo i { position: absolute; left: -2px; top: -2px; width: 4px; height: 4px; border-radius: 50%;
     background: var(--cor); box-shadow: 0 0 6px var(--cor); opacity: 0; animation: faisca 2.6s ease-out infinite; }
-  @keyframes notaVoa { 0% { transform: translate(0, 0) rotate(0); opacity: 0; } 15% { opacity: .95; }
-    100% { transform: translate(110px, -70px) rotate(25deg); opacity: 0; } }
   @keyframes faisca { 0% { transform: rotate(var(--a)) translateY(0); opacity: 0; } 8% { opacity: 1; }
     55% { transform: rotate(var(--a)) translateY(-30px); opacity: 1; }
     100% { transform: rotate(var(--a)) translateY(-40px); opacity: 0; } }
@@ -998,7 +995,8 @@
     renderChart();
   }
 
-  // Efeito do card em variação forte: só fogos na alta (pedido 29/10/2026) ou dinheiro voando embora (baixa).
+  // Efeito do card em variação forte: só fogos na alta (pedido 29/10/2026). Na baixa não há animação por cima
+  // (💸 voando retirado em 12/11/2026, pedido): ficam a borda vermelha, o preço pulsando e o selo FORTE BAIXA.
   // Só é montado quando o estado muda, para a animação não reiniciar a cada atualização.
   var efeitoAtual = "";
   function efeitoForte(tipo) {
@@ -1010,10 +1008,6 @@
         html += '<span class="fogo" style="left:' + f[0] + ";top:" + f[1] + ";--cor:" + f[2] + '">';
         for (var a = 0; a < 360; a += 30) html += '<i style="--a:' + a + "deg;animation-delay:" + f[3] + 's"></i>';
         html += "</span>";
-      });
-    } else if (tipo === "forte-baixa") {
-      [["4%", "70%", 0], ["18%", "55%", .8], ["32%", "75%", 1.6], ["46%", "60%", 2.3]].forEach(function (n) {
-        html += '<span class="voa" style="left:' + n[0] + ";top:" + n[1] + ";animation-delay:" + n[2] + 's">💸</span>';
       });
     }
     $("efeito").innerHTML = html;
