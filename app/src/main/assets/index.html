@@ -370,6 +370,10 @@
   .foot { color: var(--muted); font-size: 12px; text-align: center; margin-top: 12px; line-height: 1.5; }
   .foot.fontes { font-size: 10.5px; opacity: .7; }
   .err { background: var(--red); border-radius: 6px; padding: 8px 10px; font-size: 14px; margin-bottom: 8px; display: none; }
+  .dono { background: #4a3500; border: 1px solid #f5b301; color: #ffe9a8; border-radius: 10px; padding: 8px 12px;
+          font-size: 14px; line-height: 1.35; margin-bottom: 8px; }
+  .dono b { color: #ffd34d; display: block; font-size: 12px; letter-spacing: .5px; margin-bottom: 2px; }
+  .dono ul { margin: 0; padding-left: 18px; }
 
   /* Modal */
   .modal { position: fixed; inset: 0; background: rgba(0,0,0,.75); display: none; align-items: flex-end; z-index: 10; }
@@ -429,6 +433,7 @@
 
 <div id="vPainel">
 <div class="err" id="err"></div>
+<div class="dono" id="dono" hidden></div>
 
 <div class="hero" id="hero">
   <div class="efeito" id="efeito" aria-hidden="true"></div>
@@ -993,6 +998,61 @@
     paintMkt($("mLdn"), last.qLdn, fmt(ldn, 0), ctrLabel(last.ctrLdn) + " - " + ddmm(last.qLdn.time));
     paintMkt($("mNy"), last.qNy, fmt(ny, 2), ctrLabel(last.ctrNy) + " - " + ddmm(last.qNy.time));
     renderChart();
+    renderDono();
+  }
+
+  // ---------- avisos só para o dono (pedido 18/11/2026) ----------
+  // No aparelho marcado como do dono (5 toques no logo → "umami.disabled"), mostra o que falhou nos
+  // dados: CCCV do pregão anterior, dólar, Londres/NY, gráfico do dia, GitHub parado, reserva em uso.
+  // Refeito a cada atualização (ao abrir, a cada minuto e no ATUALIZAR).
+  function ehDono() { try { return !!localStorage.getItem("umami.disabled"); } catch (e) { return false; } }
+  function avisosDono() {
+    var a = agoraBRT(), hoje = a.dia, out = [];
+    var semana = new Date(hoje + "T12:00:00Z").getUTCDay(), util = semana >= 1 && semana <= 5;
+    var dias = hist && hist.dias || [], c = calib();
+    var ant = dias.filter(function (d) { return d.data < hoje; }).pop();
+    var hojeD = dias.filter(function (d) { return d.data === hoje; })[0], fechadas = hojeD && hojeD.fechadas || [];
+    var combinado = (c.inicios || []).some(function (i) { return i.data === hoje; });
+    // 1) CCCV do pregão anterior: sem ele o dia começa no fechamento do app.
+    if (util && ant && c.cccvDesde && ant.data >= c.cccvDesde && ant.cccv == null && !combinado)
+      out.push("Não consegui o CCCV de " + ddmmIso(ant.data) + ": hoje o Conilon começou no fechamento do app (R$ " +
+               fmt(baseDe(hoje).preco, 2) + ").");
+    if (util && last) {
+      // 2) Dólar, depois das 9h30 (no feriado nacional o câmbio daqui não abre).
+      if (a.min >= 9 * 60 + 30 && !feriado(hoje)) {
+        var semPontos = intra && intra.data === hoje && a.min >= 10 * 60 &&
+          !(intra.series.usd || []).some(function (x) { return x[0] >= 9 * 60; });
+        if (hist && hist.dolarParado === hoje)
+          out.push("Dólar: a fonte principal parou hoje; estou usando a reserva (Yahoo/AwesomeAPI).");
+        else if (last.diaUsd !== hoje)
+          out.push("Dólar desatualizado: ainda sem a cotação de hoje (mostrando a de " + ddmmIso(last.diaUsd || hoje) + ").");
+        else if (semPontos)
+          out.push("Dólar pode estar parado: nenhum ponto no gráfico desde as 9h.");
+      }
+      // 3) Londres e Nova York (depois das 7h; feriado lá fora aparece em "fechadas").
+      if (a.min >= 7 * 60) {
+        if (last.qLdn && isoUTC(last.qLdn.time) !== hoje && fechadas.indexOf("londres") < 0)
+          out.push("Londres sem cotação de hoje (a última é de " + ddmm(last.qLdn.time) + "). Pode ser feriado lá.");
+        if (a.min >= 7 * 60 + 30 && last.qNy && isoUTC(last.qNy.time) !== hoje && fechadas.indexOf("novaYork") < 0)
+          out.push("Nova York sem cotação de hoje (a última é de " + ddmm(last.qNy.time) + "). Pode ser feriado lá.");
+      }
+      // 4) Gráfico do dia e GitHub.
+      if (a.min >= 7 * 60 && intra && intra.data !== hoje)
+        out.push("O gráfico de hoje não chegou (o último é de " + ddmmIso(intra.data) + ").");
+      if (a.min >= 7 * 60 && a.min <= 18 * 60 && hist && hist.geradoEm) {
+        var idade = Math.round((Date.now() - Date.parse(hist.geradoEm)) / 60000);
+        if (idade > 75) out.push("O GitHub não atualiza os dados há " + idade + " min.");
+      }
+    }
+    // 5) Celular sem acesso direto às cotações.
+    if (reservaUsada) out.push("O celular não conseguiu buscar as cotações direto: usando a cópia do GitHub (" + horaOk + ").");
+    return out;
+  }
+  function renderDono() {
+    var el = $("dono"), lista = ehDono() ? avisosDono() : [];
+    el.hidden = !lista.length;
+    if (lista.length) el.innerHTML = "<b>⚠️ AVISOS (SÓ VOCÊ VÊ)</b><ul><li>" +
+      lista.join("</li><li>") + "</li></ul>";
   }
 
   // Efeito do card em variação forte: só fogos na alta (pedido 29/10/2026). Na baixa não há animação por cima
@@ -1484,6 +1544,7 @@
       intra = d;
       save("intra", JSON.stringify(d));
       renderChart();
+      renderDono();
     }).catch(function () {
       lastIntraFetch = 0;
       if (!intra && periodo === "hoje") $("chBody").innerHTML = '<div class="empty">gráfico do dia indisponível no momento</div>';
@@ -1710,6 +1771,7 @@
         localStorage.setItem("umami.disabled", "1");
         aviso("Pronto: este aparelho NÃO é mais contado nas estatísticas.");
       }
+      renderDono();
     } catch (e) { aviso("Não foi possível mudar neste aparelho."); }
   });
 
