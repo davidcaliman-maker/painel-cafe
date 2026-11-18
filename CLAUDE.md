@@ -173,6 +173,10 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
     noticiasagricolas.com.br/cotacoes/cafe/cafe-conillon-disponivel-vitoria-es, ~10 últimos pregões; fica em
     `dias[].cccv`). Prioridade da base: `inicios` (preço combinado) → CCCV do dia anterior → fechamento do app.
     Se o CCCV ainda não saiu, o dia começa no fechamento do app e é REFEITO quando ele sair (escolha do usuário).
+    **Desde 18/11/2026 também lê o próprio site do CCCV** (`cccv_do_site`/`cccv_site`: página inicial
+    www.cccv.org.br, só o último pregão, texto "17 NOV 2026 … Conilon … tipo 7/8 … R$ 913,00"; vale por cima do
+    Notícias Agrícolas). Motivo: desde 12/11 o Notícias Agrícolas responde 403 ao GitHub e os dias 13–18/11
+    começaram no fechamento do app. Cada rodada deixa a anotação "CCCV" com o que cada fonte deu.
     **Desde 27/10/2026 (pedido do usuário em 27/10): base = CCCV + R$ 10,00** (`config.json` `cccvAcrescimo`: 10.0;
     vale para hoje e em diante; 27/10 começou em 905 + 10 = 915,00). Preço combinado em `inicios` continua na frente.
     `calibracao.cepeaConilon`/`diferencialConilon` = base do próximo dia (para o alerta do APK).

@@ -285,6 +285,32 @@ def cccv_conilon():
     return valores
 
 
+MESES = {m: i for i, m in enumerate("JAN FEV MAR ABR MAI JUN JUL AGO SET OUT NOV DEZ".split(), 1)}
+
+
+def cccv_site(html):
+    """CCCV Tipo 7/8 na página inicial do próprio CCCV (www.cccv.org.br): (data ISO, valor).
+
+    Desde 12/11/2026 o Notícias Agrícolas recusa o GitHub (403); o site do CCCV abre e mostra só o
+    último pregão, em texto: "Arábica 17 NOV 2026 … Conilon 2026/2027 Bica corrida, tipo 7/8 … R$ 913,00".
+    """
+    texto = re.sub(r"<script.*?</script>|<style.*?</style>", " ", html, flags=re.S | re.I)
+    texto = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", texto))
+    data = re.search(r"(\d{1,2}) (" + "|".join(MESES) + r") (\d{4})", texto, re.I)
+    preco = re.search(r"Conilon.{0,200}?tipo 7/8.{0,200}?R\$ ?([\d.]+,\d{2})", texto, re.I)
+    if not data or not preco:
+        raise RuntimeError("CCCV Tipo 7/8 não encontrado no site do CCCV")
+    d, m, a = int(data.group(1)), MESES[data.group(2).upper()], data.group(3)
+    return f"{a}-{m:02d}-{d:02d}", float(preco.group(1).replace(".", "").replace(",", "."))
+
+
+def cccv_do_site():
+    req = urllib.request.Request("https://www.cccv.org.br/", headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                                 "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36"})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return cccv_site(r.read().decode("utf-8", "replace"))
+
+
 def marcar_fechamentos(dias, inicios, publicados, agora, cccv_desde=None, cccv_acrescimo=0):
     """Base ("baseConilon") e fechamento do app ("fechamentoApp") de cada dia desde o 1º início combinado.
 
@@ -374,10 +400,22 @@ async def main(caminho_config, caminho_saida):
             d["usd"], d["usdFonte"] = pub["usd"], pub["usdFonte"]
     # CCCV 7/8 de cada dia (a página tem os últimos ~10 pregões; os mais antigos vêm do publicado).
     cccv = {d["data"]: d["cccv"] for d in anterior.get("dias", []) if d.get("cccv") is not None}
+    lidos = []
     try:
-        cccv.update(cccv_conilon())
-    except Exception as e:  # fora do ar: o dia começa no fechamento do app até o CCCV voltar
-        print(f"aviso: CCCV indisponível ({e}); usando o último publicado")
+        na = cccv_conilon()
+        cccv.update(na)
+        lidos.append(f"Notícias Agrícolas {max(na)} {na[max(na)]}")
+    except Exception as e:  # fora do ar: fica o site do CCCV, senão o último publicado
+        lidos.append(f"Notícias Agrícolas indisponível ({e})")
+    try:  # o próprio site do CCCV (só o último pregão) vale por cima
+        dia_cccv, valor = cccv_do_site()
+        cccv[dia_cccv] = valor
+        lidos.append(f"site do CCCV {dia_cccv} {valor}")
+    except Exception as e:
+        lidos.append(f"site do CCCV indisponível ({e})")
+    # Anotação na execução (aparece no GitHub): de onde veio o CCCV. Sem os dois, o dia começa no
+    # fechamento do app até o CCCV voltar.
+    print("::notice title=CCCV::" + "; ".join(lidos))
     for d in dias:
         if d["data"] in cccv:
             d["cccv"] = cccv[d["data"]]
