@@ -35,7 +35,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v75).
+  (`painel-agro-vN` → `vN+1`; hoje v76).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
@@ -222,6 +222,11 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   **CORRIGIDO no mesmo dia:** a notícia dos R$ 5,60 (+12%) não bateu com nenhuma fonte (TradingView 4,9652
   ao vivo, Yahoo 4,9993 atrasado, AwesomeAPI 429 no GitHub). O TradingView NÃO tinha travado. Agora as
   fontes extras só entram se o TradingView FALHAR (sem dólar de hoje), nunca por discordância.
+  **Exceção desde 18/11/2026 — TradingView PARADO:** nesse dia o FX_IDC ficou sem nenhuma barra de 5 min depois
+  das 9h e o scanner repetia o fechamento de ontem (5,7778; Yahoo 5,7982 ao vivo). Agora o historico.py, em dia útil
+  depois das 9h30, confere as barras; sem nenhuma depois das 9h usa a AwesomeAPI/Yahoo para hoje, publica
+  `historico.json` → `dolarParado: "<hoje>"` (o app então usa a `dolarReserva()` no lugar do TradingView) e o gráfico
+  HOJE do dólar recebe as barras de 5 min do Yahoo (`dolar_yahoo.serie`). Anotação "Dólar" diz "TradingView PARADO".
   Se a AwesomeAPI falhar, tenta o Yahoo Finanças (BRL=X, `dolar_yahoo`/`dolarYahoo`; no navegador pode dar
   CORS, no Android vai pela ponte). O app espera no máximo 8 s pelas fontes extras. Cada rodada do pages.yml
   deixa uma anotação "Dólar" com o que cada fonte mandou (API: check-runs/{id}/annotations).

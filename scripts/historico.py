@@ -174,8 +174,16 @@ def dolar_yahoo():
     req = urllib.request.Request("https://query1.finance.yahoo.com/v8/finance/chart/BRL=X?interval=5m&range=1d",
                                  headers={"User-Agent": "Mozilla/5.0"})
     with urllib.request.urlopen(req, timeout=20) as r:
-        m = json.load(r)["chart"]["result"][0]["meta"]
+        res = json.load(r)["chart"]["result"][0]
+    m = res["meta"]
     preco = float(m["regularMarketPrice"])
+    # Barras de 5 min do dia (para o gráfico HOJE se o TradingView parar): {minuto em Brasília: fechamento}.
+    fech = (res.get("indicators", {}).get("quote") or [{}])[0].get("close") or []
+    dolar_yahoo.serie = {}
+    for t, v in zip(res.get("timestamp") or [], fech):
+        if v is not None:
+            h = dt.datetime.fromtimestamp(t, BRT)
+            dolar_yahoo.serie[(h.date().isoformat(), h.hour * 60 + h.minute)] = float(v)
     return preco, preco - float(m["chartPreviousClose"]), dt.datetime.fromtimestamp(int(m["regularMarketTime"]), BRT)
 
 
@@ -370,6 +378,19 @@ async def main(caminho_config, caminho_saida):
     usd_aw = None
     tv = usd.get(hoje_iso)
     lidos = [f"TradingView {tv}"]
+    # TradingView parado: dia útil, já passou das 9h30 e nenhuma barra de 5 min do dólar depois das 9h.
+    # 18/11/2026: às 10h50 nenhuma barra e o scanner repetia o fechamento de ontem (5,7778) com o Yahoo a 5,7982.
+    agora = dt.datetime.now(BRT)
+    tv_parado = False
+    if agora.weekday() < 5 and agora.hour * 60 + agora.minute >= 9 * 60 + 30:
+        try:
+            b_usd = por_minuto(await barras("FX_IDC:USDBRL", "5", 400), hoje_iso)
+            tv_parado = not any(m >= 9 * 60 for m in b_usd)
+        except Exception as e:
+            lidos.append(f"barras do TradingView indisponíveis ({e})")
+    if tv_parado:
+        lidos.append("TradingView PARADO (sem barras depois das 9h)")
+    fonte_aw = None
     for nome, fonte in (("AwesomeAPI", dolar_awesome), ("Yahoo", dolar_yahoo)):
         try:
             bid, _var, quando = fonte()
@@ -378,10 +399,12 @@ async def main(caminho_config, caminho_saida):
             continue
         lidos.append(f"{nome} {bid} às {quando:%d/%m %H:%M}")
         minuto = quando.hour * 60 + quando.minute
-        # Só substitui se o TradingView não tem o dólar de hoje (as outras fontes atrasam mais que ele).
-        if usd_aw is None and quando.date() == hoje and minuto >= 9 * 60 and tv is None:
+        # Só substitui se o TradingView não tem o dólar de hoje ou está parado (fora disso as outras
+        # fontes atrasam mais que ele).
+        if usd_aw is None and quando.date() == hoje and minuto >= 9 * 60 and (tv is None or tv_parado):
             usd_aw = (minuto, bid)
             usd[hoje_iso] = bid
+            fonte_aw = nome
             lidos.append(f"usando {nome}")
     # Anotação na execução (aparece no GitHub): o que cada fonte do dólar mandou.
     print("::notice title=Dólar::" + "; ".join(lidos))
@@ -395,7 +418,7 @@ async def main(caminho_config, caminho_saida):
     for d in dias:
         pub = publicados.get(d["data"], {})
         if d["data"] == hoje_iso and usd_aw:
-            d["usdFonte"] = "awesome"
+            d["usdFonte"] = (fonte_aw or "awesome").lower()
         elif d["data"] < hoje_iso and pub.get("usdFonte") and pub.get("usd") is not None:
             d["usd"], d["usdFonte"] = pub["usd"], pub["usdFonte"]
     # CCCV 7/8 de cada dia (a página tem os últimos ~10 pregões; os mais antigos vêm do publicado).
@@ -457,6 +480,8 @@ async def main(caminho_config, caminho_saida):
         "calibracao": calibracao,
         "dias": dias[-DIAS:],
     }
+    if tv_parado and usd_aw:  # o app também troca o dólar do TradingView pela segunda fonte hoje
+        saida["dolarParado"] = hoje_iso
     with open(caminho_saida, "w", encoding="utf-8") as f:
         json.dump(saida, f, ensure_ascii=False, indent=1)
     print(f'{len(saida["dias"])} dias, contratos {contratos}, calibração {calibracao}')
@@ -480,6 +505,9 @@ async def main(caminho_config, caminho_saida):
         usd_reserva = {}
         if intra_anterior and intra_anterior.get("data") == hoje_iso and intra_anterior.get("usdFonte"):
             usd_reserva = {m: v for m, v in intra_anterior["series"]["usd"]}
+        if fonte_aw == "Yahoo":  # o Yahoo já manda as barras de 5 min do dia
+            usd_reserva.update({m: v for (d, m), v in getattr(dolar_yahoo, "serie", {}).items()
+                                if d == hoje_iso and m >= 9 * 60})
         usd_reserva[usd_aw[0]] = usd_aw[1]
     try:
         simbolos = {nome: f'{MERCADOS[nome]["bolsa"]}:{contratos[nome]}' for nome in MERCADOS}

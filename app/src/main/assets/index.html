@@ -1052,7 +1052,10 @@
       }
       // As fontes extras só entram se o TradingView falhar: em 26/10 elas vieram mais atrasadas que ele
       // (Yahoo 4,9993 das 9h03 com o TradingView a 4,9652 às 10h) e a AwesomeAPI recusou (429).
-      if (aw && !fx[tUsd]) fx[tUsd] = aw;
+      // Exceção (18/11/2026): o GitHub marca "dolarParado" quando o TradingView fica sem barras do dólar
+      // depois das 9h (o scanner repete o fechamento de ontem); aí vale a segunda fonte.
+      var parado = hist && hist.dolarParado === hojeBRT();
+      if (aw && (!fx[tUsd] || parado)) fx[tUsd] = aw;
       if (!fx[tUsd]) throw new Error("Cotação do dólar indisponível");
       var qLdn = f["ICEEUR:" + ctrLdn], qNy = f["ICEUS:" + ctrNy];
       var refLdn = String(calib().contrato || ctrLdn).toUpperCase();
