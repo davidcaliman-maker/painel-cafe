@@ -380,11 +380,11 @@ async def main(caminho_config, caminho_saida):
     usd_aw = None
     tv = usd.get(hoje_iso)
     lidos = [f"TradingView {tv}"]
-    # TradingView parado: dia útil, já passou das 9h30 e nenhuma barra de 5 min do dólar depois das 9h.
+    # TradingView parado: dia útil, já passou das 9h15 e nenhuma barra de 5 min do dólar depois das 9h.
     # 18/11/2026: às 10h50 nenhuma barra e o scanner repetia o fechamento de ontem (5,7778) com o Yahoo a 5,7982.
     agora = dt.datetime.now(BRT)
     tv_parado = False
-    if agora.weekday() < 5 and agora.hour * 60 + agora.minute >= 9 * 60 + 30:
+    if agora.weekday() < 5 and agora.hour * 60 + agora.minute >= 9 * 60 + 15:
         try:
             b_usd = por_minuto(await barras("FX_IDC:USDBRL", "5", 400), hoje_iso)
             tv_parado = not any(m >= 9 * 60 for m in b_usd)
@@ -482,7 +482,9 @@ async def main(caminho_config, caminho_saida):
         "calibracao": calibracao,
         "dias": dias[-DIAS:],
     }
-    if tv_parado and usd_aw:  # o app também troca o dólar do TradingView pela segunda fonte hoje
+    # O app também troca o dólar do TradingView pela segunda fonte hoje: TradingView parado ou sem o dia
+    # de hoje (19/11/2026, 9h20: "TradingView None", Yahoo 5,9023, e o app ainda mostrava o do TradingView).
+    if (tv_parado or tv is None) and usd_aw:
         saida["dolarParado"] = hoje_iso
     with open(caminho_saida, "w", encoding="utf-8") as f:
         json.dump(saida, f, ensure_ascii=False, indent=1)
