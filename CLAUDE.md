@@ -224,7 +224,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   fontes extras só entram se o TradingView FALHAR (sem dólar de hoje), nunca por discordância.
   **Exceção desde 18/11/2026 — TradingView PARADO:** nesse dia o FX_IDC ficou sem nenhuma barra de 5 min depois
   das 9h e o scanner repetia o fechamento de ontem (5,7778; Yahoo 5,7982 ao vivo). Agora o historico.py, em dia útil
-  depois das 9h30, confere as barras; sem nenhuma depois das 9h usa a AwesomeAPI/Yahoo para hoje, publica
+  depois das 9h15 (era 9h30 até 19/11), confere as barras; `dolarParado` também quando o TradingView não tem o dia de hoje; sem nenhuma depois das 9h usa a AwesomeAPI/Yahoo para hoje, publica
   `historico.json` → `dolarParado: "<hoje>"` (o app então usa a `dolarReserva()` no lugar do TradingView) e o gráfico
   HOJE do dólar recebe as barras de 5 min do Yahoo (`dolar_yahoo.serie`). Anotação "Dólar" diz "TradingView PARADO".
   **Fechamento anterior do dólar vem do histórico (19/11/2026):** com o TradingView parado em 18/11, o "fechamento
