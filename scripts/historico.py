@@ -210,7 +210,9 @@ async def gerar_intradia(dias, usd_diario, simbolos, usd_reserva=None):
         raise RuntimeError(f"intradia sem dados suficientes para {dia}")
     ant, base = anteriores[-1], hoje["baseConilon"]
     dif = diferencial(base, ant)
-    usd_ant = usd_diario[max(d for d in usd_diario if d < dia)]
+    # Dólar do pregão anterior = o do histórico (o mesmo da base); o do TradingView pode estar errado
+    # num dia em que ele parou (18/11/2026: 5,7778 × 5,8488 publicado).
+    usd_ant = ant["usd"] if ant.get("usd") is not None else usd_diario[max(d for d in usd_diario if d < dia)]
 
     def usd_vigente(m):
         v = ultimo_ate(usd, m) if m >= 9 * 60 else None
