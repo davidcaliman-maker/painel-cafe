@@ -199,6 +199,8 @@ async def gerar_intradia(dias, usd_diario, simbolos, usd_reserva=None):
     b_usd = await barras("FX_IDC:USDBRL", "5", 400)
     dia = dt.datetime.fromtimestamp(b_ldn[-1][0], BRT).date().isoformat()
     ldn, ny, usd = por_minuto(b_ldn, dia), por_minuto(b_ny, dia), por_minuto(b_usd, dia)
+    if feriado(dia):  # feriado nacional: o dólar fica parado no último dia útil (sem pontos no dia)
+        usd = {}
     # TradingView com o dólar travado: vale a série da segunda fonte (pontos de cada rodada).
     fonte_usd = None
     if usd_reserva and dia == dt.datetime.now(BRT).date().isoformat():
@@ -241,6 +243,26 @@ async def gerar_intradia(dias, usd_diario, simbolos, usd_reserva=None):
     if fonte_usd:
         saida["usdFonte"] = fonte_usd
     return saida
+
+
+FERIADOS_FIXOS = ["01-01", "04-21", "05-01", "09-07", "10-12", "11-02", "11-15", "11-20", "12-25"]
+
+
+def feriado(iso):
+    """Feriado nacional (igual ao feriado() do index.html): fixos + Carnaval, Sexta Santa e Corpus Christi."""
+    if iso[5:] in FERIADOS_FIXOS:
+        return True
+    ano = int(iso[:4])  # Páscoa (algoritmo de Meeus/Jones/Butcher)
+    a, b, c = ano % 19, ano // 100, ano % 100
+    d, e = divmod(b, 4)
+    g = (b - (b + 8) // 25 + 1) // 3
+    h = (19 * a + b - d - g + 15) % 30
+    i, k = divmod(c, 4)
+    l = (32 + 2 * e + 2 * i - h - k) % 7
+    m = (a + 11 * h + 22 * l) // 451
+    mes, dia = divmod(h + l - 7 * m + 114, 31)
+    pascoa = dt.date(ano, mes, dia + 1)
+    return any((pascoa + dt.timedelta(days=n)).isoformat() == iso for n in (-48, -47, -2, 60))
 
 
 def montar_dias(ldn, ny, usd):
@@ -380,11 +402,19 @@ async def main(caminho_config, caminho_saida):
     usd_aw = None
     tv = usd.get(hoje_iso)
     lidos = [f"TradingView {tv}"]
+    # Feriado nacional (pedido 20/11/2026): o câmbio daqui não abre; o dólar de hoje = o do último dia útil.
+    feriado_hoje = feriado(hoje_iso)
+    if feriado_hoje:
+        anteriores_usd = [d for d in usd if d < hoje_iso]
+        if anteriores_usd:
+            usd[hoje_iso] = usd[max(anteriores_usd)]
+        tv = usd.get(hoje_iso)
+        lidos.append(f"feriado nacional: dólar parado em {tv}")
     # TradingView parado: dia útil, já passou das 9h15 e nenhuma barra de 5 min do dólar depois das 9h.
     # 18/11/2026: às 10h50 nenhuma barra e o scanner repetia o fechamento de ontem (5,7778) com o Yahoo a 5,7982.
     agora = dt.datetime.now(BRT)
     tv_parado = False
-    if agora.weekday() < 5 and agora.hour * 60 + agora.minute >= 9 * 60 + 15:
+    if not feriado_hoje and agora.weekday() < 5 and agora.hour * 60 + agora.minute >= 9 * 60 + 15:
         try:
             b_usd = por_minuto(await barras("FX_IDC:USDBRL", "5", 400), hoje_iso)
             tv_parado = not any(m >= 9 * 60 for m in b_usd)
