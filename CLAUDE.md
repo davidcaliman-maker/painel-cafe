@@ -35,7 +35,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v78).
+  (`painel-agro-vN` → `vN+1`; hoje v79).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
@@ -154,6 +154,9 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   Some sozinho em 26/12. Teste fora da época: abrir o site com `?natal=1`. Reduzir animações = trenó parado.
 - Feriados nacionais (`feriado()` no index.html; fixos + Carnaval seg/ter, Sexta Santa, Corpus Christi
   pela Páscoa): selo roxo FERIADO no lugar de AO VIVO (estimativa continua). Pedido do usuário em 01/10.
+  **Dólar parado no feriado nacional (pedido 20/11/2026):** o câmbio daqui não abre; `dolarVigente` devolve o fechamento
+  do último dia útil (do histórico), card cinza; no historico.py (`feriado()` igual ao do app — manter as listas iguais)
+  `usd[hoje]` = último dia útil, sem conferir TradingView/reserva, e o gráfico HOJE fica sem pontos do dólar.
 - Variação do dia >= 3% (`VARIACAO_FORTE` no index.html, não é o `alertaVariacaoPct`): borda do card verde/vermelha,
   selo FORTE ALTA/BAIXA (posicionado por cima do percentual, sem ocupar linha), SÓ fogos na alta em `#efeito`;
   na baixa NADA voando (💸 retirado em 12/11/2026, pedido) — fica a borda vermelha, o selo piscando e o percentual vermelho. Desde 29/10/2026 (pedido): sem o brilho pulsando em volta e sem as notas 💵💰 — a caixa NÃO muda de
