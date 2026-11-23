@@ -255,6 +255,10 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   o `while` nunca saía) e, pelo `concurrency: pages`, todas as seguintes ficaram canceladas → gráfico HOJE parado às 10h.
   Corrigido: `barras()` desiste em 60 s; no pages.yml `timeout-minutes: 20` no job e 8 nos passos do histórico e das
   notícias (com `continue-on-error`, a rodada segue e publica o que já estava no ar).
+- **Publicação com segunda tentativa (23/11/2026):** nesse dia 15 de 99 rodadas falharam no `deploy-pages` do lado do
+  GitHub ("Fetching artifact metadata failed" / "No artifacts named github-pages"), cada uma mandando e-mail ao usuário.
+  Agora o deploy tem `continue-on-error`, espera 30 s e tenta de novo (`deployment2`); se falhar outra vez, só deixa
+  a anotação "Publicação" (sem e-mail). O quadro de avisos do dono cobre site parado por mais de 75 min.
 - `pages.yml` roda: dias úteis a cada 15 min das 05h às 22h (Brasília);
   sáb/dom 09h, 15h, 20h. Agendadas só republicam se histórico ou notícias mudaram. Keepalive incluso.
 - **Cepea removido em 24/10/2026** (pedido do usuário): apagados `conferencia.yml` ("Cepea do dia", e-mail

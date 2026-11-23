@@ -117,9 +117,24 @@ jobs:
         if: (github.event_name != 'schedule' && inputs.agendado != 'sim') || steps.historico.outputs.mudou != 'false' || steps.noticias.outputs.mudou == 'true'
         with:
           path: app/src/main/assets
+      # A publicação às vezes falha do lado do GitHub ("Fetching artifact metadata failed", 23/11/2026:
+      # 9 falhas no dia, cada uma mandando e-mail). Tenta de novo depois de 30 s; se falhar outra vez,
+      # só anota (a próxima rodada, 10 min depois, publica; o quadro de avisos do dono avisa se o site
+      # ficar mais de 75 min sem atualizar).
       - id: deployment
         if: (github.event_name != 'schedule' && inputs.agendado != 'sim') || steps.historico.outputs.mudou != 'false' || steps.noticias.outputs.mudou == 'true'
+        continue-on-error: true
         uses: actions/deploy-pages@v4
+      - name: Esperar antes de tentar publicar de novo
+        if: steps.deployment.outcome == 'failure'
+        run: sleep 30
+      - id: deployment2
+        if: steps.deployment.outcome == 'failure'
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+      - name: Anotar se a publicação falhou duas vezes
+        if: steps.deployment.outcome == 'failure' && steps.deployment2.outcome == 'failure'
+        run: echo "::warning title=Publicação::O GitHub Pages recusou a publicação duas vezes; a próxima rodada tenta de novo."
 
       # O GitHub desliga agendamentos após 60 dias sem atividade no repositório; isto evita.
       - uses: liskin/gh-workflow-keepalive@f72ff1a1336129f29bf0166c0fd0ca6cf1bcb38c # v1
