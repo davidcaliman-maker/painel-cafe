@@ -1032,7 +1032,8 @@
     var hojeD = dias.filter(function (d) { return d.data === hoje; })[0], fechadas = hojeD && hojeD.fechadas || [];
     var combinado = (c.inicios || []).some(function (i) { return i.data === hoje; });
     // 1) CCCV do pregão anterior: sem ele o dia começa no fechamento do app.
-    if (util && ant && c.cccvDesde && ant.data >= c.cccvDesde && ant.cccv == null && !combinado)
+    // No feriado nacional o CCCV não publica: o dia seguinte começa no fechamento do app de propósito (23/11/2026).
+    if (util && ant && c.cccvDesde && ant.data >= c.cccvDesde && ant.cccv == null && !combinado && !feriado(ant.data))
       out.push("Não consegui o CCCV de " + ddmmIso(ant.data) + ": hoje o Conilon começou no fechamento do app (R$ " +
                fmt(baseDe(hoje).preco, 2) + ").");
     if (util && last) {

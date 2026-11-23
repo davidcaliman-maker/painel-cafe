@@ -35,7 +35,7 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   recarregam sozinhos quando há versão nova (`versao.json`, carimbado pelo workflow com o commit).
   → Mudança de tela = editar `index.html` e dar push. Não precisa gerar APK.
 - A cada mudança em `index.html`, suba o nome do cache em `app/src/main/assets/sw.js`
-  (`painel-agro-vN` → `vN+1`; hoje v79).
+  (`painel-agro-vN` → `vN+1`; hoje v80).
 - Teste no navegador (larguras 375 e 412 px) antes de publicar. Para testar local: servidor
   `python -m http.server 8765 -d app/src/main/assets` (contador Umami fica desligado fora do site oficial;
   `.claude/launch.json` tem a configuração "painel" para o preview do Claude). Os JSON gerados
@@ -335,7 +335,8 @@ numerados. Ele usa Android; o app também é distribuído para iPhone.
   e no ATUALIZAR: CCCV do pregão anterior que não veio (dia começou no fechamento do app); dólar (depois das 9h30, dia
   útil sem feriado: `dolarParado`, sem a cotação de hoje, ou sem ponto no gráfico desde as 9h às 10h+); Londres/NY sem
   cotação de hoje (7h/7h30, salvo "fechadas"); gráfico do dia de outro dia (7h+); GitHub sem publicar há > 75 min
-  (7h–18h); cotações pela reserva do GitHub. Visitantes nunca veem.
+  (7h–18h); cotações pela reserva do GitHub. Visitantes nunca veem. Sem aviso de CCCV quando o dia anterior foi feriado
+  nacional (o CCCV não publica; o dia começa no fechamento do app de propósito — 23/11/2026).
 - Umami: eventos `abertura` (plataforma, tema, cidade_chuva), `aba`, `tema`, `cidade-chuva`,
   `noticia`, `atualizar`, `instalar` (tipo).
   `primeiro-uso` (plataforma; desde 30/10/2026, uma vez por aparelho, chave `primeiroUso` salva no aparelho;
